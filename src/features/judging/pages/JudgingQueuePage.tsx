@@ -168,7 +168,16 @@ export function JudgingQueuePage() {
           </span>
         </Grow>
         {next && advancedCount > 0 && (
-          <Button variant="secondary" onClick={() => setPromoteOpen(true)}>
+          <Button
+            variant="secondary"
+            style={{
+              height: "auto",
+              maxWidth: "100%",
+              whiteSpace: "normal",
+              textAlign: "left",
+            }}
+            onClick={() => setPromoteOpen(true)}
+          >
             <ArrowRightCircle size={16} /> Open {getStageConfig(next).name} for{" "}
             {advancedCount}
           </Button>

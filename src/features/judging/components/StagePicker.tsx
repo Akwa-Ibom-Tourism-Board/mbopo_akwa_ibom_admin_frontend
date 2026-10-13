@@ -17,7 +17,7 @@ export function StagePicker({
 }) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as CandidateStage)}>
-      <SelectTrigger aria-label="Stage" style={{ minWidth: 260 }}>
+      <SelectTrigger aria-label="Stage" style={{ width: "min(100%, 320px)" }}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

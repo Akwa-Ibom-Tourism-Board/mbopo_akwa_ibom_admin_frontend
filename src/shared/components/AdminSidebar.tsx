@@ -52,7 +52,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
         </SidebarBrand>
 
         {groups.map((group) => (
-          <div key={group.label}>
+          <div key={group.label} style={{ marginTop: 12 }}>
             <SectionLabel>{group.label}</SectionLabel>
             <NavList>
               {group.items.map(({ to, label, icon: Icon }) => (
