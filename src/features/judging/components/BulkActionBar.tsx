@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Crown, UserCheck, UserX } from "lucide-react";
+import { UserCheck, UserX } from "lucide-react";
 import {
   Button,
   Select,
@@ -11,44 +11,65 @@ import {
   Textarea,
 } from "@/shared/ui";
 import { ConfirmDialog } from "@/shared/components";
-import type { Candidate, CandidateStage } from "@/features/candidates/types";
-import { DISQUALIFICATION_REASONS } from "../types";
+import type { Candidate } from "@/features/candidates/types";
+import { DISQUALIFICATION_REASONS, type StageConfig } from "../types";
 import { useAdvance, useDisqualify } from "../api/hooks";
 
 // Rendered inside the candidate DataTable's bulk bar: one action applied to
 // every selected row, individually or in bulk (a single row works too).
+//  • Select for next stage — cumulative stages only, with a soft warning when
+//    it would exceed the document's per-LGA quota.
+//  • Disqualify — every stage. A rule-breaker, not a normal cut: it needs a
+//    reason. (The Grand Finale's cuts happen when a round is closed.)
 export function BulkActionBar({
   selected,
-  stage,
+  all,
+  config,
   clear,
 }: {
   selected: Candidate[];
-  stage: CandidateStage;
+  all: Candidate[]; // every candidate in the stage, for quota counting
+  config: StageConfig;
   clear: () => void;
 }) {
-  const advance = useAdvance(stage);
+  const advance = useAdvance(config.id);
   const disqualify = useDisqualify();
   const [advanceOpen, setAdvanceOpen] = useState(false);
   const [dqOpen, setDqOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
 
-  const finale = stage === "grand_finale";
   const n = selected.length;
-  const canAdvance =
-    selected.every((c) => c.status === "active") && (!finale || n === 1);
   const ids = selected.map((c) => c.id);
+  const canAdvance =
+    config.mode === "cumulative" &&
+    selected.every((c) => c.status === "active");
+
+  // LGAs that would go over the per-LGA quota.
+  const over = config.perLgaQuota
+    ? [...new Set(selected.map((c) => c.lga))].filter((lga) => {
+        const already = all.filter(
+          (c) =>
+            c.lga === lga && c.status === "advanced" && !ids.includes(c.id),
+        ).length;
+        return (
+          already + selected.filter((c) => c.lga === lga).length >
+          config.perLgaQuota!
+        );
+      })
+    : [];
 
   return (
     <>
-      <Button
-        size="sm"
-        disabled={!canAdvance}
-        onClick={() => setAdvanceOpen(true)}
-      >
-        {finale ? <Crown size={16} /> : <UserCheck size={16} />}
-        {finale ? "Crown winner" : `Advance ${n}`}
-      </Button>
+      {config.mode === "cumulative" && (
+        <Button
+          size="sm"
+          disabled={!canAdvance}
+          onClick={() => setAdvanceOpen(true)}
+        >
+          <UserCheck size={16} /> Select {n}
+        </Button>
+      )}
       <Button size="sm" variant="destructive" onClick={() => setDqOpen(true)}>
         <UserX size={16} /> Disqualify {n}
       </Button>
@@ -56,22 +77,24 @@ export function BulkActionBar({
       <ConfirmDialog
         open={advanceOpen}
         onOpenChange={setAdvanceOpen}
-        title={
-          finale
-            ? "Crown this candidate as winner?"
-            : `Advance ${n} candidate${n === 1 ? "" : "s"}?`
-        }
+        title={`Select ${n} candidate${n === 1 ? "" : "s"} for the next stage?`}
         description={
-          finale
-            ? `${selected[0]?.name} will be recorded as the Mbopo Akwa Ibom winner.`
-            : "They'll be marked as advanced and move into the next stage when it opens."
+          <>
+            They'll be marked as selected and move on when the stage is closed.
+            {over.length > 0 && (
+              <strong style={{ display: "block", marginTop: 8 }}>
+                Over the quota of {config.perLgaQuota} per LGA in:{" "}
+                {over.join(", ")}.
+              </strong>
+            )}
+          </>
         }
-        confirmLabel={finale ? "Crown winner" : "Advance"}
+        confirmLabel="Select"
         loading={advance.isPending}
         onConfirm={() =>
           advance.mutate(ids, {
             onSuccess: () => {
-              toast.success(finale ? "Winner recorded" : `${n} advanced`);
+              toast.success(`${n} selected`);
               setAdvanceOpen(false);
               clear();
             },
@@ -84,7 +107,7 @@ export function BulkActionBar({
         open={dqOpen}
         onOpenChange={setDqOpen}
         title={`Disqualify ${n} candidate${n === 1 ? "" : "s"}?`}
-        description="This is a recorded decision. A reason is required."
+        description="This is a recorded decision for breaking a rule. A reason is required."
         destructive
         confirmLabel="Disqualify"
         confirmDisabled={!reason}

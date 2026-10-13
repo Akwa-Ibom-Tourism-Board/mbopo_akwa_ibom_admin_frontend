@@ -89,8 +89,14 @@ const STORIES = [
   "I want to show that Akwa Ibom's culture and its young people are our greatest tourism assets — I am ready to carry that message.",
 ];
 
-const SENATORIAL_LGA_INDEXES = new Set([0, 4, 8, 12, 16, 20, 24, 28]);
-const FINALE_LGA_INDEXES = new Set([0, 4]);
+// Spread across the pipeline so every stage has something to show:
+//   LGA index % 4 === 0 → first candidate is a Grand Finale contestant (8
+//     finalists); the other two were not selected at the senatorial stage.
+//   LGA index % 4 === 1 → all three are competing at the senatorial stage.
+//   everyone else       → still at the Local Government stage.
+// Two finalists (the last two) were cut after Round 1 — see mock-scores.ts,
+// which gives them the lowest Round 1 scores to match.
+const FINALE_CUT_IN_ROUND_1 = new Set([24, 28]);
 
 function build(lgaIndex: number, k: number): Candidate {
   const i = lgaIndex * 3 + k;
@@ -101,21 +107,29 @@ function build(lgaIndex: number, k: number): Candidate {
   let stage: CandidateStage = "lga_selection";
   let status: CandidateStatus = "active";
   let disqualificationReason: string | undefined;
+  let eliminatedAt: string | undefined;
 
-  if (SENATORIAL_LGA_INDEXES.has(lgaIndex)) {
+  if (lgaIndex % 4 === 0) {
+    if (k === 0) {
+      stage = "grand_finale";
+      if (FINALE_CUT_IN_ROUND_1.has(lgaIndex)) {
+        status = "eliminated";
+        eliminatedAt = "s3-r1";
+      }
+    } else {
+      stage = "senatorial_selection";
+      status = "eliminated";
+      eliminatedAt = "senatorial_selection";
+    }
+  } else if (lgaIndex % 4 === 1) {
     stage = "senatorial_selection";
-    if (k === 0) status = "advanced";
-  }
-  if (FINALE_LGA_INDEXES.has(lgaIndex) && k === 0) {
-    stage = "grand_finale";
-    status = "active";
-  }
-  if (stage === "lga_selection" && lgaIndex % 5 === 1 && k === 0) {
-    status = "advanced";
-  }
-  if (stage === "lga_selection" && i % 29 === 5) {
-    status = "disqualified";
-    disqualificationReason = REASONS[Math.floor(i / 29) % REASONS.length];
+  } else {
+    if (lgaIndex % 5 === 1 && k === 0) status = "advanced";
+    if (i % 29 === 5) {
+      status = "disqualified";
+      disqualificationReason =
+        REASONS[Math.floor(i / 29) % REASONS.length] ?? REASONS[0];
+    }
   }
 
   const hasProfile = i % 3 !== 0;
@@ -142,6 +156,7 @@ function build(lgaIndex: number, k: number): Candidate {
     stage,
     status,
     disqualificationReason,
+    eliminatedAt,
     bio: hasProfile
       ? `${first} is a ${OCCUPATIONS[(i * 3) % OCCUPATIONS.length]!.toLowerCase()} from ${lga}, passionate about culture, community and Beauty with Purpose.`
       : undefined,

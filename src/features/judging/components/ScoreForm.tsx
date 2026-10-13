@@ -115,6 +115,7 @@ export function ScoreForm({
   );
   const complete = isComplete(values, round.criteria);
   const needsCause = !!round.causes;
+  const causeMissing = needsCause && !cause;
 
   const persist = (status: Score["status"]) =>
     save.mutate(
@@ -251,7 +252,7 @@ export function ScoreForm({
         </Button>
         <Button
           type="button"
-          disabled={disabled || save.isPending || !complete}
+          disabled={disabled || save.isPending || !complete || causeMissing}
           onClick={() => persist("submitted")}
         >
           {existing?.status === "submitted" ? "Update score" : "Submit score"}

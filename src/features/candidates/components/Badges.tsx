@@ -9,6 +9,7 @@ import {
 const STATUS_TONE: Record<CandidateStatus, BadgeTone> = {
   active: "neutral",
   advanced: "primary",
+  eliminated: "secondary",
   disqualified: "danger",
   winner: "success",
 };

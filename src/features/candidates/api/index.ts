@@ -39,7 +39,10 @@ export async function updateCandidateProfile(
 export async function applyJudgingDecision(
   ids: string[],
   patch: Partial<
-    Pick<Candidate, "stage" | "status" | "disqualificationReason">
+    Pick<
+      Candidate,
+      "stage" | "status" | "disqualificationReason" | "eliminatedAt"
+    >
   >,
 ): Promise<Candidate[]> {
   await delay();

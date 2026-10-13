@@ -3,7 +3,10 @@ import type { Lga, SenatorialDistrict } from "@/lib/constants";
 export type CandidateStage =
   "lga_selection" | "senatorial_selection" | "grand_finale";
 
-export type CandidateStatus = "active" | "advanced" | "disqualified" | "winner";
+// "eliminated" = not selected by the judges at a cut (a normal competitive
+// outcome); "disqualified" = broke a rule and always carries a reason.
+export type CandidateStatus =
+  "active" | "advanced" | "eliminated" | "disqualified" | "winner";
 
 export type VerificationStatus = "verified" | "pending" | "failed";
 
@@ -38,6 +41,9 @@ export interface Candidate {
   stage: CandidateStage;
   status: CandidateStatus;
   disqualificationReason?: string;
+  // Where an eliminated candidate's run ended: a Grand Finale round id
+  // (e.g. "s3-r1") or, for stage-level selection, the stage id.
+  eliminatedAt?: string;
   // Public profile content (Media-managed)
   bio?: string;
   additionalPhotos?: string[];
@@ -60,6 +66,7 @@ export const STAGE_LABELS: Record<CandidateStage, string> = {
 export const STATUS_LABELS: Record<CandidateStatus, string> = {
   active: "Active",
   advanced: "Advanced",
+  eliminated: "Eliminated",
   disqualified: "Disqualified",
   winner: "Winner",
 };

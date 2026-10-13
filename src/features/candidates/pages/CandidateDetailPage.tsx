@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { YoutubeEmbed } from "@/features/voting-content";
-import { CandidateScoreCard } from "@/features/judging";
+import { CandidateScoreCard, describeEliminatedAt } from "@/features/judging";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { parseYoutubeId } from "@/lib/youtube";
@@ -159,6 +159,12 @@ export function CandidateDetailPage() {
             <Badge>{c.lga}</Badge>
             <Badge>{c.senatorialDistrict}</Badge>
           </Badges>
+          {c.status === "eliminated" && (
+            <p style={{ margin: "12px 0 0", fontSize: "0.875rem" }}>
+              Eliminated —{" "}
+              {describeEliminatedAt(c.eliminatedAt) ?? "not selected"}.
+            </p>
+          )}
           {c.status === "disqualified" && c.disqualificationReason && (
             <Reason>Disqualified: {c.disqualificationReason}</Reason>
           )}

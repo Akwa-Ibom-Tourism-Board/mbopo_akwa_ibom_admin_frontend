@@ -3,21 +3,25 @@ import { candidateKeys } from "@/features/candidates/api/hooks";
 import type { CandidateStage } from "@/features/candidates/types";
 import {
   advanceCandidates,
+  closeRound,
+  closeStage,
   disqualifyCandidates,
+  getClosures,
   getJudges,
   getJudgingQueue,
   getLeaderboard,
   getMyScores,
-  promoteAdvanced,
+  reopenRound,
   saveScore,
 } from ".";
 
 export const judgingKeys = {
   queue: (stage: CandidateStage) => ["judging", "queue", stage] as const,
+  closures: (stage: CandidateStage) => ["judging", "closures", stage] as const,
   myScores: (judgeId: string, key: string) =>
     ["judging", "scores", judgeId, key] as const,
-  leaderboard: (stage: CandidateStage) =>
-    ["judging", "leaderboard", stage] as const,
+  leaderboard: (stage: CandidateStage, roundId?: string) =>
+    ["judging", "leaderboard", stage, roundId ?? "all"] as const,
   judges: ["judging", "judges"] as const,
 };
 
@@ -25,6 +29,12 @@ export const useJudgingQueue = (stage: CandidateStage) =>
   useQuery({
     queryKey: judgingKeys.queue(stage),
     queryFn: () => getJudgingQueue(stage),
+  });
+
+export const useClosures = (stage: CandidateStage) =>
+  useQuery({
+    queryKey: judgingKeys.closures(stage),
+    queryFn: () => getClosures(stage),
   });
 
 export const useMyStageScores = (judgeId: string, stage: CandidateStage) =>
@@ -39,10 +49,10 @@ export const useMyCandidateScores = (judgeId: string, candidateId: string) =>
     queryFn: () => getMyScores(judgeId, { candidateId }),
   });
 
-export const useLeaderboard = (stage: CandidateStage) =>
+export const useLeaderboard = (stage: CandidateStage, roundId?: string) =>
   useQuery({
-    queryKey: judgingKeys.leaderboard(stage),
-    queryFn: () => getLeaderboard(stage),
+    queryKey: judgingKeys.leaderboard(stage, roundId),
+    queryFn: () => getLeaderboard(stage, roundId),
   });
 
 export const useJudges = () =>
@@ -54,6 +64,7 @@ function useInvalidateAll() {
     Promise.all([
       qc.invalidateQueries({ queryKey: ["judging"] }),
       qc.invalidateQueries({ queryKey: candidateKeys.all }),
+      qc.invalidateQueries({ queryKey: ["activity"] }),
     ]);
 }
 
@@ -79,10 +90,26 @@ export function useDisqualify() {
   });
 }
 
-export function usePromoteAdvanced(stage: CandidateStage) {
+export function useCloseRound() {
   const invalidate = useInvalidateAll();
   return useMutation({
-    mutationFn: () => promoteAdvanced(stage),
+    mutationFn: ({
+      roundId,
+      passedIds,
+    }: {
+      roundId: string;
+      passedIds?: string[];
+    }) => closeRound(roundId, passedIds),
     onSuccess: invalidate,
   });
+}
+
+export function useReopenRound() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: reopenRound, onSuccess: invalidate });
+}
+
+export function useCloseStage() {
+  const invalidate = useInvalidateAll();
+  return useMutation({ mutationFn: closeStage, onSuccess: invalidate });
 }

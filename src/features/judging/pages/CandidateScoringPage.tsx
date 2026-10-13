@@ -15,8 +15,9 @@ import { parseYoutubeId } from "@/lib/youtube";
 import { media } from "@/theme";
 import { CriteriaRubric } from "../components/CriteriaRubric";
 import { ScoreForm } from "../components/ScoreForm";
-import { getStageConfig } from "../data/mock-stages";
-import { useMyCandidateScores } from "../api/hooks";
+import { describeEliminatedAt, getStageConfig } from "../data/mock-stages";
+import { useClosures, useMyCandidateScores } from "../api/hooks";
+import { fieldForRound, isClosed, roundOpenForScoring } from "../utils/rounds";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -30,10 +31,11 @@ const Back = styled(Link)`
 
 const Layout = styled.div`
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 
   ${media.xl} {
-    grid-template-columns: 360px 1fr;
+    grid-template-columns: 360px minmax(0, 1fr);
     align-items: start;
   }
 `;
@@ -126,15 +128,44 @@ export function CandidateScoringPage() {
   const { data: c, isLoading } = useCandidate(candidateId);
   const myScores = useMyCandidateScores(judgeId, candidateId);
   const [roundId, setRoundId] = useState<string | null>(null);
+  const closuresQ = useClosures(c?.stage ?? "lga_selection");
 
   if (isLoading || myScores.isLoading) return <EmptyState>Loading…</EmptyState>;
   if (!c) return <EmptyState>We couldn't find that candidate.</EmptyState>;
 
   const config = getStageConfig(c.stage);
-  const round =
-    config.rounds.find((r) => r.id === roundId) ?? config.rounds[0]!;
+  const closures = closuresQ.data ?? [];
+  const elimination = config.mode === "elimination";
+  // Default to the round in play: the current round of an elimination stage,
+  // otherwise the first round.
+  const defaultIndex = elimination
+    ? Math.max(
+        0,
+        config.rounds.findIndex((r) => !isClosed(closures, r.id)),
+      )
+    : 0;
+  const index = Math.max(
+    0,
+    roundId ? config.rounds.findIndex((r) => r.id === roundId) : defaultIndex,
+  );
+  const round = config.rounds[index]!;
   const existing = myScores.data?.find((s) => s.roundId === round.id);
-  const locked = c.status === "disqualified" || c.status === "winner";
+  const gate = roundOpenForScoring(config, index, closures);
+  const inField = fieldForRound(config, index, [c]).length === 1;
+  const outcomeLocked =
+    c.status === "disqualified" ||
+    c.status === "eliminated" ||
+    c.status === "winner";
+  const locked = outcomeLocked || !gate.open || !inField;
+  const lockReason = outcomeLocked
+    ? c.status === "winner"
+      ? "This candidate has been crowned winner; scoring is closed."
+      : c.status === "eliminated"
+        ? `Eliminated${c.eliminatedAt ? ` (${describeEliminatedAt(c.eliminatedAt)})` : ""}. Scoring is closed.`
+        : `Disqualified${c.disqualificationReason ? `: ${c.disqualificationReason}` : ""}. Scoring is closed.`
+    : !inField
+      ? "This candidate isn't in the field for this round."
+      : gate.reason;
   const pitchIsYoutube = c.videoPitchUrl && parseYoutubeId(c.videoPitchUrl);
 
   return (
@@ -204,25 +235,13 @@ export function CandidateScoringPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>
-              {config.name}
-              {config.rubricPending && " — rubric pending confirmation"}
-            </CardTitle>
+            <CardTitle>{config.name}</CardTitle>
           </CardHeader>
           <CardContent>
-            {locked && (
+            {locked && lockReason && (
               <Warn>
                 <TriangleAlert size={16} />
-                {c.status === "winner"
-                  ? "This candidate has been crowned winner; scoring is closed."
-                  : `Disqualified${c.disqualificationReason ? `: ${c.disqualificationReason}` : ""}. Scoring is closed.`}
-              </Warn>
-            )}
-            {config.rubricPending && (
-              <Warn>
-                <TriangleAlert size={16} />
-                These are placeholder criteria — the real Grand Finale rubric
-                hasn't been supplied yet.
+                {lockReason}
               </Warn>
             )}
 
@@ -262,7 +281,7 @@ export function CandidateScoringPage() {
 
             <CriteriaRubric round={round} />
             <ScoreForm
-              key={`${c.id}-${round.id}-${existing?.updatedAt ?? "new"}`}
+              key={`${c.id}-${round.id}-${existing?.updatedAt ?? "new"}-${locked}`}
               round={round}
               judgeId={judgeId}
               candidateId={c.id}
