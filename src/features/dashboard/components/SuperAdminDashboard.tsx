@@ -13,7 +13,7 @@ import { useComplaints } from "@/features/complaints";
 import { useUsers } from "@/features/users";
 import { useVoteTiers } from "@/features/voting-content/api/hooks";
 import { formatNaira, formatNumber } from "@/lib/formatting";
-import { count, useRecentActivity } from "../hooks";
+import { count, useCurrentStage, useRecentActivity } from "../hooks";
 import {
   ActivityList,
   NoteBox,
@@ -29,6 +29,7 @@ export function SuperAdminDashboard() {
   const complaints = useComplaints().data;
   const tiers = useVoteTiers().data;
   const activity = useRecentActivity();
+  const stage = useCurrentStage();
 
   const votes = candidates?.reduce((sum, c) => sum + (c.voteCount ?? 0), 0);
   const open = complaints?.filter((c) => c.status === "open").length;
@@ -43,6 +44,17 @@ export function SuperAdminDashboard() {
         description="Full control of staff accounts, the voting platform and pricing."
       />
       <StatGrid>
+        <StatTile
+          label="Current stage"
+          value={stage?.title ?? "—"}
+          hint={
+            stage?.status === "open"
+              ? "Open for judging"
+              : stage?.status === "pending"
+                ? "Waiting to be opened"
+                : undefined
+          }
+        />
         <StatTile
           label="Active staff accounts"
           value={count(

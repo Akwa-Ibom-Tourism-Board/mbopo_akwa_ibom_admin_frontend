@@ -35,8 +35,8 @@ export function LeaderboardTable({
   // LGA/district doesn't renumber a candidate's position.
   const ranks = useMemo(() => {
     const sorted = [...(entries ?? [])]
-      .filter((e) => e.average != null)
-      .sort((a, b) => b.average! - a.average!);
+      .filter((e) => e.total != null)
+      .sort((a, b) => b.total! - a.total!);
     return new Map(sorted.map((e, i) => [e.candidate.id, i + 1]));
   }, [entries]);
 
@@ -96,10 +96,16 @@ export function LeaderboardTable({
       cell: (e) => formatScore(e.perJudge[j.id]?.score),
     })),
     {
+      id: "total",
+      header: "Total",
+      sortValue: (e) => e.total ?? -1,
+      cell: (e) => <strong>{formatScore(e.total)}</strong>,
+    },
+    {
       id: "avg",
       header: "Average",
       sortValue: (e) => e.average ?? -1,
-      cell: (e) => <strong>{formatScore(e.average)}</strong>,
+      cell: (e) => formatScore(e.average),
     },
   ];
 

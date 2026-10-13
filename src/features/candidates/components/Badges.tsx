@@ -1,10 +1,6 @@
 import { Badge, type BadgeTone } from "@/shared/components";
-import {
-  STAGE_LABELS,
-  STATUS_LABELS,
-  type CandidateStage,
-  type CandidateStatus,
-} from "../types";
+import { phaseTitle, type PhaseId } from "@/lib/phases";
+import { STATUS_LABELS, type CandidateStatus } from "../types";
 
 const STATUS_TONE: Record<CandidateStatus, BadgeTone> = {
   active: "neutral",
@@ -14,8 +10,8 @@ const STATUS_TONE: Record<CandidateStatus, BadgeTone> = {
   winner: "success",
 };
 
-export function StageBadge({ stage }: { stage: CandidateStage }) {
-  return <Badge $tone="secondary">{STAGE_LABELS[stage]}</Badge>;
+export function PhaseBadge({ phase }: { phase: PhaseId }) {
+  return <Badge $tone="secondary">{phaseTitle(phase)}</Badge>;
 }
 
 export function StatusBadge({ status }: { status: CandidateStatus }) {

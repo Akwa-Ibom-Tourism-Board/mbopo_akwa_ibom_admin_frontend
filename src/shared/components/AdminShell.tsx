@@ -10,7 +10,10 @@ import { ShellFrame, ContentPane, ContentBody } from "./DashboardShell.styles";
 export function AdminShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
-  const title = matchNavItem(pathname)?.label ?? "Mbopo Admin";
+  const title = (() => {
+    const item = matchNavItem(pathname);
+    return item?.title ?? item?.label ?? "Mbopo Admin";
+  })();
 
   return (
     <ShellFrame>

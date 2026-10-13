@@ -12,7 +12,7 @@ import { useCandidates } from "@/features/candidates/api/hooks";
 import { useComplaints } from "@/features/complaints";
 import { useUsers } from "@/features/users";
 import { useNewsPosts } from "@/features/voting-content/api/hooks";
-import { count, useRecentActivity } from "../hooks";
+import { count, useCurrentStage, useRecentActivity } from "../hooks";
 import {
   ActivityList,
   NoteBox,
@@ -28,6 +28,7 @@ export function AdminDashboard() {
   const complaints = useComplaints().data;
   const news = useNewsPosts().data;
   const activity = useRecentActivity();
+  const stage = useCurrentStage();
 
   return (
     <>
@@ -36,6 +37,17 @@ export function AdminDashboard() {
         description="Run staff accounts and the voting platform's content."
       />
       <StatGrid>
+        <StatTile
+          label="Current stage"
+          value={stage?.title ?? "—"}
+          hint={
+            stage?.status === "open"
+              ? "Open for judging"
+              : stage?.status === "pending"
+                ? "Waiting to be opened"
+                : undefined
+          }
+        />
         <StatTile
           label="Media, Judges & Support staff"
           value={count(

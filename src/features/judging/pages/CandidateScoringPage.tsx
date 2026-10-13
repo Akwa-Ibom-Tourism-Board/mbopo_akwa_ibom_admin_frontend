@@ -7,17 +7,19 @@ import { Badge, EmptyState } from "@/shared/components";
 import { useAuth } from "@/features/auth";
 import { useCandidate } from "@/features/candidates/api/hooks";
 import {
-  StageBadge,
+  PhaseBadge,
   StatusBadge,
 } from "@/features/candidates/components/Badges";
+import { usePhaseStates } from "@/features/stages/api/hooks";
+import { inField as candidateInField } from "@/features/stages/utils/participants";
+import { phaseTitle } from "@/lib/phases";
 import { YoutubeEmbed } from "@/features/voting-content";
 import { parseYoutubeId } from "@/lib/youtube";
 import { media } from "@/theme";
 import { CriteriaRubric } from "../components/CriteriaRubric";
 import { ScoreForm } from "../components/ScoreForm";
-import { describeEliminatedAt, getStageConfig } from "../data/mock-stages";
-import { useClosures, useMyCandidateScores } from "../api/hooks";
-import { fieldForRound, isClosed, roundOpenForScoring } from "../utils/rounds";
+import { roundsOf } from "../data/mock-stages";
+import { useMyCandidateScores } from "../api/hooks";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -128,50 +130,47 @@ export function CandidateScoringPage() {
   const { data: c, isLoading } = useCandidate(candidateId);
   const myScores = useMyCandidateScores(judgeId, candidateId);
   const [roundId, setRoundId] = useState<string | null>(null);
-  const closuresQ = useClosures(c?.stage ?? "lga_selection");
+  const states = usePhaseStates().data;
 
   if (isLoading || myScores.isLoading) return <EmptyState>Loading…</EmptyState>;
   if (!c) return <EmptyState>We couldn't find that candidate.</EmptyState>;
 
-  const config = getStageConfig(c.stage);
-  const closures = closuresQ.data ?? [];
-  const elimination = config.mode === "elimination";
-  // Default to the round in play: the current round of an elimination stage,
-  // otherwise the first round.
-  const defaultIndex = elimination
-    ? Math.max(
-        0,
-        config.rounds.findIndex((r) => !isClosed(closures, r.id)),
-      )
-    : 0;
+  const rounds = roundsOf(c.phase);
+  const phaseState = states?.find((st) => st.phaseId === c.phase);
   const index = Math.max(
     0,
-    roundId ? config.rounds.findIndex((r) => r.id === roundId) : defaultIndex,
+    roundId ? rounds.findIndex((r) => r.id === roundId) : 0,
   );
-  const round = config.rounds[index]!;
+  const round = rounds[index]!;
   const existing = myScores.data?.find((s) => s.roundId === round.id);
-  const gate = roundOpenForScoring(config, index, closures);
-  const inField = fieldForRound(config, index, [c]).length === 1;
-  const outcomeLocked =
-    c.status === "disqualified" ||
-    c.status === "eliminated" ||
-    c.status === "winner";
-  const locked = outcomeLocked || !gate.open || !inField;
-  const lockReason = outcomeLocked
-    ? c.status === "winner"
+
+  // Scores can only be entered while the candidate's stage is open and they
+  // are still competing in it. A closed stage is locked for every judge.
+  const stageLocked =
+    phaseState?.status === "closed"
+      ? `${phaseTitle(c.phase)} is closed — scores are locked.`
+      : phaseState?.status === "pending"
+        ? `${phaseTitle(c.phase)} hasn't been opened yet.`
+        : undefined;
+  const competing = candidateInField(c, c.phase);
+  const locked = !phaseState || !!stageLocked || !competing;
+  const lockReason =
+    c.status === "winner"
       ? "This candidate has been crowned winner; scoring is closed."
       : c.status === "eliminated"
-        ? `Eliminated${c.eliminatedAt ? ` (${describeEliminatedAt(c.eliminatedAt)})` : ""}. Scoring is closed.`
-        : `Disqualified${c.disqualificationReason ? `: ${c.disqualificationReason}` : ""}. Scoring is closed.`
-    : !inField
-      ? "This candidate isn't in the field for this round."
-      : gate.reason;
+        ? `Eliminated${c.eliminatedAt ? ` (${phaseTitle(c.eliminatedAt)})` : ""}. Scoring is closed.`
+        : c.status === "disqualified"
+          ? `Disqualified${c.disqualificationReason ? `: ${c.disqualificationReason}` : ""}. Scoring is closed.`
+          : (stageLocked ??
+            (c.status === "advanced"
+              ? `Finalized through ${phaseTitle(c.phase)}. Scoring is closed.`
+              : undefined));
   const pitchIsYoutube = c.videoPitchUrl && parseYoutubeId(c.videoPitchUrl);
 
   return (
     <>
-      <Back to="/judging">
-        <ArrowLeft size={16} /> Judging queue
+      <Back to={`/stages/${c.phase}`}>
+        <ArrowLeft size={16} /> {phaseTitle(c.phase)}
       </Back>
 
       <Layout>
@@ -184,7 +183,7 @@ export function CandidateScoringPage() {
                 <div>
                   <h2>{c.name}</h2>
                   <Tags>
-                    <StageBadge stage={c.stage} />
+                    <PhaseBadge phase={c.phase} />
                     <StatusBadge status={c.status} />
                     <Badge>{c.lga}</Badge>
                   </Tags>
@@ -235,7 +234,7 @@ export function CandidateScoringPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{config.name}</CardTitle>
+            <CardTitle>{phaseTitle(c.phase)}</CardTitle>
           </CardHeader>
           <CardContent>
             {locked && lockReason && (
@@ -246,7 +245,7 @@ export function CandidateScoringPage() {
             )}
 
             <RoundTabs role="tablist">
-              {config.rounds.map((r) => {
+              {rounds.map((r) => {
                 const s = myScores.data?.find((x) => x.roundId === r.id);
                 return (
                   <RoundTab

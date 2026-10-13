@@ -1,7 +1,8 @@
 import type { Lga, SenatorialDistrict } from "@/lib/constants";
 
-export type CandidateStage =
-  "lga_selection" | "senatorial_selection" | "grand_finale";
+import type { CandidateStage, PhaseId } from "@/lib/phases";
+
+export type { CandidateStage };
 
 // "eliminated" = not selected by the judges at a cut (a normal competitive
 // outcome); "disqualified" = broke a rule and always carries a reason.
@@ -35,15 +36,18 @@ export interface Candidate {
   videoPitchUrl?: string;
   story: string;
   appliedAt: string; // ISO
-  // Judging state. `stage` is the stage the candidate is currently in (or last
-  // competed in); `advanced` means a decision to move on has been made and the
-  // next stage hasn't opened yet. Only the judging workflow changes these.
+  // Judging state. `phase` is the stage of elimination the candidate is in (or
+  // last competed in); `stage` is the broader stage it belongs to, kept in
+  // sync. `advanced` means the Head Judge has finalized them through that
+  // phase and they wait there until an Admin opens the next one. Only the
+  // judging workflow changes these.
+  phase: PhaseId;
   stage: CandidateStage;
   status: CandidateStatus;
   disqualificationReason?: string;
-  // Where an eliminated candidate's run ended: a Grand Finale round id
-  // (e.g. "s3-r1") or, for stage-level selection, the stage id.
-  eliminatedAt?: string;
+  // The phase where an eliminated / disqualified candidate's run ended.
+  eliminatedAt?: PhaseId;
+  disqualifiedAt?: PhaseId;
   // Public profile content (Media-managed)
   bio?: string;
   additionalPhotos?: string[];

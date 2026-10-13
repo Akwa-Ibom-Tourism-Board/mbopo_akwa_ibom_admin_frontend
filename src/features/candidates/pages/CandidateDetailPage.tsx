@@ -4,13 +4,14 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { YoutubeEmbed } from "@/features/voting-content";
-import { CandidateScoreCard, describeEliminatedAt } from "@/features/judging";
+import { CandidateScoreCard } from "@/features/judging";
+import { phaseTitle } from "@/lib/phases";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { parseYoutubeId } from "@/lib/youtube";
 import { media } from "@/theme";
 import { useCandidate } from "../api/hooks";
-import { StageBadge, StatusBadge } from "../components/Badges";
+import { PhaseBadge, StatusBadge } from "../components/Badges";
 import { CandidateProfilePanel } from "../components/CandidateProfilePanel";
 import type { VerificationStatus } from "../types";
 
@@ -154,7 +155,7 @@ export function CandidateDetailPage() {
         <div>
           <h2>{c.name}</h2>
           <Badges>
-            <StageBadge stage={c.stage} />
+            <PhaseBadge phase={c.phase} />
             <StatusBadge status={c.status} />
             <Badge>{c.lga}</Badge>
             <Badge>{c.senatorialDistrict}</Badge>
@@ -162,7 +163,7 @@ export function CandidateDetailPage() {
           {c.status === "eliminated" && (
             <p style={{ margin: "12px 0 0", fontSize: "0.875rem" }}>
               Eliminated —{" "}
-              {describeEliminatedAt(c.eliminatedAt) ?? "not selected"}.
+              {c.eliminatedAt ? phaseTitle(c.eliminatedAt) : "not selected"}.
             </p>
           )}
           {c.status === "disqualified" && c.disqualificationReason && (

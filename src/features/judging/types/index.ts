@@ -27,25 +27,9 @@ export interface StageConfig {
   order: number;
   name: string;
   summary: string;
-  // cumulative:  every contestant is scored in every round; the stage's
-  //              aggregate decides who is selected (stages 1 and 2).
-  // elimination: rounds run one after another and the judges cut the field
-  //              at the end of each (the Grand Finale).
-  mode: "cumulative" | "elimination";
-  // How many candidates this stage is meant to advance, for the queue header.
+  // How many candidates this stage is meant to take through, for the header.
   advanceTarget: { count: number; label: string };
-  // Selection quota per LGA, where the document sets one.
-  perLgaQuota?: number;
   rounds: Round[];
-}
-
-// A round the judges have closed: scores are locked. In an elimination stage
-// closing also records the cut.
-export interface RoundClosure {
-  roundId: string;
-  closedAt: string;
-  // Present for elimination rounds: who went through the cut.
-  passedIds?: string[];
 }
 
 export interface Judge {
@@ -72,6 +56,8 @@ export interface LeaderboardEntry {
   candidate: Candidate;
   // Stage score per judge (average of that judge's submitted round scores).
   perJudge: Record<string, { score: number; rounds: number } | null>;
+  // Sum of the judges' stage scores — the figure the Head Judge finalizes on.
+  total: number | null;
   // Average across judges who have scored.
   average: number | null;
   // roundId -> judgeId -> round score

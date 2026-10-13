@@ -1,77 +1,68 @@
 import { useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/ui";
-import { PageHeader } from "@/shared/components";
-import type { CandidateStage } from "@/features/candidates/types";
+import { EmptyState, PageHeader } from "@/shared/components";
+import { usePhaseStates } from "@/features/stages/api/hooks";
+import { phaseTitle, type PhaseId } from "@/lib/phases";
 import { JudgeComparisonView } from "../components/JudgeComparisonView";
 import { LeaderboardTable } from "../components/LeaderboardTable";
-import { StagePicker } from "../components/StagePicker";
-import { getStageConfig } from "../data/mock-stages";
+import { PhasePicker } from "../components/PhasePicker";
+import { roundsOf } from "../data/mock-stages";
 import { useJudges, useLeaderboard } from "../api/hooks";
 import type { LeaderboardEntry } from "../types";
-
-const ALL = "all";
 
 // Judges-only. The route is wrapped in RoleGuard("judging.leaderboard"), so
 // this component — and therefore the queries below — never mounts for any
 // other role. (UI-level only; the backend must enforce it independently.)
+// Judges can read every judge's submitted scores here but change only their
+// own, on the scoring screen.
 export function LeaderboardPage() {
-  const [stage, setStage] = useState<CandidateStage>("lga_selection");
-  const [round, setRound] = useState(ALL);
-  const config = getStageConfig(stage);
-  const board = useLeaderboard(stage, round === ALL ? undefined : round);
+  const states = usePhaseStates().data;
+  const [phase, setPhase] = useState<PhaseId>(
+    () => "lga", // refined below once stage states load
+  );
+  const [chosen, setChosen] = useState(false);
+  // Default to the open stage once we know which it is.
+  const open = states?.find((s) => s.status === "open")?.phaseId;
+  const active = chosen ? phase : (open ?? phase);
+
+  const board = useLeaderboard(active);
   const judges = useJudges();
-  const [open, setOpen] = useState<LeaderboardEntry | null>(null);
+  const [selected, setSelected] = useState<LeaderboardEntry | null>(null);
+  const pending =
+    states?.find((s) => s.phaseId === active)?.status === "pending";
 
   return (
     <>
       <PageHeader
         title="Leaderboard"
-        description="Every judge's score per candidate, and the overall average. Visible to judges only. Pick a round to see how the field stood when it was cut; select a row for the per-round breakdown."
+        description="Every judge's score per candidate and the added-up total. Visible to judges only. Select a row for the per-round breakdown."
         actions={
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            <StagePicker
-              value={stage}
-              onChange={(s) => {
-                setStage(s);
-                setRound(ALL);
-              }}
-            />
-            <Select value={round} onValueChange={setRound}>
-              <SelectTrigger
-                aria-label="Round"
-                style={{ width: "min(100%, 260px)" }}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All rounds (stage score)</SelectItem>
-                {config.rounds.map((r) => (
-                  <SelectItem key={r.id} value={r.id}>
-                    {r.code} · {r.name.replace(/^Round \d — /, "")}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <PhasePicker
+            value={active}
+            onChange={(p) => {
+              setPhase(p);
+              setChosen(true);
+            }}
+          />
         }
       />
-      <LeaderboardTable
-        entries={board.data}
-        judges={judges.data ?? []}
-        isLoading={board.isLoading || judges.isLoading}
-        onSelect={setOpen}
-      />
+      {pending ? (
+        <EmptyState>
+          {phaseTitle(active)} hasn't been opened yet, so there are no scores.
+        </EmptyState>
+      ) : (
+        <LeaderboardTable
+          entries={board.data}
+          judges={judges.data ?? []}
+          isLoading={board.isLoading || judges.isLoading}
+          onSelect={setSelected}
+        />
+      )}
       <JudgeComparisonView
-        entry={open}
+        entry={selected}
         judges={judges.data ?? []}
-        stage={config}
-        onClose={() => setOpen(null)}
+        rounds={roundsOf(active)}
+        title={phaseTitle(active)}
+        onClose={() => setSelected(null)}
       />
     </>
   );

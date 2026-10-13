@@ -10,11 +10,9 @@ import {
   PricingPage,
   SponsorsAdminPage,
 } from "@/features/voting-content";
-import {
-  CandidateScoringPage,
-  JudgingQueuePage,
-  LeaderboardPage,
-} from "@/features/judging";
+import { CandidateScoringPage, LeaderboardPage } from "@/features/judging";
+import { StagePage } from "@/features/stages";
+import { JudgingRedirect } from "./JudgingRedirect";
 import { AdminShell } from "@/shared/components";
 import { NotFoundPage } from "./NotFoundPage";
 import { RequireAuth, RoleGuard } from "./RoleGuard";
@@ -37,8 +35,12 @@ export function AppRoutes() {
             <Route path="/candidates/:id" element={<CandidateDetailPage />} />
           </Route>
 
+          <Route element={<RoleGuard capability="candidates.view" />}>
+            <Route path="/stages/:phaseId" element={<StagePage />} />
+          </Route>
+
           <Route element={<RoleGuard capability="judging.access" />}>
-            <Route path="/judging" element={<JudgingQueuePage />} />
+            <Route path="/judging" element={<JudgingRedirect />} />
             <Route
               path="/judging/:candidateId/score"
               element={<CandidateScoringPage />}

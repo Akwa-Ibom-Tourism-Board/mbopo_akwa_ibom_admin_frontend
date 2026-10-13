@@ -12,15 +12,10 @@ import {
   SelectValue,
 } from "@/shared/ui";
 import { DataTable, type DataTableColumn } from "@/shared/components";
+import { PHASES, phaseTitle } from "@/lib/phases";
 import { AKWA_IBOM_LGAS, SENATORIAL_DISTRICTS } from "@/lib/constants";
-import {
-  STAGE_LABELS,
-  STATUS_LABELS,
-  type Candidate,
-  type CandidateStage,
-  type CandidateStatus,
-} from "../types";
-import { StageBadge, StatusBadge } from "./Badges";
+import { STATUS_LABELS, type Candidate, type CandidateStatus } from "../types";
+import { PhaseBadge, StatusBadge } from "./Badges";
 
 const NameCell = styled.div`
   display: flex;
@@ -87,7 +82,7 @@ const columns: DataTableColumn<Candidate>[] = [
     sortValue: (c) => c.senatorialDistrict,
     cell: (c) => c.senatorialDistrict,
   },
-  { id: "stage", header: "Stage", cell: (c) => <StageBadge stage={c.stage} /> },
+  { id: "phase", header: "Stage", cell: (c) => <PhaseBadge phase={c.phase} /> },
   {
     id: "status",
     header: "Status",
@@ -118,7 +113,7 @@ export function CandidateTable({
     () =>
       candidates?.filter(
         (c) =>
-          (stage === ALL || c.stage === stage) &&
+          (stage === ALL || c.phase === stage) &&
           (lga === ALL || c.lga === lga) &&
           (district === ALL || c.senatorialDistrict === district) &&
           (status === ALL || c.status === status),
@@ -142,12 +137,10 @@ export function CandidateTable({
             label="stages"
             value={stage}
             onChange={setStage}
-            options={(Object.keys(STAGE_LABELS) as CandidateStage[]).map(
-              (s) => ({
-                value: s,
-                label: STAGE_LABELS[s],
-              }),
-            )}
+            options={PHASES.map((p) => ({
+              value: p.id,
+              label: phaseTitle(p.id),
+            }))}
           />
           <Filter
             label="statuses"

@@ -1,9 +1,6 @@
 import { Gavel, Trophy, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useAuth } from "@/features/auth";
-import { useCandidates } from "@/features/candidates/api/hooks";
-import { useMyStageScores } from "@/features/judging/api/hooks";
-import { STAGES } from "@/features/judging/data/mock-stages";
+import { useJudgeSummary } from "../judgeSummary";
 import { count } from "../hooks";
 import {
   NoteBox,
@@ -14,44 +11,33 @@ import {
 } from "./DashboardParts";
 
 export function JudgeDashboard() {
-  const { user } = useAuth();
-  const candidates = useCandidates().data;
-
-  // The live stage is the earliest one that still has candidates competing.
-  const live =
-    STAGES.find((s) =>
-      candidates?.some((c) => c.stage === s.id && c.status === "active"),
-    ) ?? STAGES[0]!;
-  const mine = useMyStageScores(user!.id, live.id).data;
-
-  const inQueue = candidates?.filter(
-    (c) => c.stage === live.id && c.status === "active",
-  );
-  const submitted = new Map<string, number>();
-  let drafts = 0;
-  for (const s of mine ?? []) {
-    if (s.status === "draft") drafts++;
-    else submitted.set(s.candidateId, (submitted.get(s.candidateId) ?? 0) + 1);
-  }
-  const fullyScored = [...submitted.values()].filter(
-    (n) => n === live.rounds.length,
-  ).length;
+  const s = useJudgeSummary();
+  const live = !s.loading ? s.live : undefined;
 
   return (
     <>
       <PageHeader
         title="Judging panel"
-        description={`Live stage: ${live.name}`}
+        description={
+          s.loading
+            ? "Loading…"
+            : s.live
+              ? `Live stage: ${s.title}`
+              : "No stage is open right now. An Admin or Super Admin opens the next one."
+        }
       />
       <StatGrid>
-        <StatTile label="Candidates in queue" value={count(inQueue?.length)} />
+        <StatTile
+          label="Candidates to score"
+          value={live ? count(s.inField) : "—"}
+        />
         <StatTile
           label="Fully scored by you"
-          value={count(mine && fullyScored)}
+          value={live ? count(s.fullyScored) : "—"}
         />
         <StatTile
           label="Draft scores"
-          value={count(mine && drafts)}
+          value={live ? count(s.drafts) : "—"}
           hint="Saved but not submitted"
         />
       </StatGrid>
@@ -60,9 +46,9 @@ export function JudgeDashboard() {
         <QuickLinks
           links={[
             {
-              to: "/judging",
-              title: "Judging queue",
-              text: "Score, advance or disqualify — singly or in bulk.",
+              to: live ? `/stages/${live}` : "/judging",
+              title: "Live stage",
+              text: "Score candidates or disqualify rule-breakers, singly or in bulk.",
               icon: Gavel,
             },
             {
@@ -82,8 +68,9 @@ export function JudgeDashboard() {
       </Section>
 
       <NoteBox>
-        Scores can be saved as drafts and corrected until the round closes.
-        Disqualification always needs a recorded reason.
+        Scores can be saved as drafts and corrected while the stage is open.
+        Once the Head Judge closes it, scores are locked. You can see other
+        judges' scores on the leaderboard but only ever change your own.
       </NoteBox>
     </>
   );

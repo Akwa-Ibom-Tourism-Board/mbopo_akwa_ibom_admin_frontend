@@ -1,3 +1,4 @@
+import type { PhaseId } from "@/lib/phases";
 import type { Round, StageConfig } from "../types";
 
 // Seeded from the selection-process document ("1ST SELECTION PROCESS"):
@@ -225,9 +226,7 @@ export const STAGES: StageConfig[] = [
     name: "Local Government Selections",
     summary:
       "Preliminary audition — a short, high-volume elimination round of about 3–5 minutes per contestant. Three candidates are selected per LGA.",
-    mode: "cumulative",
     advanceTarget: { count: 93, label: "3 per LGA × 31 LGAs" },
-    perLgaQuota: 3,
     rounds: stage1,
   },
   {
@@ -236,9 +235,7 @@ export const STAGES: StageConfig[] = [
     name: "Senatorial District Selections",
     summary:
       "Auditions by senatorial district: Walk & Presentation, then a Quick Question. One candidate per LGA advances.",
-    mode: "cumulative",
     advanceTarget: { count: 31, label: "1 per LGA" },
-    perLgaQuota: 1,
     rounds: stage2,
   },
   {
@@ -247,7 +244,6 @@ export const STAGES: StageConfig[] = [
     name: "Grand Finale",
     summary:
       "Five elimination rounds. Questions get progressively harder, and the judges cut the field at the end of each round until one winner remains.",
-    mode: "elimination",
     advanceTarget: { count: 1, label: "1 winner" },
     rounds: stage3,
   },
@@ -256,19 +252,28 @@ export const STAGES: StageConfig[] = [
 export const getStageConfig = (id: StageConfig["id"]) =>
   STAGES.find((s) => s.id === id)!;
 
-export const nextStageId = (id: StageConfig["id"]) =>
-  STAGES.find((s) => s.order === getStageConfig(id).order + 1)?.id;
-
 export const ALL_ROUNDS = STAGES.flatMap((s) => s.rounds);
 
-export const getRound = (roundId: string) =>
-  ALL_ROUNDS.find((r) => r.id === roundId);
-
-// Human label for where a candidate was eliminated: a Grand Finale round id
-// or a stage id.
-export function describeEliminatedAt(id: string | undefined) {
-  if (!id) return undefined;
-  const round = getRound(id);
-  if (round) return round.name.split(" — ")[0] ?? round.name;
-  return STAGES.find((s) => s.id === id)?.name ?? id;
+// The rounds judged in each stage of elimination. Local Government and
+// Senatorial score every round together (the stage total decides the cut);
+// each Grand Finale round is a stage of its own.
+export function roundsOf(phase: PhaseId): Round[] {
+  if (phase === "lga") return STAGES[0]!.rounds;
+  if (phase === "senatorial") return STAGES[1]!.rounds;
+  const id = `s3-${phase.slice(3)}`; // "gf-r2" -> "s3-r2"
+  return STAGES[2]!.rounds.filter((r) => r.id === id);
 }
+
+export function phaseOfRound(roundId: string): PhaseId | undefined {
+  if (roundId.startsWith("s1-")) return "lga";
+  if (roundId.startsWith("s2-")) return "senatorial";
+  const m = /^s3-(r\d)$/.exec(roundId);
+  return m ? (`gf-${m[1]}` as PhaseId) : undefined;
+}
+
+// Maximum selections per LGA when a stage is finalized (the document's "3 per
+// LGA" and the Senatorial "1 per LGA"). The Grand Finale has no per-LGA quota.
+export const PHASE_QUOTA: Partial<Record<PhaseId, number>> = {
+  lga: 3,
+  senatorial: 1,
+};

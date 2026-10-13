@@ -5,7 +5,8 @@ import womanC from "@/assets/woman_3.webp";
 import womanD from "@/assets/woman_4.webp";
 import womanE from "@/assets/woman_5.webp";
 import womanF from "@/assets/woman_6.webp";
-import type { Candidate, CandidateStage, CandidateStatus } from "../types";
+import { stageOfPhase, type PhaseId } from "@/lib/phases";
+import type { Candidate, CandidateStatus } from "../types";
 
 // Dummy data only. 3 candidates per LGA × 31 LGAs = 93 — the output of the
 // Local Government stage — with a deterministic spread of stages/statuses so
@@ -89,48 +90,35 @@ const STORIES = [
   "I want to show that Akwa Ibom's culture and its young people are our greatest tourism assets — I am ready to carry that message.",
 ];
 
-// Spread across the pipeline so every stage has something to show:
-//   LGA index % 4 === 0 → first candidate is a Grand Finale contestant (8
-//     finalists); the other two were not selected at the senatorial stage.
-//   LGA index % 4 === 1 → all three are competing at the senatorial stage.
-//   everyone else       → still at the Local Government stage.
-// Two finalists (the last two) were cut after Round 1 — see mock-scores.ts,
-// which gives them the lowest Round 1 scores to match.
-const FINALE_CUT_IN_ROUND_1 = new Set([24, 28]);
-
+// Seed pool: 4 per LGA × 31 LGAs = 124. Local Government is already closed:
+//   • 3 per LGA (93) were finalized through and now wait, "advanced", for an
+//     Admin to open Senatorial;
+//   • the 4th in each LGA was not selected — or, in a few LGAs, was
+//     disqualified (a recorded rule-break, not a normal cut).
 function build(lgaIndex: number, k: number): Candidate {
-  const i = lgaIndex * 3 + k;
+  const i = lgaIndex * 4 + k;
   const lga = AKWA_IBOM_LGAS[lgaIndex]!;
   const first = FIRST[i % FIRST.length]!;
   const last = LAST[(i * 7 + lgaIndex) % LAST.length]!;
 
-  let stage: CandidateStage = "lga_selection";
-  let status: CandidateStatus = "active";
+  const phase: PhaseId = "lga";
+  let status: CandidateStatus = "advanced";
   let disqualificationReason: string | undefined;
-  let eliminatedAt: string | undefined;
+  let eliminatedAt: PhaseId | undefined;
+  let disqualifiedAt: PhaseId | undefined;
 
-  if (lgaIndex % 4 === 0) {
-    if (k === 0) {
-      stage = "grand_finale";
-      if (FINALE_CUT_IN_ROUND_1.has(lgaIndex)) {
-        status = "eliminated";
-        eliminatedAt = "s3-r1";
-      }
-    } else {
-      stage = "senatorial_selection";
-      status = "eliminated";
-      eliminatedAt = "senatorial_selection";
-    }
-  } else if (lgaIndex % 4 === 1) {
-    stage = "senatorial_selection";
-  } else {
-    if (lgaIndex % 5 === 1 && k === 0) status = "advanced";
-    if (i % 29 === 5) {
+  if (k === 3) {
+    if (lgaIndex % 6 === 2) {
       status = "disqualified";
+      disqualifiedAt = "lga";
       disqualificationReason =
-        REASONS[Math.floor(i / 29) % REASONS.length] ?? REASONS[0];
+        REASONS[Math.floor(lgaIndex / 6) % REASONS.length] ?? REASONS[0];
+    } else {
+      status = "eliminated";
+      eliminatedAt = "lga";
     }
   }
+  const stage = stageOfPhase(phase);
 
   const hasProfile = i % 3 !== 0;
   const photo = PHOTOS[i % PHOTOS.length]!;
@@ -153,10 +141,12 @@ function build(lgaIndex: number, k: number): Candidate {
       i % 4 === 0 ? undefined : "https://www.youtube.com/watch?v=jNQXAC9IVRw",
     story: STORIES[i % STORIES.length]!,
     appliedAt: `2026-0${(i % 3) + 6}-${String((i % 27) + 1).padStart(2, "0")}T10:00:00.000Z`,
+    phase,
     stage,
     status,
     disqualificationReason,
     eliminatedAt,
+    disqualifiedAt,
     bio: hasProfile
       ? `${first} is a ${OCCUPATIONS[(i * 3) % OCCUPATIONS.length]!.toLowerCase()} from ${lga}, passionate about culture, community and Beauty with Purpose.`
       : undefined,
@@ -175,5 +165,5 @@ function build(lgaIndex: number, k: number): Candidate {
 }
 
 export const MOCK_CANDIDATES: Candidate[] = AKWA_IBOM_LGAS.flatMap(
-  (_, lgaIndex) => [0, 1, 2].map((k) => build(lgaIndex, k)),
+  (_, lgaIndex) => [0, 1, 2, 3].map((k) => build(lgaIndex, k)),
 );

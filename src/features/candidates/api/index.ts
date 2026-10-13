@@ -41,7 +41,12 @@ export async function applyJudgingDecision(
   patch: Partial<
     Pick<
       Candidate,
-      "stage" | "status" | "disqualificationReason" | "eliminatedAt"
+      | "stage"
+      | "phase"
+      | "status"
+      | "disqualificationReason"
+      | "eliminatedAt"
+      | "disqualifiedAt"
     >
   >,
 ): Promise<Candidate[]> {

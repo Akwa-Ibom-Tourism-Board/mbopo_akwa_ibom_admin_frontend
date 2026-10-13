@@ -141,3 +141,62 @@ export const SidebarFooterText = styled.p`
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.4);
 `;
+
+// Parent entry that expands a sub-menu (the Grand Finale and its rounds).
+export const NavParent = styled.button<{ $active: boolean }>`
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: ${({ theme }) => theme.radii.md};
+  background: ${({ theme, $active }) => ($active ? theme.alpha(theme.colors.white, 0.1) : "transparent")};
+  color: ${({ theme, $active }) => ($active ? theme.colors.white : theme.alpha(theme.colors.white, 0.72))};
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.alpha(theme.colors.white, 0.08)};
+    color: ${({ theme }) => theme.colors.white};
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  .chevron {
+    margin-left: auto;
+    transition: transform ${({ theme }) => theme.transitions.fast};
+  }
+`;
+
+export const SubNavList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 4px 22px;
+  padding-left: 10px;
+  border-left: 1px solid ${({ theme }) => theme.alpha(theme.colors.white, 0.15)};
+`;
+
+export const SubNavItem = styled(NavItem)`
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+`;
+
+// "Open" marker beside a stage that is currently open for judging.
+export const OpenPill = styled.span`
+  margin-left: auto;
+  padding: 1px 8px;
+  border-radius: ${({ theme }) => theme.radii.full};
+  background: ${({ theme }) => theme.alpha(theme.colors.white, 0.18)};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+`;

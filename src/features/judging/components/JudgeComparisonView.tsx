@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/shared/ui";
 import { Badge } from "@/shared/components";
-import type { Judge, LeaderboardEntry, StageConfig } from "../types";
+import type { Judge, LeaderboardEntry, Round } from "../types";
 import { formatScore } from "../utils/scoring";
 
 const Scroll = styled.div`
@@ -39,12 +39,14 @@ const T = styled.table`
 export function JudgeComparisonView({
   entry,
   judges,
-  stage,
+  rounds,
+  title,
   onClose,
 }: {
   entry: LeaderboardEntry | null;
   judges: Judge[];
-  stage: StageConfig;
+  rounds: Round[];
+  title: string;
   onClose: () => void;
 }) {
   return (
@@ -53,8 +55,8 @@ export function JudgeComparisonView({
         <DialogHeader>
           <DialogTitle>{entry?.candidate.name}</DialogTitle>
           <DialogDescription>
-            {entry?.candidate.lga} · {stage.name}. Submitted scores only
-            (average of criteria, out of 10).
+            {entry?.candidate.lga} · {title}. Submitted scores only (average of
+            criteria, out of 10).
           </DialogDescription>
         </DialogHeader>
         {entry && (
@@ -69,7 +71,7 @@ export function JudgeComparisonView({
                 </tr>
               </thead>
               <tbody>
-                {stage.rounds.map((r) => (
+                {rounds.map((r) => (
                   <tr key={r.id}>
                     <td>
                       {r.code} · {r.name}
