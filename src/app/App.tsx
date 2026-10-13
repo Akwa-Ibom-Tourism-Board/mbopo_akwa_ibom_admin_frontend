@@ -1,5 +1,6 @@
 import { BrowserRouter } from "react-router-dom";
 import { AppProviders } from "./providers";
+import { AppRoutes } from "./routes";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 function App() {
@@ -7,7 +8,7 @@ function App() {
     <ErrorBoundary>
       <AppProviders>
         <BrowserRouter>
-          <p>Mbopo Akwa Ibom Admin Portal — scaffold</p>
+          <AppRoutes />
         </BrowserRouter>
       </AppProviders>
     </ErrorBoundary>

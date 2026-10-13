@@ -86,3 +86,42 @@ export const PageFooterText = styled.p`
   color: ${({ theme }) => theme.colors.muted.foreground};
   font-size: 12px;
 `;
+
+export const RightPane = styled.div`
+  display: none;
+  position: relative;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 48px;
+  background: ${({ theme }) => theme.gradients.panel};
+  color: ${({ theme }) => theme.colors.white};
+  text-align: center;
+
+  ${media.lg} {
+    display: flex;
+  }
+`;
+
+export const RightPaneLogo = styled.img`
+  width: 220px;
+  max-width: 70%;
+  height: auto;
+`;
+
+export const RightPaneTitle = styled.h2`
+  margin: 0;
+  font-family: ${({ theme }) => theme.fonts.display};
+  font-size: 2rem;
+  font-weight: 700;
+`;
+
+export const RightPaneText = styled.p`
+  margin: 0;
+  max-width: 24rem;
+  color: ${({ theme }) => theme.alpha(theme.colors.white, 0.8)};
+  font-size: 0.9375rem;
+  line-height: 1.6;
+`;

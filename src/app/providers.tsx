@@ -3,6 +3,7 @@ import { ThemeProvider } from "styled-components";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster, SonnerToaster, TooltipProvider } from "@/shared/ui";
 import { GlobalStyle, theme } from "@/theme";
+import { AuthProvider } from "@/features/auth";
 
 const queryClient = new QueryClient();
 
@@ -11,11 +12,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <ThemeProvider theme={theme}>
       <GlobalStyle />
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <SonnerToaster />
-          {children}
-        </TooltipProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <SonnerToaster />
+            {children}
+          </TooltipProvider>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );
