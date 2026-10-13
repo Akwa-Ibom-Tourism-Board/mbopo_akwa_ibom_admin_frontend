@@ -3,6 +3,11 @@ import { LoginPage } from "@/features/auth";
 import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { DashboardPage } from "@/features/dashboard";
 import {
+  PictureNewsAdminPage,
+  PricingPage,
+  SponsorsAdminPage,
+} from "@/features/voting-content";
+import {
   CandidateScoringPage,
   JudgingQueuePage,
   LeaderboardPage,
@@ -42,22 +47,16 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<RoleGuard capability="voting.pricing" />}>
-            <Route
-              path="/voting/pricing"
-              element={<PlaceholderPage title="Vote Pricing" />}
-            />
+            <Route path="/voting/pricing" element={<PricingPage />} />
           </Route>
           <Route element={<RoleGuard capability="voting.news" />}>
             <Route
               path="/voting/picture-news"
-              element={<PlaceholderPage title="Picture News" />}
+              element={<PictureNewsAdminPage />}
             />
           </Route>
           <Route element={<RoleGuard capability="voting.sponsors" />}>
-            <Route
-              path="/voting/sponsors"
-              element={<PlaceholderPage title="Sponsors" />}
-            />
+            <Route path="/voting/sponsors" element={<SponsorsAdminPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="users.manage" />}>
