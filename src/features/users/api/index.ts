@@ -23,6 +23,20 @@ function assertCanManage(target: AdminUser["role"]) {
   }
 }
 
+// There is one Head Judge at a time: the person who finalizes the scores and
+// closes each stage. Creating, promoting or reactivating a second active one
+// is refused until the current Head Judge is deactivated or changed.
+function assertSingleHeadJudge(candidateId: string | null) {
+  const other = users.find(
+    (u) => u.role === "head_judge" && u.active && u.id !== candidateId,
+  );
+  if (other) {
+    throw new Error(
+      `${fullName(other)} is already the Head Judge. Deactivate or change them first.`,
+    );
+  }
+}
+
 export async function getUsers(): Promise<AdminUser[]> {
   await delay();
   return users.map((u) => ({ ...u }));
@@ -31,6 +45,7 @@ export async function getUsers(): Promise<AdminUser[]> {
 export async function createUser(input: NewUserInput): Promise<AdminUser> {
   await delay();
   assertCanManage(input.role);
+  if (input.role === "head_judge") assertSingleHeadJudge(null);
   if (users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
     throw new Error("A user with that email already exists.");
   }
@@ -57,6 +72,7 @@ export async function updateUser(
   if (!current) throw new Error("User not found.");
   assertCanManage(current.role);
   if (patch.role) assertCanManage(patch.role);
+  if (patch.role === "head_judge" && current.active) assertSingleHeadJudge(id);
   if (
     patch.email &&
     users.some(
@@ -80,6 +96,7 @@ export async function setUserActive(
   const current = users.find((u) => u.id === id);
   if (!current) throw new Error("User not found.");
   assertCanManage(current.role);
+  if (active && current.role === "head_judge") assertSingleHeadJudge(id);
   if (readSessionUser()?.id === id)
     throw new Error("You can't deactivate your own account.");
   const next = { ...current, active };

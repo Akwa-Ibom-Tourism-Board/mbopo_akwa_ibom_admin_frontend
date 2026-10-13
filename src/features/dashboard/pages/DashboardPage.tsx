@@ -1,6 +1,7 @@
 import { useAuth } from "@/features/auth";
 import { AdminDashboard } from "../components/AdminDashboard";
 import { CustomerServiceDashboard } from "../components/CustomerServiceDashboard";
+import { HeadJudgeDashboard } from "../components/HeadJudgeDashboard";
 import { JudgeDashboard } from "../components/JudgeDashboard";
 import { MediaDashboard } from "../components/MediaDashboard";
 import { SuperAdminDashboard } from "../components/SuperAdminDashboard";
@@ -18,6 +19,8 @@ export function DashboardPage() {
       return <MediaDashboard />;
     case "judge":
       return <JudgeDashboard />;
+    case "head_judge":
+      return <HeadJudgeDashboard />;
     case "customer_service":
       return <CustomerServiceDashboard />;
     default:

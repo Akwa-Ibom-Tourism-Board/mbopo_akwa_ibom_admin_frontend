@@ -51,6 +51,8 @@ export interface RoundClosure {
 export interface Judge {
   id: string;
   name: string;
+  // The Head Judge also scores; they additionally finalize the stage.
+  head?: boolean;
 }
 
 export type ScoreStatus = "draft" | "submitted";

@@ -94,6 +94,15 @@ export const MOCK_USERS: AdminUser[] = [
     createdAt: "2026-10-11T09:00:00.000Z",
   },
   {
+    id: "u-hj-1",
+    firstName: "Mbuk",
+    lastName: "Inyang",
+    email: "head.judge@mbopo.test",
+    role: "head_judge",
+    active: true,
+    createdAt: "2026-06-28T09:00:00.000Z",
+  },
+  {
     id: "u-cs-1",
     firstName: "Nsikak",
     lastName: "Umoh",

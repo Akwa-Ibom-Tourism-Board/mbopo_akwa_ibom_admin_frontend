@@ -55,6 +55,16 @@ export const DUMMY_ACCOUNTS: SessionUser[] = [
     blurb: "Scores candidates, advances or disqualifies, sees the leaderboard.",
   },
   {
+    id: "u-hj-1",
+    firstName: "Mbuk",
+    lastName: "Inyang",
+    email: "head.judge@mbopo.test",
+    password: "Mbopo@2026",
+    role: "head_judge",
+    blurb:
+      "Everything a judge can do, plus finalizing the added-up scores and closing a stage.",
+  },
+  {
     id: "u-cs-1",
     firstName: "Nsikak",
     lastName: "Umoh",

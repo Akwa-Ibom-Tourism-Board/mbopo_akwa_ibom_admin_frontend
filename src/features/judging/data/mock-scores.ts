@@ -10,6 +10,7 @@ export const JUDGES: Judge[] = [
   { id: "u-judge-2", name: "Ekaette Umoh" },
   { id: "u-judge-3", name: "Barr. Etido Ita" },
   { id: "u-judge-4", name: "Dr. Affiong Effiong" },
+  { id: "u-hj-1", name: "Prof. Mbuk Inyang", head: true },
 ];
 
 // Deterministic pseudo-random 5–9 so the leaderboard has a believable spread.
