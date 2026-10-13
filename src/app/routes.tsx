@@ -2,6 +2,11 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/features/auth";
 import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { DashboardPage } from "@/features/dashboard";
+import {
+  CandidateScoringPage,
+  JudgingQueuePage,
+  LeaderboardPage,
+} from "@/features/judging";
 import { AdminShell } from "@/shared/components";
 import { NotFoundPage } from "./NotFoundPage";
 import { PlaceholderPage } from "./PlaceholderPage";
@@ -26,20 +31,14 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<RoleGuard capability="judging.access" />}>
-            <Route
-              path="/judging"
-              element={<PlaceholderPage title="Judging Queue" />}
-            />
+            <Route path="/judging" element={<JudgingQueuePage />} />
             <Route
               path="/judging/:candidateId/score"
-              element={<PlaceholderPage title="Score Candidate" />}
+              element={<CandidateScoringPage />}
             />
           </Route>
           <Route element={<RoleGuard capability="judging.leaderboard" />}>
-            <Route
-              path="/judging/leaderboard"
-              element={<PlaceholderPage title="Leaderboard" />}
-            />
+            <Route path="/judging/leaderboard" element={<LeaderboardPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="voting.pricing" />}>

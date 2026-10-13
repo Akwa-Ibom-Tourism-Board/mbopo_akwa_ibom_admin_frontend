@@ -36,7 +36,9 @@ export async function updateCandidateProfile(
 // Used by the judging feature's advance/disqualify actions.
 export async function applyJudgingDecision(
   ids: string[],
-  patch: Pick<Candidate, "status" | "disqualificationReason">,
+  patch: Partial<
+    Pick<Candidate, "stage" | "status" | "disqualificationReason">
+  >,
 ): Promise<Candidate[]> {
   await delay();
   const set = new Set(ids);

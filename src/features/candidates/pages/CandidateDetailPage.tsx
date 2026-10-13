@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { YoutubeEmbed } from "@/features/voting-content";
+import { CandidateScoreCard } from "@/features/judging";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { parseYoutubeId } from "@/lib/youtube";
@@ -232,6 +233,7 @@ export function CandidateDetailPage() {
         </Column>
 
         <Column>
+          {can("judging.leaderboard") && <CandidateScoreCard candidate={c} />}
           {/* Keyed so the editor's local form state resets per candidate. */}
           <CandidateProfilePanel
             key={c.id}
