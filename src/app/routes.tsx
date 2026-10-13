@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/features/auth";
+import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { DashboardPage } from "@/features/dashboard";
 import { AdminShell } from "@/shared/components";
 import { NotFoundPage } from "./NotFoundPage";
@@ -20,14 +21,8 @@ export function AppRoutes() {
           <Route path="/dashboard" element={<DashboardPage />} />
 
           <Route element={<RoleGuard capability="candidates.view" />}>
-            <Route
-              path="/candidates"
-              element={<PlaceholderPage title="Candidates" />}
-            />
-            <Route
-              path="/candidates/:id"
-              element={<PlaceholderPage title="Candidate" />}
-            />
+            <Route path="/candidates" element={<CandidatesPage />} />
+            <Route path="/candidates/:id" element={<CandidateDetailPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="judging.access" />}>

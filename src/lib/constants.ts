@@ -79,3 +79,6 @@ export const LGA_TO_DISTRICT: Record<Lga, SenatorialDistrict> = {
   "Udung Uko": "Akwa Ibom South",
   "Urue-Offong/Oruko": "Akwa Ibom South",
 };
+
+// Same cap as the applicant platform's MAX_IMAGE_BYTES.
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
