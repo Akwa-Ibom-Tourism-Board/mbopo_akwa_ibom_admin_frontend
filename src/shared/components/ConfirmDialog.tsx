@@ -21,6 +21,8 @@ export interface ConfirmDialogProps {
   destructive?: boolean;
   confirmDisabled?: boolean;
   loading?: boolean;
+  // Wider dialog for content like a table.
+  wide?: boolean;
   onConfirm: () => void;
 }
 
@@ -34,11 +36,12 @@ export function ConfirmDialog({
   destructive = false,
   confirmDisabled = false,
   loading = false,
+  wide = false,
   onConfirm,
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent style={wide ? { maxWidth: 720 } : undefined}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

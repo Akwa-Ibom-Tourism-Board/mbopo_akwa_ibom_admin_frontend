@@ -1,6 +1,7 @@
 import { Gavel, Trophy, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
 import { useJudgeSummary } from "../judgeSummary";
+import { useFinalizeStatus } from "@/features/judging/api/hooks";
 import { count } from "../hooks";
 import {
   NoteBox,
@@ -13,6 +14,8 @@ import {
 export function HeadJudgeDashboard() {
   const s = useJudgeSummary();
   const live = !s.loading ? s.live : undefined;
+  const fin = useFinalizeStatus(live ?? "lga", !!live).data;
+  const finished = fin?.judges.filter((j) => j.outstanding === 0).length;
 
   return (
     <>

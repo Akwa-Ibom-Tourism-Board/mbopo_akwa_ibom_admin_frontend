@@ -2,13 +2,24 @@ import { recordActivity } from "@/features/activity-log/api";
 import { readSessionUser } from "@/features/auth/session";
 import { applyJudgingDecision, getCandidates } from "@/features/candidates/api";
 import type { Candidate } from "@/features/candidates/types";
-import { phaseStateSync } from "@/features/stages/api";
+import { phaseStateSync, setPhaseState } from "@/features/stages/api";
 import { participantsOf, inField } from "@/features/stages/utils/participants";
-import { isJudgeRole } from "@/lib/rbac";
+import { can, isJudgeRole } from "@/lib/rbac";
 import { phaseTitle, type PhaseId } from "@/lib/phases";
 import { JUDGES, MOCK_SCORES } from "../data/mock-scores";
-import { STAGES, phaseOfRound, roundsOf } from "../data/mock-stages";
-import type { Judge, LeaderboardEntry, Score, StageConfig } from "../types";
+import {
+  PHASE_QUOTA,
+  STAGES,
+  phaseOfRound,
+  roundsOf,
+} from "../data/mock-stages";
+import type {
+  FinalizeStatus,
+  Judge,
+  LeaderboardEntry,
+  Score,
+  StageConfig,
+} from "../types";
 import { avg, roundScore, stageScoreForJudge } from "../utils/scoring";
 
 // Dummy data layer — same swap-later discipline as the other features. The
@@ -195,4 +206,121 @@ export async function getLeaderboard(
         average: avg(judgeScores),
       };
     });
+}
+
+function finalizeStatusFor(phase: PhaseId, field: Candidate[]): FinalizeStatus {
+  const rounds = roundsOf(phase);
+  const judges = JUDGES.map((j) => ({
+    id: j.id,
+    name: j.name,
+    head: j.head,
+    outstanding: field.filter((c) =>
+      rounds.some(
+        (r) =>
+          !scores.some(
+            (s) =>
+              s.judgeId === j.id &&
+              s.candidateId === c.id &&
+              s.roundId === r.id &&
+              s.status === "submitted",
+          ),
+      ),
+    ).length,
+  }));
+  const state = phaseStateSync(phase);
+  return {
+    phaseId: phase,
+    stageStatus: state.status,
+    fieldCount: field.length,
+    judges,
+    ready:
+      state.status === "open" &&
+      field.length > 0 &&
+      judges.every((j) => j.outstanding === 0),
+  };
+}
+
+// How far each judge is through the stage's candidates — what stands between
+// the Head Judge and finalizing.
+export async function getFinalizeStatus(
+  phase: PhaseId,
+): Promise<FinalizeStatus> {
+  await delay();
+  requireJudge();
+  const field = (await getCandidates()).filter((c) => inField(c, phase));
+  return finalizeStatusFor(phase, field);
+}
+
+// The Head Judge's step: with every judge's scores in, choose who goes through
+// and close the stage. Everyone else still competing is eliminated; the Grand
+// Finale's last round leaves one winner. Closing locks the stage for every
+// judge — only an Admin / Super Admin can then open the next one.
+export async function finalizePhase(phase: PhaseId, passedIds: string[]) {
+  await delay();
+  const actor = readSessionUser();
+  if (!can(actor?.role, "judging.finalize")) {
+    throw new Error("Only the Head Judge can finalize a stage.");
+  }
+  requireOpen(phase);
+  const field = (await getCandidates()).filter((c) => inField(c, phase));
+  const status = finalizeStatusFor(phase, field);
+  if (!status.ready) {
+    const waiting = status.judges
+      .filter((j) => j.outstanding > 0)
+      .map((j) => j.name);
+    throw new Error(
+      `Every judge must finish scoring first. Waiting on: ${waiting.join(", ")}.`,
+    );
+  }
+
+  const passed = new Set(passedIds);
+  if (passed.size === 0) throw new Error("Choose who goes through.");
+  if (![...passed].every((id) => field.some((c) => c.id === id))) {
+    throw new Error("Only candidates competing in this stage can go through.");
+  }
+  const quota = PHASE_QUOTA[phase];
+  if (quota) {
+    const lgas = new Set(field.map((c) => c.lga));
+    for (const lga of lgas) {
+      const n = field.filter((c) => passed.has(c.id) && c.lga === lga).length;
+      if (n > quota)
+        throw new Error(
+          `${lga} can send at most ${quota} through (${n} chosen).`,
+        );
+    }
+  }
+  const finalRound = phase === "gf-r5";
+  if (finalRound && passed.size !== 1) {
+    throw new Error("The last round must leave exactly one winner.");
+  }
+  if (phase.startsWith("gf-") && !finalRound && passed.size >= field.length) {
+    throw new Error("A round has to eliminate at least one candidate.");
+  }
+
+  const out = field.filter((c) => !passed.has(c.id));
+  if (out.length) {
+    await applyJudgingDecision(
+      out.map((c) => c.id),
+      { status: "eliminated", eliminatedAt: phase },
+    );
+  }
+  await applyJudgingDecision([...passed], {
+    status: finalRound ? "winner" : "advanced",
+  });
+
+  const state = phaseStateSync(phase);
+  setPhaseState({
+    ...state,
+    status: "closed",
+    closedAt: new Date().toISOString(),
+    closedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
+    passedIds: [...passed],
+  });
+  recordActivity(
+    "judging",
+    finalRound
+      ? `Finalized ${phaseTitle(phase)} and crowned the winner`
+      : `Finalized and closed ${phaseTitle(phase)}: ${plural(passed.size, "candidate")} through, ${out.length} eliminated`,
+  );
+  return { through: passed.size, eliminated: out.length };
 }

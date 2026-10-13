@@ -64,6 +64,16 @@ export interface LeaderboardEntry {
   perRound: Record<string, Record<string, number | null>>;
 }
 
+// Where a stage stands before the Head Judge can finalize it: who has still to
+// finish scoring. Judges-only data (it reveals scoring progress, not scores).
+export interface FinalizeStatus {
+  phaseId: string;
+  stageStatus: "pending" | "open" | "closed";
+  fieldCount: number;
+  judges: { id: string; name: string; head?: boolean; outstanding: number }[];
+  ready: boolean;
+}
+
 export const DISQUALIFICATION_REASONS = [
   "Providing false information",
   "Failing age/residency requirements",
