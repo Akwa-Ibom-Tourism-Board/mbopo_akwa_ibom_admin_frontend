@@ -1,6 +1,8 @@
 import { Handshake, Newspaper, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { DASHBOARD_STATS as S } from "../data/mock-dashboard";
+import { useCandidates } from "@/features/candidates/api/hooks";
+import { useNewsPosts, useSponsors } from "@/features/voting-content/api/hooks";
+import { count } from "../hooks";
 import {
   NoteBox,
   QuickLinks,
@@ -10,6 +12,10 @@ import {
 } from "./DashboardParts";
 
 export function MediaDashboard() {
+  const candidates = useCandidates().data;
+  const news = useNewsPosts().data;
+  const sponsors = useSponsors().data;
+
   return (
     <>
       <PageHeader
@@ -19,11 +25,11 @@ export function MediaDashboard() {
       <StatGrid>
         <StatTile
           label="Profiles missing a bio"
-          value={S.profilesMissingBio}
+          value={count(candidates?.filter((c) => !c.bio).length)}
           hint="Candidates with no public bio yet"
         />
-        <StatTile label="Picture news posts" value={S.newsPosts} />
-        <StatTile label="Sponsors" value={S.sponsors} />
+        <StatTile label="Picture news posts" value={count(news?.length)} />
+        <StatTile label="Sponsors" value={count(sponsors?.length)} />
       </StatGrid>
 
       <Section title="Your work">

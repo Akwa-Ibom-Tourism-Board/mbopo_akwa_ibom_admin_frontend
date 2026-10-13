@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/features/auth";
 import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
+import { ActivityLogPage } from "@/features/activity-log";
+import { ComplaintDetailPage, ComplaintsPage } from "@/features/complaints";
 import { DashboardPage } from "@/features/dashboard";
+import { UsersPage } from "@/features/users";
 import {
   PictureNewsAdminPage,
   PricingPage,
@@ -14,7 +17,6 @@ import {
 } from "@/features/judging";
 import { AdminShell } from "@/shared/components";
 import { NotFoundPage } from "./NotFoundPage";
-import { PlaceholderPage } from "./PlaceholderPage";
 import { RequireAuth, RoleGuard } from "./RoleGuard";
 
 // Every protected route sits under RequireAuth (signed in) and, where the
@@ -60,25 +62,16 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<RoleGuard capability="users.manage" />}>
-            <Route path="/users" element={<PlaceholderPage title="Users" />} />
+            <Route path="/users" element={<UsersPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="complaints.view" />}>
-            <Route
-              path="/complaints"
-              element={<PlaceholderPage title="Complaints" />}
-            />
-            <Route
-              path="/complaints/:id"
-              element={<PlaceholderPage title="Complaint" />}
-            />
+            <Route path="/complaints" element={<ComplaintsPage />} />
+            <Route path="/complaints/:id" element={<ComplaintDetailPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="activity.view" />}>
-            <Route
-              path="/activity-log"
-              element={<PlaceholderPage title="Activity Log" />}
-            />
+            <Route path="/activity-log" element={<ActivityLogPage />} />
           </Route>
         </Route>
       </Route>

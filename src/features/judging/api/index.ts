@@ -1,3 +1,4 @@
+import { recordActivity } from "@/features/activity-log/api";
 import { applyJudgingDecision, getCandidates } from "@/features/candidates/api";
 import type { Candidate, CandidateStage } from "@/features/candidates/types";
 import { JUDGES, MOCK_SCORES } from "../data/mock-scores";
@@ -9,6 +10,14 @@ import { avg, roundScore, stageScoreForJudge } from "../utils/scoring";
 // functions are judges-only by design; the route guards enforce that in the UI
 // (frontend-only, see lib/rbac.ts) and the real backend must enforce it too.
 const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
+
+// Short label for activity entries: the LGA when they share one, else the names.
+const describe = (cs: Candidate[]) =>
+  new Set(cs.map((c) => c.lga)).size === 1
+    ? cs[0]!.lga
+    : cs.length <= 3
+      ? cs.map((c) => c.name).join(", ")
+      : `${cs.length} LGAs`;
 
 let scores: Score[] = MOCK_SCORES.map((s) => ({
   ...s,
@@ -79,9 +88,16 @@ export async function advanceCandidates(
   if (stage === "grand_finale" && ids.length !== 1) {
     throw new Error("Only one winner can be crowned.");
   }
-  return applyJudgingDecision(ids, {
+  const result = await applyJudgingDecision(ids, {
     status: stage === "grand_finale" ? "winner" : "advanced",
   });
+  recordActivity(
+    "judging",
+    stage === "grand_finale"
+      ? `Crowned ${result[0]?.name} as winner`
+      : `Advanced ${result.length} candidate${result.length === 1 ? "" : "s"} (${describe(result)}, ${getStageConfig(stage).name})`,
+  );
+  return result;
 }
 
 export async function disqualifyCandidates(
@@ -89,10 +105,15 @@ export async function disqualifyCandidates(
   reason: string,
 ): Promise<Candidate[]> {
   if (!reason.trim()) throw new Error("A disqualification reason is required.");
-  return applyJudgingDecision(ids, {
+  const result = await applyJudgingDecision(ids, {
     status: "disqualified",
     disqualificationReason: reason.trim(),
   });
+  recordActivity(
+    "judging",
+    `Disqualified ${result.length} candidate${result.length === 1 ? "" : "s"} (${describe(result)}) — ${reason.trim()}`,
+  );
+  return result;
 }
 
 // Opens the next stage: every candidate advanced out of `stage` moves into it.
@@ -106,6 +127,12 @@ export async function promoteAdvanced(stage: CandidateStage): Promise<number> {
     advanced.map((c) => c.id),
     { stage: next, status: "active" },
   );
+  if (advanced.length) {
+    recordActivity(
+      "judging",
+      `Opened ${getStageConfig(next).name} with ${advanced.length} advanced candidate${advanced.length === 1 ? "" : "s"}`,
+    );
+  }
   return advanced.length;
 }
 

@@ -1,3 +1,4 @@
+import { recordActivity } from "@/features/activity-log/api";
 import { MOCK_NEWS } from "../data/mock-news";
 import { MOCK_SPONSORS } from "../data/mock-sponsors";
 import { MOCK_VOTE_TIERS } from "../data/mock-tiers";
@@ -32,6 +33,7 @@ export async function saveVoteTiers(next: VoteTier[]): Promise<VoteTier[]> {
     new Set(next.map((t) => t.votes)).size === next.length;
   if (!valid) throw new Error("Tiers must be unique, positive whole numbers.");
   tiers = [...next].sort((a, b) => a.votes - b.votes).map((t) => ({ ...t }));
+  recordActivity("voting", "Updated vote pricing");
   return tiers.map((t) => ({ ...t }));
 }
 
@@ -48,12 +50,19 @@ export async function saveNewsPost(
   news = post.id
     ? news.map((n) => (n.id === post.id ? saved : n))
     : [saved, ...news];
+  recordActivity(
+    "voting",
+    `${post.id ? "Edited" : "Published"} picture news post “${saved.title}”`,
+  );
   return saved;
 }
 
 export async function deleteNewsPost(id: string): Promise<void> {
   await delay();
+  const removed = news.find((n) => n.id === id);
   news = news.filter((n) => n.id !== id);
+  if (removed)
+    recordActivity("voting", `Deleted picture news post “${removed.title}”`);
 }
 
 export async function getSponsors(): Promise<Sponsor[]> {
@@ -69,10 +78,16 @@ export async function saveSponsor(
   sponsors = sponsor.id
     ? sponsors.map((s) => (s.id === sponsor.id ? saved : s))
     : [...sponsors, saved];
+  recordActivity(
+    "voting",
+    `${sponsor.id ? "Edited" : "Added"} sponsor ${saved.name}`,
+  );
   return saved;
 }
 
 export async function deleteSponsor(id: string): Promise<void> {
   await delay();
+  const removed = sponsors.find((s) => s.id === id);
   sponsors = sponsors.filter((s) => s.id !== id);
+  if (removed) recordActivity("voting", `Deleted sponsor ${removed.name}`);
 }

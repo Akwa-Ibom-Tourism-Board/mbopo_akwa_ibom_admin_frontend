@@ -18,7 +18,7 @@ import {
 import { parseYoutubeId } from "@/lib/youtube";
 import type { NewsPost } from "../types";
 import { useSaveNewsPost } from "../api/hooks";
-import { FormRow, FormStack } from "./FormParts";
+import { FormRow, FormStack } from "@/shared/components/FormParts";
 import { ImageUploadField } from "./ImageUploadField";
 import { YoutubeLinkField } from "./YoutubeLinkField";
 

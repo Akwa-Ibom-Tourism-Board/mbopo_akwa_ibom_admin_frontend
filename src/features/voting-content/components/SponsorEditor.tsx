@@ -16,7 +16,7 @@ import {
 } from "@/shared/ui";
 import type { Sponsor } from "../types";
 import { useSaveSponsor } from "../api/hooks";
-import { FormRow, FormStack } from "./FormParts";
+import { FormRow, FormStack } from "@/shared/components/FormParts";
 import { ImageUploadField } from "./ImageUploadField";
 
 const schema = z.object({

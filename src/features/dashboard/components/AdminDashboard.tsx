@@ -8,7 +8,11 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { DASHBOARD_STATS as S, RECENT_ACTIVITY } from "../data/mock-dashboard";
+import { useCandidates } from "@/features/candidates/api/hooks";
+import { useComplaints } from "@/features/complaints";
+import { useUsers } from "@/features/users";
+import { useNewsPosts } from "@/features/voting-content/api/hooks";
+import { count, useRecentActivity } from "../hooks";
 import {
   ActivityList,
   NoteBox,
@@ -19,6 +23,12 @@ import {
 } from "./DashboardParts";
 
 export function AdminDashboard() {
+  const candidates = useCandidates().data;
+  const users = useUsers().data;
+  const complaints = useComplaints().data;
+  const news = useNewsPosts().data;
+  const activity = useRecentActivity();
+
   return (
     <>
       <PageHeader
@@ -28,14 +38,23 @@ export function AdminDashboard() {
       <StatGrid>
         <StatTile
           label="Media, Judges & Support staff"
-          value={S.staffAccounts - 2}
+          value={count(
+            users?.filter(
+              (u) => u.active && !["super_admin", "admin"].includes(u.role),
+            ).length,
+          )}
+          hint="Active accounts you manage"
         />
         <StatTile
-          label="Candidates in LGA stage"
-          value={S.candidatesByStage.lga_selection}
+          label="Candidates still competing"
+          value={count(candidates?.filter((c) => c.status === "active").length)}
+          hint="Status only — no scores"
         />
-        <StatTile label="News posts" value={S.newsPosts} />
-        <StatTile label="Open complaints" value={S.openComplaints} />
+        <StatTile label="News posts" value={count(news?.length)} />
+        <StatTile
+          label="Open complaints"
+          value={count(complaints?.filter((c) => c.status === "open").length)}
+        />
       </StatGrid>
 
       <Section title="Manage">
@@ -88,7 +107,7 @@ export function AdminDashboard() {
       </Section>
 
       <Section title="Recent activity">
-        <ActivityList items={RECENT_ACTIVITY} />
+        <ActivityList items={activity} />
       </Section>
 
       <NoteBox>

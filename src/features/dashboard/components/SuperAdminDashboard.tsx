@@ -8,7 +8,12 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { DASHBOARD_STATS as S, RECENT_ACTIVITY } from "../data/mock-dashboard";
+import { useCandidates } from "@/features/candidates/api/hooks";
+import { useComplaints } from "@/features/complaints";
+import { useUsers } from "@/features/users";
+import { useVoteTiers } from "@/features/voting-content/api/hooks";
+import { formatNaira, formatNumber } from "@/lib/formatting";
+import { count, useRecentActivity } from "../hooks";
 import {
   ActivityList,
   NoteBox,
@@ -19,6 +24,18 @@ import {
 } from "./DashboardParts";
 
 export function SuperAdminDashboard() {
+  const candidates = useCandidates().data;
+  const users = useUsers().data;
+  const complaints = useComplaints().data;
+  const tiers = useVoteTiers().data;
+  const activity = useRecentActivity();
+
+  const votes = candidates?.reduce((sum, c) => sum + (c.voteCount ?? 0), 0);
+  const open = complaints?.filter((c) => c.status === "open").length;
+  const cheapest = tiers?.length
+    ? Math.min(...tiers.map((t) => t.priceNaira / t.votes))
+    : undefined;
+
   return (
     <>
       <PageHeader
@@ -27,18 +44,21 @@ export function SuperAdminDashboard() {
       />
       <StatGrid>
         <StatTile
-          label="Staff accounts"
-          value={S.staffAccounts}
-          hint="All non-Super-Admin roles"
+          label="Active staff accounts"
+          value={count(
+            users?.filter((u) => u.active && u.role !== "super_admin").length,
+          )}
+          hint="All roles except Super Admin"
         />
-        <StatTile label="Candidates" value={S.candidatesTotal} />
+        <StatTile label="Candidates" value={count(candidates?.length)} />
         <StatTile
           label="Votes cast"
-          value={S.votesCast.toLocaleString("en-NG")}
+          value={votes == null ? "—" : formatNumber(votes)}
         />
         <StatTile
-          label="Vote revenue"
-          value={`₦${S.voteRevenueNaira.toLocaleString("en-NG")}`}
+          label="Best vote rate"
+          value={cheapest == null ? "—" : formatNaira(cheapest)}
+          hint={`${tiers?.length ?? 0} vote tiers`}
         />
       </StatGrid>
 
@@ -78,7 +98,7 @@ export function SuperAdminDashboard() {
             {
               to: "/complaints",
               title: "Complaints",
-              text: `${S.openComplaints} open — oversight and reassignment.`,
+              text: `${count(open)} open — oversight and reassignment.`,
               icon: LifeBuoy,
             },
             {
@@ -92,7 +112,7 @@ export function SuperAdminDashboard() {
       </Section>
 
       <Section title="Recent activity">
-        <ActivityList items={RECENT_ACTIVITY} />
+        <ActivityList items={activity} />
       </Section>
 
       <NoteBox>

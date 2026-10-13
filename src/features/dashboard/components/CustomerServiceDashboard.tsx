@@ -1,6 +1,7 @@
 import { LifeBuoy } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { DASHBOARD_STATS as S } from "../data/mock-dashboard";
+import { useComplaints } from "@/features/complaints";
+import { count } from "../hooks";
 import {
   NoteBox,
   QuickLinks,
@@ -10,6 +11,9 @@ import {
 } from "./DashboardParts";
 
 export function CustomerServiceDashboard() {
+  const complaints = useComplaints().data;
+  const by = (s: string) => complaints?.filter((c) => c.status === s).length;
+
   return (
     <>
       <PageHeader
@@ -19,11 +23,11 @@ export function CustomerServiceDashboard() {
       <StatGrid>
         <StatTile
           label="Open"
-          value={S.openComplaints}
+          value={count(by("open"))}
           hint="Waiting for a first reply"
         />
-        <StatTile label="In progress" value={S.inProgressComplaints} />
-        <StatTile label="Resolved" value={S.resolvedComplaints} />
+        <StatTile label="In progress" value={count(by("in_progress"))} />
+        <StatTile label="Resolved" value={count(by("resolved"))} />
       </StatGrid>
 
       <Section title="Go to">

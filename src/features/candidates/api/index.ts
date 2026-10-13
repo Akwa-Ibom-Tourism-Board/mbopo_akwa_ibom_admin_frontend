@@ -1,3 +1,4 @@
+import { recordActivity } from "@/features/activity-log/api";
 import { MOCK_CANDIDATES } from "../data/mock-candidates";
 import type { Candidate, PublicProfileUpdate } from "../types";
 
@@ -30,6 +31,7 @@ export async function updateCandidateProfile(
   if (!current) throw new Error("Candidate not found");
   const next = { ...current, ...update };
   store = store.map((c, i) => (i === index ? next : c));
+  recordActivity("candidates", `Updated the public profile of ${next.name}`);
   return { ...next };
 }
 
