@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createUser, getUsers, setUserActive, updateUser } from ".";
+import {
+  createUser,
+  createUsers,
+  getUsers,
+  setUserActive,
+  updateUser,
+} from ".";
 import type { UserUpdate } from "../types";
 
 const KEY = ["users"] as const;
@@ -15,6 +21,7 @@ function useInvalidating<A, R>(fn: (arg: A) => Promise<R>) {
 }
 
 export const useCreateUser = () => useInvalidating(createUser);
+export const useCreateUsers = () => useInvalidating(createUsers);
 export const useUpdateUser = () =>
   useInvalidating(({ id, patch }: { id: string; patch: UserUpdate }) =>
     updateUser(id, patch),

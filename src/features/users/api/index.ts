@@ -107,3 +107,57 @@ export async function setUserActive(
   );
   return { ...next };
 }
+
+export interface BulkResult {
+  created: AdminUser[];
+  // Index into the submitted list, so the form can mark the right rows.
+  failed: { index: number; error: string }[];
+}
+
+// Creates several accounts in one go. Each row is checked on its own with the
+// same rules as createUser (assignable role, unique email — including against
+// earlier rows in this batch — and the single Head Judge), so one bad row
+// doesn't stop the others. One activity entry summarises the batch.
+export async function createUsers(inputs: NewUserInput[]): Promise<BulkResult> {
+  await delay(400);
+  const created: AdminUser[] = [];
+  const failed: BulkResult["failed"] = [];
+  inputs.forEach((input, index) => {
+    try {
+      assertCanManage(input.role);
+      if (input.role === "head_judge") assertSingleHeadJudge(null);
+      if (
+        users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())
+      ) {
+        throw new Error("A user with that email already exists.");
+      }
+      const user: AdminUser = {
+        ...input,
+        id: `u-${Math.random().toString(36).slice(2, 9)}`,
+        active: true,
+        createdAt: new Date().toISOString(),
+      };
+      users = [...users, user];
+      created.push({ ...user });
+    } catch (e) {
+      failed.push({
+        index,
+        error: e instanceof Error ? e.message : "Couldn't add this user.",
+      });
+    }
+  });
+  if (created.length) {
+    const byRole = new Map<string, number>();
+    created.forEach((u) =>
+      byRole.set(
+        ROLE_LABELS[u.role],
+        (byRole.get(ROLE_LABELS[u.role]) ?? 0) + 1,
+      ),
+    );
+    recordActivity(
+      "users",
+      `Added ${created.length} staff account${created.length === 1 ? "" : "s"} in bulk (${[...byRole].map(([r, n]) => `${n} ${r}`).join(", ")})`,
+    );
+  }
+  return { created, failed };
+}

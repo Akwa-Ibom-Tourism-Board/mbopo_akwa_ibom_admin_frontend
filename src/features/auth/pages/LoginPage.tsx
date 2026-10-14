@@ -169,12 +169,16 @@ export function LoginPage() {
               setFormError(null);
             }}
           >
-            <DemoRole>
-              {ROLE_LABELS[a.role]} — {a.firstName} {a.lastName}
-            </DemoRole>
-            <DemoCreds>
-              {a.email} · {a.password}
-            </DemoCreds>
+            {a.role !== "super_admin" && (
+              <>
+                <DemoRole>
+                  {ROLE_LABELS[a.role]} — {a.firstName} {a.lastName}
+                </DemoRole>
+                <DemoCreds>
+                  {a.email} · {a.password}
+                </DemoCreds>
+              </>
+            )}
           </DemoRow>
         ))}
       </DemoBox>

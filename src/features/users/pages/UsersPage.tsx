@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ListPlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
 import { ConfirmDialog, PageHeader } from "@/shared/components";
@@ -21,14 +22,21 @@ export function UsersPage() {
         title="Users"
         description="Staff accounts. Super Admin accounts can't be created or changed here."
         actions={
-          <Button
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            <Plus size={16} /> Add user
-          </Button>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            <Button asChild variant="outline">
+              <Link to="/users/bulk">
+                <ListPlus size={16} /> Add in bulk
+              </Link>
+            </Button>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus size={16} /> Add user
+            </Button>
+          </div>
         }
       />
       <UserTable

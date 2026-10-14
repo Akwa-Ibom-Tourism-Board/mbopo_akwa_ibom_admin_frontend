@@ -4,7 +4,7 @@ import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { ActivityLogPage } from "@/features/activity-log";
 import { ComplaintDetailPage, ComplaintsPage } from "@/features/complaints";
 import { DashboardPage } from "@/features/dashboard";
-import { UsersPage } from "@/features/users";
+import { BulkAddUsersPage, UsersPage } from "@/features/users";
 import {
   PictureNewsAdminPage,
   PricingPage,
@@ -65,6 +65,7 @@ export function AppRoutes() {
 
           <Route element={<RoleGuard capability="users.manage" />}>
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/bulk" element={<BulkAddUsersPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="complaints.view" />}>
