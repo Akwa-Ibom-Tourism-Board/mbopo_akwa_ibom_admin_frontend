@@ -1,6 +1,23 @@
 import { recordActivity } from "@/features/activity-log/api";
+import { readSessionUser } from "@/features/auth/session";
+import { LGA_TO_DISTRICT } from "@/lib/constants";
+import { can } from "@/lib/rbac";
+import { toSentenceCase } from "@/lib/validation";
+import { MOCK_CANDIDATE_EVENTS } from "../data/mock-events";
 import { MOCK_CANDIDATES } from "../data/mock-candidates";
-import type { Candidate, PublicProfileUpdate } from "../types";
+import {
+  SECTION_FIELDS,
+  SENTENCE_CASE_FIELDS,
+  sectionSchemas,
+  type SectionId,
+} from "../schemas";
+import type {
+  Candidate,
+  CandidateEvent,
+  CandidateEventKind,
+  PublicProfileUpdate,
+} from "../types";
+import { deriveDisplayFields } from "../utils/derive";
 
 // Dummy data layer. Each function has the async signature a real HTTP call
 // would have, so wiring the backend means replacing these bodies only — the
@@ -9,6 +26,49 @@ const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
 
 // In-memory "database": edits persist until the page reloads.
 let store: Candidate[] = MOCK_CANDIDATES.map((c) => ({ ...c }));
+let events: CandidateEvent[] = MOCK_CANDIDATE_EVENTS.map((e) => ({ ...e }));
+
+// Appends to each candidate's own history (their Activity tab). Called by the
+// other features when staff do something to a candidate — judging decisions,
+// stage moves, profile edits. The actor comes from the dev-only session.
+export function recordCandidateEvents(
+  ids: string[],
+  kind: CandidateEventKind,
+  summary: string,
+) {
+  const actor = readSessionUser();
+  const at = new Date().toISOString();
+  events = [
+    ...ids.map((candidateId) => ({
+      id: `${candidateId}-e${Math.random().toString(36).slice(2, 9)}`,
+      candidateId,
+      at,
+      actorType: (actor ? "staff" : "system") as CandidateEvent["actorType"],
+      actorName: actor ? `${actor.firstName} ${actor.lastName}` : "System",
+      actorRole: actor?.role,
+      kind,
+      summary,
+    })),
+    ...events,
+  ];
+}
+
+// Admin and Super Admin only. A Super Admin's own actions are never shown to
+// an Admin — to them those lines simply don't exist.
+export async function getCandidateEvents(
+  id: string,
+): Promise<CandidateEvent[]> {
+  await delay();
+  const viewer = readSessionUser();
+  if (viewer?.role !== "super_admin" && viewer?.role !== "admin") return [];
+  return events
+    .filter(
+      (e) =>
+        e.candidateId === id &&
+        (viewer.role === "super_admin" || e.actorRole !== "super_admin"),
+    )
+    .sort((a, b) => b.at.localeCompare(a.at));
+}
 
 export async function getCandidates(): Promise<Candidate[]> {
   await delay();
@@ -81,8 +141,107 @@ export async function updateCandidateProfile(
   const next = { ...current, ...update };
   store = store.map((c, i) => (i === index ? next : c));
   const changes = describeProfileChange(current, next);
-  if (changes)
+  if (changes) {
     recordActivity("candidates", `${changes} on ${next.name}'s profile`);
+    recordCandidateEvents(
+      [id],
+      "staff",
+      `Public profile updated — ${changes[0]!.toLowerCase()}${changes.slice(1)}`,
+    );
+  }
+  return { ...next };
+}
+
+const FIELD_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(SECTION_FIELDS).flatMap(([section, fields]) =>
+    fields.map((f) => [
+      f.name,
+      // "Name" / "Phone" alone would be ambiguous in the trail.
+      section === "kin"
+        ? `next of kin ${f.label.toLowerCase()}`
+        : f.label.toLowerCase(),
+    ]),
+  ),
+);
+
+// Corrects part of an applicant's application. Admin / Super Admin only, and
+// only the editable sections — names, gender, date of birth, NIN, VIN, email
+// and the profile photo come from the verified identity and are never touched
+// (the schemas don't even contain them). Re-validated here with the same rules
+// the form uses, then written the way the backend would: free text
+// sentence-cased, "Other" notes dropped when the dropdown isn't "Other", and
+// the senatorial district re-derived if the LGA changes. The log records WHICH
+// fields changed, never the values (no phone numbers or addresses in the trail).
+export async function updateCandidateDetails(
+  id: string,
+  section: SectionId,
+  raw: Record<string, unknown>,
+): Promise<Candidate> {
+  await delay();
+  const actor = readSessionUser();
+  if (!can(actor?.role, "candidates.editDetails")) {
+    throw new Error("Only an administrator can edit an applicant's details.");
+  }
+  const current = store.find((c) => c.id === id);
+  if (!current) throw new Error("Candidate not found");
+  const parsed = sectionSchemas[section].safeParse(raw);
+  if (!parsed.success)
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid details");
+
+  const values = { ...(parsed.data as Record<string, string | undefined>) };
+  if (section === "work") {
+    if (values.institution !== "Other") values.institutionOther = undefined;
+    if (values.occupation !== "Other") values.occupationOther = undefined;
+  }
+
+  const patch: Record<string, string | undefined> = {};
+  const changed: string[] = [];
+  const before = current as unknown as Record<string, string | undefined>;
+  for (const [key, val] of Object.entries(values)) {
+    let next = typeof val === "string" ? val.trim() : val;
+    if (next === "") next = undefined;
+    if (
+      typeof next === "string" &&
+      (SENTENCE_CASE_FIELDS as readonly string[]).includes(key) &&
+      next !== before[key]
+    ) {
+      next = toSentenceCase(next);
+    }
+    if (next !== before[key]) {
+      patch[key] = next;
+      changed.push(key);
+    }
+  }
+  if (!changed.length) return { ...current };
+
+  const lgaChanged = "lga" in patch;
+  const next = deriveDisplayFields({
+    ...current,
+    ...patch,
+    ...(lgaChanged
+      ? {
+          senatorialDistrict:
+            LGA_TO_DISTRICT[patch.lga as keyof typeof LGA_TO_DISTRICT],
+        }
+      : {}),
+  } as Candidate);
+  store = store.map((c) => (c.id === id ? next : c));
+
+  const names = changed.map((k) => FIELD_LABELS[k] ?? k).join(", ");
+  recordActivity(
+    "candidates",
+    lgaChanged
+      ? `Changed the local government of ${next.name} from ${current.lga} to ${next.lga}${
+          changed.length > 1
+            ? ` and updated ${changed
+                .filter((k) => k !== "lga")
+                .map((k) => FIELD_LABELS[k] ?? k)
+                .join(", ")}`
+            : ""
+        }`
+      : `Updated ${names} on ${next.name}'s application`,
+  );
+  recordCandidateEvents([id], "staff", `Application updated — ${names}`);
   return { ...next };
 }
 

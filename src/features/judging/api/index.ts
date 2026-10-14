@@ -1,6 +1,10 @@
 import { recordActivity } from "@/features/activity-log/api";
 import { readSessionUser } from "@/features/auth/session";
-import { applyJudgingDecision, getCandidates } from "@/features/candidates/api";
+import {
+  applyJudgingDecision,
+  getCandidates,
+  recordCandidateEvents,
+} from "@/features/candidates/api";
 import type { Candidate } from "@/features/candidates/types";
 import {
   getPhaseStates,
@@ -167,6 +171,13 @@ export async function disqualifyCandidates(
       })),
     );
   }
+  for (const c of result) {
+    recordCandidateEvents(
+      [c.id],
+      "judging",
+      `Disqualified at ${phaseTitle(c.disqualifiedAt!)} — ${reason.trim()}`,
+    );
+  }
   recordActivity(
     "judging",
     `Disqualified ${plural(result.length, "candidate")} (${describe(result)}, ${phaseTitle(result[0]!.disqualifiedAt!)}) — ${reason.trim()}`,
@@ -318,6 +329,21 @@ export async function finalizePhase(phase: PhaseId, passedIds: string[]) {
     status: finalRound ? "winner" : "advanced",
   });
 
+  recordCandidateEvents(
+    [...passed],
+    "judging",
+    finalRound
+      ? "Crowned winner of Mbopo Akwa Ibom"
+      : `Finalized through ${phaseTitle(phase)}`,
+  );
+  if (out.length) {
+    recordCandidateEvents(
+      out.map((c) => c.id),
+      "judging",
+      `Eliminated in ${phaseTitle(phase)}`,
+    );
+  }
+
   const state = phaseStateSync(phase);
   setPhaseState({
     ...state,
@@ -395,6 +421,13 @@ export async function reopenStage(
     },
   );
 
+  if (affected.length) {
+    recordCandidateEvents(
+      affected.map((c) => c.id),
+      "judging",
+      `Returned to ${phaseTitle(phase)} — the stage was reopened`,
+    );
+  }
   for (const id of later) setPhaseState({ phaseId: id, status: "pending" });
   setPhaseState({
     phaseId: phase,

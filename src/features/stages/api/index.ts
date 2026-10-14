@@ -1,6 +1,10 @@
 import { recordActivity } from "@/features/activity-log/api";
 import { readSessionUser } from "@/features/auth/session";
-import { applyJudgingDecision, getCandidates } from "@/features/candidates/api";
+import {
+  applyJudgingDecision,
+  getCandidates,
+  recordCandidateEvents,
+} from "@/features/candidates/api";
 import { can } from "@/lib/rbac";
 import {
   phaseTitle,
@@ -66,6 +70,11 @@ export async function openPhase(id: PhaseId): Promise<{ moved: number }> {
     await applyJudgingDecision(
       incoming.map((c) => c.id),
       { phase: id, stage: stageOfPhase(id), status: "active" },
+    );
+    recordCandidateEvents(
+      incoming.map((c) => c.id),
+      "judging",
+      `Moved into ${phaseTitle(id)}`,
     );
   }
   setPhaseState({

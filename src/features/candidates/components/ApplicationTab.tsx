@@ -72,11 +72,17 @@ export function ApplicationTab({
   const personal: Fact[] = [
     {
       label: "Full name",
+      locked: true,
       value: [c.firstName, c.middleName, c.lastName].filter(Boolean).join(" "),
     },
-    { label: "Gender", value: c.gender === "female" ? "Female" : "Male" },
+    {
+      label: "Gender",
+      locked: true,
+      value: c.gender === "female" ? "Female" : "Male",
+    },
     {
       label: seeIdentity ? "Date of birth" : "Age",
+      locked: true,
       value: (
         <>
           {seeIdentity ? `${formatDate(c.dateOfBirth)} · ` : ""}
@@ -89,6 +95,7 @@ export function ApplicationTab({
     },
     {
       label: "Email",
+      locked: true,
       value: (
         <>
           {c.email}{" "}
@@ -105,15 +112,16 @@ export function ApplicationTab({
   const identity: Fact[] = [
     {
       label: "Identity check",
+      locked: true,
       value: (
         <Badge $tone={c.identityVerified ? "primary" : "danger"}>
           {c.identityVerified ? "NIN verified" : "Not verified"}
         </Badge>
       ),
     },
-    { label: "NIN", value: seeIdentity ? c.nin : maskId(c.nin) },
-    { label: "VIN", value: seeIdentity ? c.vin : maskId(c.vin) },
-    { label: "VIN check", value: vinOutcome },
+    { label: "NIN", locked: true, value: seeIdentity ? c.nin : maskId(c.nin) },
+    { label: "VIN", locked: true, value: seeIdentity ? c.vin : maskId(c.vin) },
+    { label: "VIN check", locked: true, value: vinOutcome },
     { label: "Local government", value: c.lga },
     { label: "Senatorial district", value: c.senatorialDistrict },
     { label: "Ward", value: c.ward },
@@ -175,11 +183,16 @@ export function ApplicationTab({
         title="Personal & contact"
         facts={personal}
         action={edit("personal")}
+        note={
+          editAction
+            ? "Locked fields come from the verified identity and can't be edited."
+            : undefined
+        }
       />
       <FactCard
         title="Identity & origin"
         facts={identity}
-        action={edit("identity")}
+        action={edit("origin")}
       />
       <FactCard
         title="Residence"

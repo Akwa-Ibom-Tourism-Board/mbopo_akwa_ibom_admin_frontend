@@ -125,6 +125,24 @@ export interface Candidate {
   voteCount?: number;
 }
 
+// One line in a candidate's own activity history: what the applicant did on the
+// applicant platform and what staff did to their record. Shown to Admin and
+// Super Admin on the candidate's Activity tab.
+export type CandidateEventKind =
+  "account" | "identity" | "application" | "document" | "judging" | "staff";
+
+export interface CandidateEvent {
+  id: string;
+  candidateId: string;
+  at: string; // ISO
+  actorType: "applicant" | "staff" | "system";
+  actorName: string;
+  // For staff, so a Super Admin's actions can be hidden from an Admin.
+  actorRole?: Role;
+  kind: CandidateEventKind;
+  summary: string;
+}
+
 export type PublicProfileUpdate = Pick<
   Candidate,
   "bio" | "additionalPhotos" | "additionalVideos"

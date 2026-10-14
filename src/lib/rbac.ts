@@ -34,6 +34,8 @@ export type Capability =
   // masked), edit an applicant's details and upload or replace documents.
   | "candidates.viewIdentity"
   | "candidates.editDetails"
+  // Admin / Super Admin: a candidate's own activity history.
+  | "candidates.viewActivity"
   // Judging — the two judge roles only. Deliberately granted to no other
   // role, including Super Admin: nobody outside the panel sees live scores.
   | "judging.access"
@@ -76,6 +78,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],
   "candidates.viewIdentity": ["super_admin", "admin"],
   "candidates.editDetails": ["super_admin", "admin"],
+  "candidates.viewActivity": ["super_admin", "admin"],
 
   "judging.access": ["judge", "head_judge"],
   "judging.score": ["judge", "head_judge"],
