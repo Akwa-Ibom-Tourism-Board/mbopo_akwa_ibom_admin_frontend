@@ -29,7 +29,9 @@ export function JudgeStageTable({
   const { user } = useAuth();
   const mine = useMyPhaseScores(user!.id, phaseId);
   const rounds = roundsOf(phaseId);
-  const open = state.status === "open";
+  // Scoring is possible only while the stage is open AND results haven't been
+  // submitted — submitting locks every judge's scores.
+  const open = state.status === "open" && !state.resultsSubmittedAt;
 
   const progress = useMemo(() => {
     const map = new Map<string, { submitted: number; drafts: number }>();

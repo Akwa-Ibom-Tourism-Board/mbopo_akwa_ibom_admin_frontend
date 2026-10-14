@@ -3,13 +3,16 @@ import { candidateKeys } from "@/features/candidates/api/hooks";
 import type { PhaseId } from "@/lib/phases";
 import {
   disqualifyCandidates,
-  finalizePhase,
+  closeStage,
   getFinalizeStatus,
   getJudges,
   getLeaderboard,
   getMyScores,
+  getResultsStandings,
   reopenStage,
   saveScore,
+  submitResults,
+  submitResultsAndClose,
 } from ".";
 
 export const judgingKeys = {
@@ -72,13 +75,35 @@ export function useDisqualify() {
   });
 }
 
-export function useFinalize(phase: PhaseId) {
+export function useSubmitResults(phase: PhaseId) {
   const invalidate = useInvalidateJudging();
   return useMutation({
-    mutationFn: (passedIds: string[]) => finalizePhase(phase, passedIds),
+    mutationFn: (passedIds: string[]) => submitResults(phase, passedIds),
     onSuccess: invalidate,
   });
 }
+
+export function useSubmitResultsAndClose(phase: PhaseId) {
+  const invalidate = useInvalidateJudging();
+  return useMutation({
+    mutationFn: (passedIds: string[]) =>
+      submitResultsAndClose(phase, passedIds),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCloseStage() {
+  const invalidate = useInvalidateJudging();
+  return useMutation({ mutationFn: closeStage, onSuccess: invalidate });
+}
+
+// For whoever may submit results (Head Judge, Super Admin).
+export const useResultsStandings = (phase: PhaseId, enabled: boolean) =>
+  useQuery({
+    queryKey: ["judging", "standings", phase],
+    queryFn: () => getResultsStandings(phase),
+    enabled,
+  });
 
 export function useReopenStage() {
   const invalidate = useInvalidateJudging();

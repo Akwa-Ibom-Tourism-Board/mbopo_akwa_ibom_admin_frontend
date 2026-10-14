@@ -109,7 +109,11 @@ export function StageHeader({
     <Card>
       <Main>
         <h2>
-          {phaseTitle(phaseId)} <PhaseStatusBadge status={state.status} />
+          {phaseTitle(phaseId)}{" "}
+          <PhaseStatusBadge
+            status={state.status}
+            resultsSubmitted={!!state.resultsSubmittedAt}
+          />
         </h2>
         <p>{summary}</p>
         {state.openedAt && (
@@ -119,8 +123,11 @@ export function StageHeader({
             {state.reopenedAt
               ? ` · Reopened ${formatDateTime(state.reopenedAt)}${who(state.reopenedBy, state.reopenedByRole)}`
               : ""}
+            {state.resultsSubmittedAt
+              ? ` · Results submitted ${formatDateTime(state.resultsSubmittedAt)}${who(state.resultsSubmittedBy, state.resultsSubmittedByRole)}`
+              : ""}
             {state.closedAt
-              ? ` · Closed ${formatDateTime(state.closedAt)}${state.closedBy ? ` by ${state.closedBy}` : ""}`
+              ? ` · Closed ${formatDateTime(state.closedAt)}${who(state.closedBy, state.closedByRole)}`
               : ""}
           </Meta>
         )}

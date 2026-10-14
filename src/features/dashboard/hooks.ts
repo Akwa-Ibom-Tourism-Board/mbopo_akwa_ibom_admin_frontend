@@ -34,5 +34,6 @@ export function useCurrentStage() {
     id: state.phaseId,
     title: phaseTitle(state.phaseId),
     status: state.status,
+    resultsSubmitted: !!state.resultsSubmittedAt,
   };
 }

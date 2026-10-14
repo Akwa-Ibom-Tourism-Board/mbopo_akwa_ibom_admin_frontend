@@ -152,7 +152,9 @@ export function CandidateScoringPage() {
       ? `${phaseTitle(c.phase)} is closed — scores are locked.`
       : phaseState?.status === "pending"
         ? `${phaseTitle(c.phase)} hasn't been opened yet.`
-        : undefined;
+        : phaseState?.resultsSubmittedAt
+          ? `Results for ${phaseTitle(c.phase)} have been submitted — scores are locked.`
+          : undefined;
   const competing = candidateInField(c, c.phase);
   const locked = !phaseState || !!stageLocked || !competing;
   const lockReason =

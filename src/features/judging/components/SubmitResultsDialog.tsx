@@ -6,7 +6,11 @@ import { ConfirmDialog } from "@/shared/components";
 import { inField } from "@/features/stages/utils/participants";
 import { phaseTitle, type PhaseId } from "@/lib/phases";
 import { PHASE_QUOTA } from "../data/mock-stages";
-import { useFinalize, useLeaderboard } from "../api/hooks";
+import {
+  useResultsStandings,
+  useSubmitResults,
+  useSubmitResultsAndClose,
+} from "../api/hooks";
 import type { LeaderboardEntry } from "../types";
 import { formatScore } from "../utils/scoring";
 
@@ -67,19 +71,25 @@ function suggest(phase: PhaseId, standings: LeaderboardEntry[]) {
   return picked;
 }
 
-// The Head Judge's finalize step: every judge's scores are added up, ranked,
-// and the Head Judge ticks who goes through. Closing locks the stage.
-export function FinalizeDialog({
+// Submit results: every judge's scores are added up and ranked, and whoever is
+// submitting (the Head Judge, or the Super Admin) ticks who goes through.
+// Submitting locks the scores; with `andClose` (Super Admin only) the stage is
+// closed in the same step.
+export function SubmitResultsDialog({
   phaseId,
   open,
   onOpenChange,
+  andClose = false,
 }: {
   phaseId: PhaseId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  andClose?: boolean;
 }) {
-  const board = useLeaderboard(phaseId);
-  const finalize = useFinalize(phaseId);
+  const board = useResultsStandings(phaseId, open);
+  const submit = useSubmitResults(phaseId);
+  const submitAndClose = useSubmitResultsAndClose(phaseId);
+  const finalize = andClose ? submitAndClose : submit;
   const quota = PHASE_QUOTA[phaseId];
   const finalRound = phaseId === "gf-r5";
 
@@ -121,15 +131,21 @@ export function FinalizeDialog({
       onOpenChange={onOpenChange}
       title={
         finalRound
-          ? "Finalize and crown the winner"
-          : `Finalize ${phaseTitle(phaseId)}`
+          ? `Submit the winner${andClose ? " and close" : ""}`
+          : `Submit results — ${phaseTitle(phaseId)}${andClose ? " and close" : ""}`
       }
       description={
         finalRound
-          ? "Every judge's scores are added up below. Choose the single winner. The stage closes and its scores lock."
-          : "Every judge's scores are added up below. Tick who goes through; everyone else still competing is eliminated. The stage closes, its scores lock, and only an Admin can open the next stage. This can't be undone."
+          ? `Every judge's scores are added up below. Choose the single winner. Scores lock${andClose ? " and the stage closes" : ", then the stage can be closed"}.`
+          : `Every judge's scores are added up below. Tick who goes through; everyone else still competing is eliminated. Scores lock${andClose ? " and the stage closes" : ", then the stage can be closed"}. This can't be undone.`
       }
-      confirmLabel={finalRound ? "Crown winner" : "Finalize & close stage"}
+      confirmLabel={
+        andClose
+          ? "Submit results & close"
+          : finalRound
+            ? "Submit winner"
+            : "Submit results"
+      }
       destructive={!finalRound}
       wide
       confirmDisabled={invalid || board.isLoading}
@@ -139,8 +155,10 @@ export function FinalizeDialog({
           onSuccess: (r) => {
             toast.success(
               finalRound
-                ? "Winner crowned"
-                : `${phaseTitle(phaseId)} closed — ${r.through} through, ${r.eliminated} eliminated`,
+                ? andClose
+                  ? "Winner submitted — stage closed"
+                  : "Winner submitted"
+                : `${andClose ? "Results submitted and stage closed" : "Results submitted"} — ${r.through} through, ${r.eliminated} eliminated`,
             );
             onOpenChange(false);
           },

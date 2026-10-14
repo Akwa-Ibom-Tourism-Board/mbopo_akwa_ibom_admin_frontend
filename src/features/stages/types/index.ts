@@ -15,10 +15,16 @@ export interface PhaseState {
   openedByRole?: Role;
   closedAt?: string;
   closedBy?: string;
+  closedByRole?: Role;
+  // Results (who goes through) are submitted before the stage is closed. Once
+  // submitted, scoring is locked; the stage stays "open" until it is closed.
+  resultsSubmittedAt?: string;
+  resultsSubmittedBy?: string;
+  resultsSubmittedByRole?: Role;
   reopenedAt?: string;
   reopenedBy?: string;
   reopenedByRole?: Role;
-  // Candidate ids the Head Judge finalized through (set when closed).
+  // Candidate ids the results sent through (set when results are submitted).
   passedIds?: string[];
 }
 

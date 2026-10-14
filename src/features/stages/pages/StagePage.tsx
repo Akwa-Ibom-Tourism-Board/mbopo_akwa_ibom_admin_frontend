@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import styled from "styled-components";
 import { EmptyState } from "@/shared/components";
 import { useCandidates } from "@/features/candidates/api/hooks";
-import { FinalizePanel, JudgeStageTable } from "@/features/judging";
+import { JudgeStageTable, ResultsPanel } from "@/features/judging";
 import { STAGES, roundsOf } from "@/features/judging/data/mock-stages";
 import { useCan } from "@/lib/rbac";
 import {
@@ -99,9 +99,9 @@ export function StagePage() {
           </li>
         ))}
       </Rounds>
-      {can("judging.access") && state.status === "open" && rows.length > 0 && (
-        <FinalizePanel phaseId={phaseId} />
-      )}
+      {(can("judging.access") || can("stages.close")) &&
+        state.status === "open" &&
+        rows.length > 0 && <ResultsPanel phaseId={phaseId} state={state} />}
       {rows.length === 0 ? (
         <EmptyState>{emptyMessage}</EmptyState>
       ) : can("judging.access") ? (

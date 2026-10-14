@@ -48,8 +48,14 @@ export type Capability =
   | "judging.score"
   | "judging.decide"
   | "judging.leaderboard"
-  // Head Judge only: finalize the added-up scores and close a stage.
-  | "judging.finalize"
+  // Submitting a stage's results (who goes through): the Head Judge once every
+  // judge has voted, or the Super Admin at any time. Nobody — the Super Admin
+  // included — can edit or enter a judge's scores.
+  | "results.submit"
+  | "results.submitAnytime"
+  // Closing a stage. Head Judge and Admin only once results are submitted; the
+  // Super Admin whenever (submit + close in one go).
+  | "stages.close"
   // Admin / Super Admin only: open the next stage (LGA, Senatorial, each
   // Grand Finale round). Judges can close a stage out but never open one.
   | "stages.open"
@@ -92,7 +98,9 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "judging.score": ["judge", "head_judge"],
   "judging.decide": ["judge", "head_judge"],
   "judging.leaderboard": ["judge", "head_judge"],
-  "judging.finalize": ["head_judge"],
+  "results.submit": ["head_judge", "super_admin"],
+  "results.submitAnytime": ["super_admin"],
+  "stages.close": ["head_judge", "admin", "super_admin"],
 
   "stages.open": ["super_admin", "admin"],
   "stages.reopenAny": ["super_admin"],

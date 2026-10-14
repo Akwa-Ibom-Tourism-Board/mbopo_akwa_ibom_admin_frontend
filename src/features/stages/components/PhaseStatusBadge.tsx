@@ -13,6 +13,16 @@ const LABEL: Record<PhaseStatus, string> = {
   closed: "Closed",
 };
 
-export function PhaseStatusBadge({ status }: { status: PhaseStatus }) {
+export function PhaseStatusBadge({
+  status,
+  resultsSubmitted = false,
+}: {
+  status: PhaseStatus;
+  // An open stage whose results are in: scoring is locked, waiting to be closed.
+  resultsSubmitted?: boolean;
+}) {
+  if (status === "open" && resultsSubmitted) {
+    return <Badge $tone="secondary">Results submitted</Badge>;
+  }
   return <Badge $tone={TONE[status]}>{LABEL[status]}</Badge>;
 }

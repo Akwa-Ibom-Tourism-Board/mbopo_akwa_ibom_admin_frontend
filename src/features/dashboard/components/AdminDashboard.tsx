@@ -42,7 +42,9 @@ export function AdminDashboard() {
           value={stage?.title ?? "—"}
           hint={
             stage?.status === "open"
-              ? "Open for judging"
+              ? stage.resultsSubmitted
+                ? "Results submitted — ready to close"
+                : "Open for judging"
               : stage?.status === "pending"
                 ? "Waiting to be opened"
                 : undefined

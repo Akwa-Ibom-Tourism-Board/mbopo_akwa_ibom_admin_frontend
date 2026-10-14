@@ -75,6 +75,11 @@ function requireOpen(phase: PhaseId) {
   if (state.status === "pending") {
     throw new Error(`${phaseTitle(phase)} hasn't been opened yet.`);
   }
+  if (state.resultsSubmittedAt) {
+    throw new Error(
+      `Results for ${phaseTitle(phase)} have been submitted — its scores are locked.`,
+    );
+  }
 }
 
 export async function getStages(): Promise<StageConfig[]> {
@@ -192,6 +197,26 @@ export async function getLeaderboard(
 ): Promise<LeaderboardEntry[]> {
   await delay();
   requireJudge();
+  return buildStandings(phase);
+}
+
+// The ranked standings the Head Judge — or the Super Admin, who may also submit
+// results — chooses from. This is the only place the Super Admin sees scores
+// (ranks and totals, inside the submit-results dialog); they can't enter or
+// change any.
+export async function getResultsStandings(
+  phase: PhaseId,
+): Promise<LeaderboardEntry[]> {
+  await delay();
+  if (!can(readSessionUser()?.role, "results.submit")) {
+    throw new Error(
+      "Only the Head Judge can see the standings to submit results.",
+    );
+  }
+  return buildStandings(phase);
+}
+
+async function buildStandings(phase: PhaseId): Promise<LeaderboardEntry[]> {
   if (phaseStateSync(phase).status === "pending") return [];
   const rounds = roundsOf(phase);
   const candidates = await getCandidates();
@@ -272,26 +297,29 @@ export async function getFinalizeStatus(
   return finalizeStatusFor(phase, field);
 }
 
-// The Head Judge's step: with every judge's scores in, choose who goes through
-// and close the stage. Everyone else still competing is eliminated; the Grand
-// Finale's last round leaves one winner. Closing locks the stage for every
-// judge — only an Admin / Super Admin can then open the next one.
-export async function finalizePhase(phase: PhaseId, passedIds: string[]) {
+// SUBMIT RESULTS — choose who goes through. The Head Judge can do it once every
+// judge has finished scoring; the Super Admin can do it at any time, with no
+// prerequisites. Everyone else still competing is eliminated; the Grand
+// Finale's last round leaves one winner. Submitting locks every judge's scores
+// but leaves the stage open until it is closed (see closeStage).
+export async function submitResults(phase: PhaseId, passedIds: string[]) {
   await delay();
   const actor = readSessionUser();
-  if (!can(actor?.role, "judging.finalize")) {
-    throw new Error("Only the Head Judge can finalize a stage.");
+  if (!can(actor?.role, "results.submit")) {
+    throw new Error("Only the Head Judge can submit results.");
   }
   requireOpen(phase);
   const field = (await getCandidates()).filter((c) => inField(c, phase));
-  const status = finalizeStatusFor(phase, field);
-  if (!status.ready) {
-    const waiting = status.judges
-      .filter((j) => j.outstanding > 0)
-      .map((j) => j.name);
-    throw new Error(
-      `Every judge must finish scoring first. Waiting on: ${waiting.join(", ")}.`,
-    );
+  if (!can(actor?.role, "results.submitAnytime")) {
+    const status = finalizeStatusFor(phase, field);
+    if (!status.ready) {
+      const waiting = status.judges
+        .filter((j) => j.outstanding > 0)
+        .map((j) => j.name);
+      throw new Error(
+        `Every judge must finish scoring first. Waiting on: ${waiting.join(", ")}.`,
+      );
+    }
   }
 
   const passed = new Set(passedIds);
@@ -344,21 +372,68 @@ export async function finalizePhase(phase: PhaseId, passedIds: string[]) {
     );
   }
 
-  const state = phaseStateSync(phase);
   setPhaseState({
-    ...state,
-    status: "closed",
-    closedAt: new Date().toISOString(),
-    closedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
+    ...phaseStateSync(phase),
+    resultsSubmittedAt: new Date().toISOString(),
+    resultsSubmittedBy: actor
+      ? `${actor.firstName} ${actor.lastName}`
+      : undefined,
+    resultsSubmittedByRole: actor?.role,
     passedIds: [...passed],
   });
   recordActivity(
     "judging",
     finalRound
-      ? `Finalized ${phaseTitle(phase)} and crowned the winner`
-      : `Finalized and closed ${phaseTitle(phase)}: ${plural(passed.size, "candidate")} through, ${out.length} eliminated`,
+      ? `Submitted the results of ${phaseTitle(phase)}: winner chosen`
+      : `Submitted the results of ${phaseTitle(phase)}: ${plural(passed.size, "candidate")} through, ${out.length} eliminated`,
   );
   return { through: passed.size, eliminated: out.length };
+}
+
+// CLOSE a stage. The Head Judge and an Admin can only close once results have
+// been submitted; the Super Admin can close whenever (see submitResultsAndClose
+// for submitting and closing in one go). Closing changes no candidate — it
+// ends the stage so the next one can be opened.
+export async function closeStage(phase: PhaseId) {
+  await delay();
+  const actor = readSessionUser();
+  if (!can(actor?.role, "stages.close")) {
+    throw new Error("You can't close a stage.");
+  }
+  const state = phaseStateSync(phase);
+  if (state.status !== "open") {
+    throw new Error(`${phaseTitle(phase)} isn't open, so it can't be closed.`);
+  }
+  if (!state.resultsSubmittedAt) {
+    throw new Error(
+      can(actor?.role, "results.submitAnytime")
+        ? "Submit the results first."
+        : "The Head Judge hasn't submitted the results yet.",
+    );
+  }
+  setPhaseState({
+    ...state,
+    status: "closed",
+    closedAt: new Date().toISOString(),
+    closedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
+    closedByRole: actor?.role,
+  });
+  recordActivity("judging", `Closed ${phaseTitle(phase)}`);
+}
+
+// Super Admin: submit the results and close the stage in one step.
+export async function submitResultsAndClose(
+  phase: PhaseId,
+  passedIds: string[],
+) {
+  if (!can(readSessionUser()?.role, "results.submitAnytime")) {
+    throw new Error(
+      "Results can only be submitted and closed together by a Super Admin.",
+    );
+  }
+  const outcome = await submitResults(phase, passedIds);
+  await closeStage(phase);
+  return outcome;
 }
 
 // Reopens a closed stage so scores can be corrected and it can be finalized
