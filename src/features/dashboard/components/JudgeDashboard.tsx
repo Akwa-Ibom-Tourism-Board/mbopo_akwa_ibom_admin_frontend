@@ -23,7 +23,7 @@ export function JudgeDashboard() {
             ? "Loading…"
             : s.live
               ? `Live stage: ${s.title}`
-              : "No stage is open right now. An Admin or Super Admin opens the next one."
+              : "No stage is open right now. An Admin opens the next one."
         }
       />
       <StatGrid>

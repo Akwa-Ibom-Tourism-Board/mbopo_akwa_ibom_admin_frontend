@@ -26,7 +26,7 @@ export function HeadJudgeDashboard() {
             ? "Loading…"
             : s.live
               ? `Live stage: ${s.title}`
-              : "No stage is open right now. An Admin or Super Admin opens the next one."
+              : "No stage is open right now. An Admin opens the next one."
         }
       />
       <StatGrid>
@@ -73,8 +73,8 @@ export function HeadJudgeDashboard() {
       <NoteBox>
         You judge like everyone else, and you also finalize: once every judge
         has voted, the scores are added up, you choose who goes through and
-        close the stage. Only an Admin or Super Admin can then open the next
-        one. Nobody can change another judge's scores — including you.
+        close the stage. Only an Admin can then open the next one. Nobody can
+        change another judge's scores — including you.
       </NoteBox>
     </>
   );

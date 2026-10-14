@@ -51,8 +51,8 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <RightPaneLogo src={mbopoLogoDark} alt="" />
         <RightPaneTitle>Admin Portal</RightPaneTitle>
         <RightPaneText>
-          Run the pageant: review applicants, judge each stage, manage the
-          voting site and support contestants.
+          Mbopo Akwa Ibom — Beauty with Purpose. <br /> Sign in with your staff account
+          to continue.
         </RightPaneText>
       </RightPane>
     </Shell>

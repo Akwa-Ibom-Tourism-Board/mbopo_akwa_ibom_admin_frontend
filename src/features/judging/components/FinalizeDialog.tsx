@@ -127,7 +127,7 @@ export function FinalizeDialog({
       description={
         finalRound
           ? "Every judge's scores are added up below. Choose the single winner. The stage closes and its scores lock."
-          : "Every judge's scores are added up below. Tick who goes through; everyone else still competing is eliminated. The stage closes, its scores lock, and only an Admin or Super Admin can open the next stage. This can't be undone."
+          : "Every judge's scores are added up below. Tick who goes through; everyone else still competing is eliminated. The stage closes, its scores lock, and only an Admin can open the next stage. This can't be undone."
       }
       confirmLabel={finalRound ? "Crown winner" : "Finalize & close stage"}
       destructive={!finalRound}

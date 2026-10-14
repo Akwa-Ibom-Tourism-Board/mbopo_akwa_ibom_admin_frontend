@@ -122,7 +122,7 @@ export function StageHeader({
       {state.status === "pending" && !can("stages.open") && (
         <Hint>
           <Lock size={14} style={{ flexShrink: 0, marginTop: 2 }} />
-          Only an Admin or Super Admin can open a stage.
+          Only an Admin can open a stage.
         </Hint>
       )}
 

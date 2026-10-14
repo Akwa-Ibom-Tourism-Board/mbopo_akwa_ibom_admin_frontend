@@ -46,7 +46,7 @@ export async function openPhase(id: PhaseId): Promise<{ moved: number }> {
   await delay();
   const actor = readSessionUser();
   if (!can(actor?.role, "stages.open")) {
-    throw new Error("Only an Admin or Super Admin can open a stage.");
+    throw new Error("Only an Admin can open a stage.");
   }
   const state = states.find((s) => s.phaseId === id);
   if (!state || state.status !== "pending") {
