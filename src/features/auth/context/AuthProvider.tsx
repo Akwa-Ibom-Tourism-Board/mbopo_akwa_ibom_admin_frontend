@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "./AuthContext";
 import { DUMMY_ACCOUNTS, type SessionUser } from "../data/dummy-accounts";
+import { recordActivity } from "@/features/activity-log/api";
 import { SESSION_KEY, readSessionUser } from "../session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -26,12 +27,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         /* storage unavailable — session lasts until reload */
       }
+      recordActivity("access", "Signed in");
       return { ok: true as const };
     },
     [queryClient],
   );
 
   const logout = useCallback(() => {
+    recordActivity("access", "Signed out");
     queryClient.clear();
     setUser(null);
     try {

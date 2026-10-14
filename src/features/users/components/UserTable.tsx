@@ -74,12 +74,18 @@ export function UserTable({
   onEdit,
   onToggleActive,
   onResetPassword,
+  onBulkSetActive,
 }: {
   users: AdminUser[] | undefined;
   isLoading: boolean;
   onEdit: (u: AdminUser) => void;
   onToggleActive: (u: AdminUser) => void;
   onResetPassword: (u: AdminUser) => void;
+  onBulkSetActive: (
+    users: AdminUser[],
+    active: boolean,
+    clear: () => void,
+  ) => void;
 }) {
   const { user: me, role: myRole } = useAuth();
   const [role, setRole] = useState(ALL);
@@ -137,6 +143,33 @@ export function UserTable({
           </div>
         </>
       }
+      // Only accounts this person may manage (and never their own) can be ticked.
+      isRowSelectable={(u) => canAssignRole(myRole, u.role) && u.id !== me?.id}
+      bulkActions={(selected, clear) => {
+        const active = selected.filter((u) => u.active);
+        const inactive = selected.filter((u) => !u.active);
+        return (
+          <>
+            {active.length > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onBulkSetActive(active, false, clear)}
+              >
+                <UserX size={16} /> Deactivate {active.length}
+              </Button>
+            )}
+            {inactive.length > 0 && (
+              <Button
+                size="sm"
+                onClick={() => onBulkSetActive(inactive, true, clear)}
+              >
+                <UserCheck size={16} /> Reactivate {inactive.length}
+              </Button>
+            )}
+          </>
+        );
+      }}
       rowActions={(u) => {
         // Rows the signed-in role may not manage (Super Admins for everyone;
         // Admins for other Admins) get no actions at all.

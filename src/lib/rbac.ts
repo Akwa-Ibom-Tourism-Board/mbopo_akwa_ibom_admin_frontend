@@ -30,6 +30,10 @@ export type Capability =
   // Candidates
   | "candidates.view"
   | "candidates.editPublicProfile"
+  // Admin / Super Admin only: see the full NIN/VIN (everyone else sees them
+  // masked), edit an applicant's details and upload or replace documents.
+  | "candidates.viewIdentity"
+  | "candidates.editDetails"
   // Judging — the two judge roles only. Deliberately granted to no other
   // role, including Super Admin: nobody outside the panel sees live scores.
   | "judging.access"
@@ -70,6 +74,8 @@ const ALL_ROLES: Role[] = [
 export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "candidates.view": ["super_admin", "admin", "media", "judge", "head_judge"],
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],
+  "candidates.viewIdentity": ["super_admin", "admin"],
+  "candidates.editDetails": ["super_admin", "admin"],
 
   "judging.access": ["judge", "head_judge"],
   "judging.score": ["judge", "head_judge"],

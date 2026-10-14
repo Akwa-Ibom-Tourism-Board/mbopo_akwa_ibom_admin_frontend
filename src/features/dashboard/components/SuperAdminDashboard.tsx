@@ -115,7 +115,7 @@ export function SuperAdminDashboard() {
             },
             {
               to: "/activity-log",
-              title: "Activity log",
+              title: "Event tracker",
               text: "Who did what, and when.",
               icon: Activity,
             },

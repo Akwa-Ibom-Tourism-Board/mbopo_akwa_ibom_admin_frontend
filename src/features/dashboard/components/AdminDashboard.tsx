@@ -110,7 +110,7 @@ export function AdminDashboard() {
             },
             {
               to: "/activity-log",
-              title: "Activity log",
+              title: "Event tracker",
               text: "Audit trail of every action.",
               icon: Activity,
             },

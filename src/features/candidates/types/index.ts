@@ -1,4 +1,5 @@
 import type { Lga, SenatorialDistrict } from "@/lib/constants";
+import type { Role } from "@/lib/rbac";
 
 import type { CandidateStage, PhaseId } from "@/lib/phases";
 
@@ -9,35 +10,101 @@ export type { CandidateStage };
 export type CandidateStatus =
   "active" | "advanced" | "eliminated" | "disqualified" | "winner";
 
-export type VerificationStatus = "verified" | "pending" | "failed";
-
 export interface CandidateVideo {
   title: string;
   youtubeUrl: string;
 }
 
-// Mirrors the applicant platform's Application + User shape (display only —
-// don't redesign these fields).
+export type Gender = "male" | "female";
+export type ApplicationStatus = "draft" | "submitted";
+
+// The file slots an applicant has, named exactly as the backend names them
+// (configurations/cloudinary.ts UPLOAD_FIELDS). "avatar" lives on the account
+// (User.avatarUrl); the rest are on the Application.
+export type DocumentField =
+  "avatar" | "certificateOfOrigin" | "fullImage" | "fullImage2" | "videoPitch";
+
+// One uploaded file. `publicId` is the Cloudinary public_id the backend keeps
+// beside every URL (mbopo/<env>/applications/<applicantId>/<field>).
+export interface CandidateDocument {
+  url: string;
+  publicId: string;
+  fileName?: string;
+  mimeType?: string;
+  bytes?: number;
+  uploadedAt: string; // ISO
+  // "Applicant" for their own upload, otherwise the staff member's name. The
+  // role lets the page show "an administrator" for a Super Admin's upload.
+  uploadedBy: string;
+  uploadedByRole: Role | "applicant";
+}
+
+// Mirrors the backend's User + Application tables (mbopo_akwa_ibom_backend:
+// auth/User.ts and applicants/application/Application.ts). Field names follow
+// the backend, with two readability exceptions the whole admin app already
+// uses: `lga` is the backend's `localGovernment`, and `why` also appears as the
+// derived `story`.
 export interface Candidate {
   id: string;
-  // From the application
-  name: string;
-  email: string;
-  phone: string;
+
+  // ── Account identity (User) — comes from the applicant's NIN/VIN check
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  gender: Gender;
   dateOfBirth: string; // ISO date
-  lga: Lga;
+  nin: string; // 11 digits
+  vin: string; // 19 characters
+  ward?: string;
+  lga: Lga; // backend: localGovernment
   senatorialDistrict: SenatorialDistrict; // derived from lga
+  identityVerified: boolean;
+  // null = no submit-time VIN check has run yet — NOT "failed".
+  isVinVerified: boolean | null;
+  vinVerificationFailedReason?: string;
+  email: string;
+  emailVerified: boolean;
+
+  // ── Application
+  phone: string;
+  socialMedia?: string;
+  nextOfKin: string;
+  nextOfKinPhone: string;
+  nextOfKinRelationship: string;
+  village: string;
+  residenceState: string;
+  city: string;
+  address: string;
   education: string;
+  institution?: string;
+  institutionOther?: string; // only when institution is "Other"
   occupation: string;
-  ninStatus: VerificationStatus;
-  vinStatus: VerificationStatus;
+  occupationOther?: string; // only when occupation is "Other"
+  talents: string;
+  languages: string;
+  initiative?: string;
+  why: string;
+  declarationIdentity: boolean;
+  declarationAccuracy: boolean;
+  declarationTerms: boolean;
+  applicationStatus: ApplicationStatus;
+  referenceCode: string;
+  submittedAt?: string; // ISO
+  appliedAt: string; // ISO — when the application was started
+
+  // ── Uploaded files
+  documents: Partial<Record<DocumentField, CandidateDocument>>;
+
+  // ── Display fields derived from the above (see utils/derive.ts) so the rest
+  // of the app can keep using short names. Never edit these directly.
+  name: string;
   photo: string;
   applicantPhotos: string[];
   videoPitchUrl?: string;
   story: string;
-  appliedAt: string; // ISO
-  // Judging state. `phase` is the stage of elimination the candidate is in (or
-  // last competed in); `stage` is the broader stage it belongs to, kept in
+
+  // ── Judging state. `phase` is the stage of elimination the candidate is in
+  // (or last competed in); `stage` is the broader stage it belongs to, kept in
   // sync. `advanced` means the Head Judge has finalized them through that
   // phase and they wait there until an Admin opens the next one. Only the
   // judging workflow changes these.
@@ -48,11 +115,13 @@ export interface Candidate {
   // The phase where an eliminated / disqualified candidate's run ended.
   eliminatedAt?: PhaseId;
   disqualifiedAt?: PhaseId;
-  // Public profile content (Media-managed)
+
+  // ── Public profile content (Media-managed)
   bio?: string;
   additionalPhotos?: string[];
   additionalVideos?: CandidateVideo[];
-  // Voting (read from the voting platform's own data)
+
+  // ── Voting (read from the voting platform's own data)
   voteCount?: number;
 }
 

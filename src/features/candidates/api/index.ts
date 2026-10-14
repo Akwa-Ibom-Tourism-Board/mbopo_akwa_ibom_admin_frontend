@@ -21,6 +21,55 @@ export async function getCandidate(id: string): Promise<Candidate | null> {
   return found ? { ...found } : null;
 }
 
+const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+// "Added 2 photos and updated the bio" — so the event tracker says what
+// actually changed on a profile, not just that it was saved.
+function describeProfileChange(before: Candidate, after: Candidate) {
+  const parts: string[] = [];
+  const bioBefore = before.bio ?? "";
+  const bioAfter = after.bio ?? "";
+  if (bioBefore !== bioAfter) {
+    parts.push(
+      !bioBefore
+        ? "added a bio"
+        : !bioAfter
+          ? "removed the bio"
+          : "updated the bio",
+    );
+  }
+  const photosBefore = new Set(before.additionalPhotos ?? []);
+  const photosAfter = new Set(after.additionalPhotos ?? []);
+  const addedPhotos = [...photosAfter].filter(
+    (p) => !photosBefore.has(p),
+  ).length;
+  const removedPhotos = [...photosBefore].filter(
+    (p) => !photosAfter.has(p),
+  ).length;
+  if (addedPhotos) parts.push(`added ${count(addedPhotos, "photo")}`);
+  if (removedPhotos) parts.push(`removed ${count(removedPhotos, "photo")}`);
+  const videosBefore = new Set(
+    (before.additionalVideos ?? []).map((v) => v.youtubeUrl),
+  );
+  const videosAfter = new Set(
+    (after.additionalVideos ?? []).map((v) => v.youtubeUrl),
+  );
+  const addedVideos = [...videosAfter].filter(
+    (v) => !videosBefore.has(v),
+  ).length;
+  const removedVideos = [...videosBefore].filter(
+    (v) => !videosAfter.has(v),
+  ).length;
+  if (addedVideos) parts.push(`added ${count(addedVideos, "video")}`);
+  if (removedVideos) parts.push(`removed ${count(removedVideos, "video")}`);
+  if (!parts.length) return "";
+  const sentence =
+    parts.length > 1
+      ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`
+      : parts[0]!;
+  return sentence[0]!.toUpperCase() + sentence.slice(1);
+}
+
 export async function updateCandidateProfile(
   id: string,
   update: PublicProfileUpdate,
@@ -31,7 +80,9 @@ export async function updateCandidateProfile(
   if (!current) throw new Error("Candidate not found");
   const next = { ...current, ...update };
   store = store.map((c, i) => (i === index ? next : c));
-  recordActivity("candidates", `Updated the public profile of ${next.name}`);
+  const changes = describeProfileChange(current, next);
+  if (changes)
+    recordActivity("candidates", `${changes} on ${next.name}'s profile`);
   return { ...next };
 }
 

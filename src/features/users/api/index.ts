@@ -114,6 +114,62 @@ export async function setUserActive(
   return { ...next };
 }
 
+export interface BulkStatusResult {
+  changed: AdminUser[];
+  skipped: { id: string; name: string; reason: string }[];
+}
+
+// Activate or deactivate several accounts at once. Each one is checked like the
+// single action (you can only manage roles you may assign, never yourself, and
+// only one active Head Judge), so one refusal doesn't stop the rest. One
+// activity entry summarises the batch.
+export async function setUsersActive(
+  ids: string[],
+  active: boolean,
+): Promise<BulkStatusResult> {
+  await delay(300);
+  const changed: AdminUser[] = [];
+  const skipped: BulkStatusResult["skipped"] = [];
+  for (const id of ids) {
+    const current = users.find((u) => u.id === id);
+    if (!current) continue;
+    try {
+      assertCanManage(current.role);
+      if (readSessionUser()?.id === id) {
+        throw new Error("You can't change your own account.");
+      }
+      if (current.active === active) {
+        throw new Error(active ? "Already active." : "Already deactivated.");
+      }
+      if (active && current.role === "head_judge") assertSingleHeadJudge(id);
+      const next = { ...current, active };
+      users = users.map((u) => (u.id === id ? next : u));
+      changed.push({ ...next });
+    } catch (e) {
+      skipped.push({
+        id,
+        name: fullName(current),
+        reason:
+          e instanceof Error ? e.message : "Couldn't change this account.",
+      });
+    }
+  }
+  if (changed.length) {
+    const byRole = new Map<string, number>();
+    changed.forEach((u) =>
+      byRole.set(
+        ROLE_LABELS[u.role],
+        (byRole.get(ROLE_LABELS[u.role]) ?? 0) + 1,
+      ),
+    );
+    recordActivity(
+      "users",
+      `${active ? "Reactivated" : "Deactivated"} ${changed.length} staff account${changed.length === 1 ? "" : "s"} in bulk (${[...byRole].map(([r, n]) => `${n} ${r}`).join(", ")})`,
+    );
+  }
+  return { changed, skipped };
+}
+
 // Random, easy-to-read temporary password (no look-alike characters).
 function generateTemporaryPassword(length = 12) {
   const alphabet =

@@ -46,6 +46,9 @@ export async function replyToComplaint(
   await delay();
   if (!body.trim()) throw new Error("Write a reply first.");
   const actor = readSessionUser();
+  const subject = store.find((c) => c.id === id)?.subject;
+  if (subject)
+    recordActivity("complaints", `Replied to complaint “${subject}”`);
   return patchComplaint(id, (c) => ({
     ...c,
     status: c.status === "open" ? "in_progress" : c.status,

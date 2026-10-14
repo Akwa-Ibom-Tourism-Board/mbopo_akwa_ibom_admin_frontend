@@ -21,3 +21,10 @@ export const formatDateTime = (value: string | Date) =>
 
 export const formatRelative = (value: string | Date) =>
   formatDistanceToNow(toDate(value), { addSuffix: true });
+
+export const formatBytes = (bytes: number | undefined) => {
+  if (bytes == null) return "—";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};

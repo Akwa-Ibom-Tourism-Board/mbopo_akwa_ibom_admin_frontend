@@ -7,3 +7,5 @@ export { ConfirmDialog } from "./ConfirmDialog";
 export type { ConfirmDialogProps } from "./ConfirmDialog";
 export { Badge } from "./Badge";
 export type { BadgeTone } from "./Badge";
+export { Tabs } from "./Tabs";
+export type { TabItem } from "./Tabs";

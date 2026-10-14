@@ -10,11 +10,12 @@ import {
   PhaseBadge,
   StatusBadge,
 } from "@/features/candidates/components/Badges";
+import { occupationLabel } from "@/features/candidates/utils/derive";
+import { PitchPlayer } from "@/features/candidates/components/MediaPlayers";
 import { usePhaseStates } from "@/features/stages/api/hooks";
 import { inField as candidateInField } from "@/features/stages/utils/participants";
 import { phaseTitle } from "@/lib/phases";
 import { YoutubeEmbed } from "@/features/voting-content";
-import { parseYoutubeId } from "@/lib/youtube";
 import { media } from "@/theme";
 import { CriteriaRubric } from "../components/CriteriaRubric";
 import { ScoreForm } from "../components/ScoreForm";
@@ -165,7 +166,6 @@ export function CandidateScoringPage() {
             (c.status === "advanced"
               ? `Finalized through ${phaseTitle(c.phase)}. Scoring is closed.`
               : undefined));
-  const pitchIsYoutube = c.videoPitchUrl && parseYoutubeId(c.videoPitchUrl);
 
   return (
     <>
@@ -198,20 +198,15 @@ export function CandidateScoringPage() {
             </CardHeader>
             <CardContent>
               <Small>
-                {c.occupation} · {c.education}
+                {occupationLabel(c)} · {c.education}
               </Small>
               <Small>{c.story}</Small>
-              {c.videoPitchUrl &&
-                (pitchIsYoutube ? (
-                  <YoutubeEmbed
-                    url={c.videoPitchUrl}
-                    title={`${c.name} video pitch`}
-                  />
-                ) : (
-                  <a href={c.videoPitchUrl} target="_blank" rel="noreferrer">
-                    Video pitch
-                  </a>
-                ))}
+              {c.videoPitchUrl && (
+                <PitchPlayer
+                  url={c.videoPitchUrl}
+                  title={`${c.name} video pitch`}
+                />
+              )}
             </CardContent>
           </Card>
 

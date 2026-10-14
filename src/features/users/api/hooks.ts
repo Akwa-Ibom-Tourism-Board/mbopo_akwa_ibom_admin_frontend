@@ -5,6 +5,7 @@ import {
   getUsers,
   resetPassword,
   setUserActive,
+  setUsersActive,
   updateUser,
 } from ".";
 import type { UserUpdate } from "../types";
@@ -33,6 +34,10 @@ export function useResetPassword() {
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   });
 }
+export const useSetUsersActive = () =>
+  useInvalidating(({ ids, active }: { ids: string[]; active: boolean }) =>
+    setUsersActive(ids, active),
+  );
 export const useUpdateUser = () =>
   useInvalidating(({ id, patch }: { id: string; patch: UserUpdate }) =>
     updateUser(id, patch),

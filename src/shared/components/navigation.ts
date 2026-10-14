@@ -124,7 +124,7 @@ export const NAV_GROUPS: NavGroupConfig[] = [
       },
       {
         to: "/activity-log",
-        label: "Activity Log",
+        label: "Event Tracker",
         icon: Activity,
         capability: "activity.view",
       },
