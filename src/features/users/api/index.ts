@@ -114,12 +114,23 @@ export async function setUserActive(
   return { ...next };
 }
 
-// Password recovery. Nobody can read a password, so "lost login" is solved by
-// issuing a fresh temporary one: it is generated here, emailed to the person's
-// address and kept only in scrambled form (in this dummy build it is simply
-// not kept — the real backend generates, hashes and emails it). The caller
-// never receives the password.
-export async function resetPassword(id: string): Promise<{ email: string }> {
+// Random, easy-to-read temporary password (no look-alike characters).
+function generateTemporaryPassword(length = 12) {
+  const alphabet =
+    "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789@#$%";
+  const bytes = crypto.getRandomValues(new Uint32Array(length));
+  return Array.from(bytes, (n) => alphabet[n % alphabet.length]).join("");
+}
+
+// Password recovery. Nobody can read an existing password, so a lost login is
+// solved by issuing a fresh temporary one. It is generated here, emailed to
+// the person's address, and handed back ONCE so the Admin / Super Admin can
+// pass it on if the email is slow. The caller must show it once and then drop
+// it; it is never stored (the real backend hashes it before saving and the old
+// password stops working). In this dummy build the demo sign-in is unchanged.
+export async function resetPassword(
+  id: string,
+): Promise<{ email: string; temporaryPassword: string }> {
   await delay(300);
   const current = users.find((u) => u.id === id);
   if (!current) throw new Error("User not found.");
@@ -133,7 +144,10 @@ export async function resetPassword(id: string): Promise<{ email: string }> {
     "users",
     `Reset the password of ${fullName(current)} — a new temporary password was emailed to them`,
   );
-  return { email: current.email };
+  return {
+    email: current.email,
+    temporaryPassword: generateTemporaryPassword(),
+  };
 }
 
 export interface BulkResult {

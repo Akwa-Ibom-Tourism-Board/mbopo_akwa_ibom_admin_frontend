@@ -32,7 +32,7 @@ const columns: DataTableColumn<AdminUser>[] = [
     header: "Password",
     sortValue: (u) => u.passwordChangedAt,
     cell: (u) => (
-      <span title="Passwords are never shown. Use Reset to email a new temporary one.">
+      <span title="Passwords are stored scrambled. Use Reset to issue a new temporary one.">
         <span aria-label="Hidden password" style={{ letterSpacing: 2 }}>
           ••••••••
         </span>

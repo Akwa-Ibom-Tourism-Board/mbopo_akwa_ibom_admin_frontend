@@ -2,10 +2,20 @@ import { recordActivity } from "@/features/activity-log/api";
 import { readSessionUser } from "@/features/auth/session";
 import { applyJudgingDecision, getCandidates } from "@/features/candidates/api";
 import type { Candidate } from "@/features/candidates/types";
-import { phaseStateSync, setPhaseState } from "@/features/stages/api";
+import {
+  getPhaseStates,
+  phaseStateSync,
+  setPhaseState,
+} from "@/features/stages/api";
 import { participantsOf, inField } from "@/features/stages/utils/participants";
 import { can, isJudgeRole } from "@/lib/rbac";
-import { phaseTitle, type PhaseId } from "@/lib/phases";
+import {
+  PHASES,
+  phaseIndex,
+  phaseTitle,
+  stageOfPhase,
+  type PhaseId,
+} from "@/lib/phases";
 import { JUDGES, MOCK_SCORES } from "../data/mock-scores";
 import {
   PHASE_QUOTA,
@@ -323,4 +333,84 @@ export async function finalizePhase(phase: PhaseId, passedIds: string[]) {
       : `Finalized and closed ${phaseTitle(phase)}: ${plural(passed.size, "candidate")} through, ${out.length} eliminated`,
   );
   return { through: passed.size, eliminated: out.length };
+}
+
+// Reopens a closed stage so scores can be corrected and it can be finalized
+// again. Admin / Super Admin only, with one difference:
+//  • an Admin may reopen only the MOST RECENTLY CLOSED stage — once the event
+//    has moved past a stage (a later one is closed) it can't be reopened;
+//  • a Super Admin may reopen any closed stage.
+// Reopening undoes that stage's finalization (candidates who went through or
+// were cut return to it; disqualifications made inside it stand) and WIPES
+// every stage after it — scores, movements, disqualifications — back to
+// "never opened". The reopened stage keeps its own scores.
+export async function reopenStage(
+  phase: PhaseId,
+): Promise<{ wiped: PhaseId[] }> {
+  await delay();
+  const actor = readSessionUser();
+  if (!can(actor?.role, "stages.open")) {
+    throw new Error("Only an administrator can reopen a stage.");
+  }
+  const states = await getPhaseStates();
+  const state = states.find((s) => s.phaseId === phase);
+  if (!state || state.status !== "closed") {
+    throw new Error("Only a closed stage can be reopened.");
+  }
+  const idx = phaseIndex(phase);
+  const laterClosed = states.some(
+    (s) => phaseIndex(s.phaseId) > idx && s.status === "closed",
+  );
+  if (laterClosed && !can(actor?.role, "stages.reopenAny")) {
+    throw new Error("This stage can't be reopened — the event has moved on.");
+  }
+
+  // Later stages that have actually been opened lose everything; ones still
+  // pending have nothing to lose.
+  const later = PHASES.slice(idx + 1).map((p) => p.id);
+  const wiped = later.filter(
+    (id) => states.find((s) => s.phaseId === id)?.status !== "pending",
+  );
+  const wipedRounds = new Set(
+    wiped.flatMap((id) => roundsOf(id).map((r) => r.id)),
+  );
+  scores = scores.filter((s) => !wipedRounds.has(s.roundId));
+
+  // Everyone who had reached this stage or beyond returns to it, still
+  // competing — except people disqualified inside this very stage.
+  const affected = (await getCandidates()).filter(
+    (c) =>
+      phaseIndex(c.phase) >= idx &&
+      !(c.status === "disqualified" && c.disqualifiedAt === phase),
+  );
+  await applyJudgingDecision(
+    affected.map((c) => c.id),
+    {
+      phase,
+      stage: stageOfPhase(phase),
+      status: "active",
+      eliminatedAt: undefined,
+      disqualifiedAt: undefined,
+      disqualificationReason: undefined,
+    },
+  );
+
+  for (const id of later) setPhaseState({ phaseId: id, status: "pending" });
+  setPhaseState({
+    phaseId: phase,
+    status: "open",
+    openedAt: state.openedAt,
+    openedBy: state.openedBy,
+    openedByRole: state.openedByRole,
+    reopenedAt: new Date().toISOString(),
+    reopenedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
+    reopenedByRole: actor?.role,
+  });
+  recordActivity(
+    "judging",
+    wiped.length
+      ? `Reopened ${phaseTitle(phase)} and cleared ${wiped.map(phaseTitle).join(", ")}`
+      : `Reopened ${phaseTitle(phase)}`,
+  );
+  return { wiped };
 }

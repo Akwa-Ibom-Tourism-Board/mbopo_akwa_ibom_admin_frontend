@@ -5,7 +5,13 @@ import { useCandidates } from "@/features/candidates/api/hooks";
 import { FinalizePanel, JudgeStageTable } from "@/features/judging";
 import { STAGES, roundsOf } from "@/features/judging/data/mock-stages";
 import { useCan } from "@/lib/rbac";
-import { getPhaseDef, isPhaseId, phaseTitle, prevPhaseId } from "@/lib/phases";
+import {
+  getPhaseDef,
+  isPhaseId,
+  phaseIndex,
+  phaseTitle,
+  prevPhaseId,
+} from "@/lib/phases";
 import { useParams } from "react-router-dom";
 import { usePhaseStates } from "../api/hooks";
 import { StageCandidateTable } from "../components/StageCandidateTable";
@@ -55,6 +61,14 @@ export function StagePage() {
   const prev = prevPhaseId(phaseId);
   const prevClosed =
     !prev || states.data?.find((s) => s.phaseId === prev)?.status === "closed";
+  const after = (states.data ?? []).filter(
+    (s) => phaseIndex(s.phaseId) > phaseIndex(phaseId),
+  );
+  const laterClosed = after.some((s) => s.status === "closed");
+  // Stages after this one that have been opened: reopening this one erases them.
+  const wipes = after
+    .filter((s) => s.status !== "pending")
+    .map((s) => s.phaseId);
   const incoming = rows.filter((r) => r.outcome === "incoming").length;
   const rounds = roundsOf(phaseId);
 
@@ -75,6 +89,8 @@ export function StagePage() {
         summary={stageConfig.summary}
         incoming={incoming}
         prevClosed={prevClosed}
+        laterClosed={laterClosed}
+        wipes={wipes}
       />
       <Rounds aria-label="What is judged">
         {rounds.map((r) => (

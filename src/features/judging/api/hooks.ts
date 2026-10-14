@@ -8,6 +8,7 @@ import {
   getJudges,
   getLeaderboard,
   getMyScores,
+  reopenStage,
   saveScore,
 } from ".";
 
@@ -77,4 +78,9 @@ export function useFinalize(phase: PhaseId) {
     mutationFn: (passedIds: string[]) => finalizePhase(phase, passedIds),
     onSuccess: invalidate,
   });
+}
+
+export function useReopenStage() {
+  const invalidate = useInvalidateJudging();
+  return useMutation({ mutationFn: reopenStage, onSuccess: invalidate });
 }

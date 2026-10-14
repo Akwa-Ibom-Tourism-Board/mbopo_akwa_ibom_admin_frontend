@@ -23,7 +23,16 @@ function useInvalidating<A, R>(fn: (arg: A) => Promise<R>) {
 
 export const useCreateUser = () => useInvalidating(createUser);
 export const useCreateUsers = () => useInvalidating(createUsers);
-export const useResetPassword = () => useInvalidating(resetPassword);
+// gcTime 0: the temporary password this returns must not linger in React
+// Query's mutation cache — the dialog shows it once and then it is gone.
+export function useResetPassword() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: resetPassword,
+    gcTime: 0,
+    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+}
 export const useUpdateUser = () =>
   useInvalidating(({ id, patch }: { id: string; patch: UserUpdate }) =>
     updateUser(id, patch),

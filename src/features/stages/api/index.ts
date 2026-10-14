@@ -73,6 +73,7 @@ export async function openPhase(id: PhaseId): Promise<{ moved: number }> {
     status: "open",
     openedAt: new Date().toISOString(),
     openedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
+    openedByRole: actor?.role,
   });
   recordActivity(
     "judging",

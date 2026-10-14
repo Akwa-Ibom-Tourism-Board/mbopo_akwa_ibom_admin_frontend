@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { DoorOpen, Lock } from "lucide-react";
+import { DoorOpen, Lock, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
 import { ConfirmDialog } from "@/shared/components";
@@ -12,6 +12,8 @@ import {
   type PhaseId,
 } from "@/lib/phases";
 import { useCan } from "@/lib/rbac";
+import { useAuth } from "@/features/auth";
+import { useReopenStage } from "@/features/judging/api/hooks";
 import { useOpenPhase } from "../api/hooks";
 import type { PhaseState } from "../types";
 import { PhaseStatusBadge } from "./PhaseStatusBadge";
@@ -72,18 +74,36 @@ export function StageHeader({
   summary,
   incoming,
   prevClosed,
+  laterClosed,
+  wipes,
 }: {
   phaseId: PhaseId;
   state: PhaseState;
   summary: string;
   incoming: number;
   prevClosed: boolean;
+  // Any later stage already closed (the event has moved on)?
+  laterClosed: boolean;
+  // Later stages that have been opened — reopening this one erases them.
+  wipes: PhaseId[];
 }) {
   const can = useCan();
   const open = useOpenPhase();
+  const reopen = useReopenStage();
+  const { role } = useAuth();
+  const [reopenConfirm, setReopenConfirm] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const prev = prevPhaseId(phaseId);
   const canOpenNow = state.status === "pending" && prevClosed;
+  // An Admin can reopen only the most recently closed stage; the Super Admin
+  // can reopen any closed stage.
+  const canReopenNow = can("stages.reopenAny") || !laterClosed;
+  // Everyone but the Super Admin sees a Super Admin's actions as "an
+  // administrator" — they simply don't know that role exists.
+  const who = (name: string | undefined, by: string | undefined) =>
+    !name
+      ? ""
+      : ` by ${by === "super_admin" && role !== "super_admin" ? "an administrator" : name}`;
 
   return (
     <Card>
@@ -95,7 +115,10 @@ export function StageHeader({
         {state.openedAt && (
           <Meta>
             Opened {formatDateTime(state.openedAt)}
-            {state.openedBy ? ` by ${state.openedBy}` : ""}
+            {who(state.openedBy, state.openedByRole)}
+            {state.reopenedAt
+              ? ` · Reopened ${formatDateTime(state.reopenedAt)}${who(state.reopenedBy, state.reopenedByRole)}`
+              : ""}
             {state.closedAt
               ? ` · Closed ${formatDateTime(state.closedAt)}${state.closedBy ? ` by ${state.closedBy}` : ""}`
               : ""}
@@ -119,6 +142,21 @@ export function StageHeader({
             stage can be opened.
           </Hint>
         )}
+      {state.status === "closed" && can("stages.open") && (
+        <Button
+          variant="outline"
+          disabled={!canReopenNow}
+          onClick={() => setReopenConfirm(true)}
+        >
+          <RotateCcw size={16} /> Reopen {getPhaseDef(phaseId).label}
+        </Button>
+      )}
+      {state.status === "closed" && can("stages.open") && !canReopenNow && (
+        <Hint>
+          <Lock size={14} style={{ flexShrink: 0, marginTop: 2 }} />
+          The event has moved on, so this stage can't be reopened.
+        </Hint>
+      )}
       {state.status === "pending" && !can("stages.open") && (
         <Hint>
           <Lock size={14} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -146,6 +184,41 @@ export function StageHeader({
             onError: (e) => {
               toast.error(e.message);
               setConfirm(false);
+            },
+          })
+        }
+      />
+      <ConfirmDialog
+        open={reopenConfirm}
+        onOpenChange={setReopenConfirm}
+        title={`Reopen ${phaseTitle(phaseId)}?`}
+        description={
+          <>
+            Judges will be able to change their scores for this stage again, and
+            the Head Judge's decision is undone — candidates who went through or
+            were cut come back into the stage.
+            {wipes.length > 0 && (
+              <strong style={{ display: "block", marginTop: 10 }}>
+                Everything in {wipes.map(phaseTitle).join(", ")} will be erased
+                — scores, movements and disqualifications — and
+                {wipes.length === 1 ? " it goes" : " they go"} back to "not
+                opened yet". This can't be undone.
+              </strong>
+            )}
+          </>
+        }
+        confirmLabel="Reopen stage"
+        destructive={wipes.length > 0}
+        loading={reopen.isPending}
+        onConfirm={() =>
+          reopen.mutate(phaseId, {
+            onSuccess: () => {
+              toast.success(`${phaseTitle(phaseId)} is open again`);
+              setReopenConfirm(false);
+            },
+            onError: (e) => {
+              toast.error(e.message);
+              setReopenConfirm(false);
             },
           })
         }

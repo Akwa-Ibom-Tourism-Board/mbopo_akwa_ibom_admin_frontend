@@ -41,6 +41,9 @@ export type Capability =
   // Admin / Super Admin only: open the next stage (LGA, Senatorial, each
   // Grand Finale round). Judges can close a stage out but never open one.
   | "stages.open"
+  // Super Admin only: reopen ANY closed stage (everything after it is wiped).
+  // Admin can only reopen the most recently closed one.
+  | "stages.reopenAny"
   // Voting platform
   | "voting.pricing"
   | "voting.news"
@@ -75,6 +78,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "judging.finalize": ["head_judge"],
 
   "stages.open": ["super_admin", "admin"],
+  "stages.reopenAny": ["super_admin"],
 
   "voting.pricing": ["super_admin", "admin"],
   "voting.news": ["super_admin", "admin", "media"],

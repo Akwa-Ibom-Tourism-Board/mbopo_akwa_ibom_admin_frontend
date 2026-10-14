@@ -1,4 +1,5 @@
 import type { PhaseId } from "@/lib/phases";
+import type { Role } from "@/lib/rbac";
 
 // pending → open (an Admin / Super Admin opens it) → closed (the Head Judge
 // finalizes it). Closed is final: nobody changes a closed stage's scores.
@@ -9,8 +10,14 @@ export interface PhaseState {
   status: PhaseStatus;
   openedAt?: string;
   openedBy?: string;
+  // Kept so the page can show "an administrator" instead of a Super Admin's
+  // name to everyone who isn't the Super Admin.
+  openedByRole?: Role;
   closedAt?: string;
   closedBy?: string;
+  reopenedAt?: string;
+  reopenedBy?: string;
+  reopenedByRole?: Role;
   // Candidate ids the Head Judge finalized through (set when closed).
   passedIds?: string[];
 }
