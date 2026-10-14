@@ -240,7 +240,7 @@ export function BulkAddUsersPage() {
         onSuccess: ({ created, failed }) => {
           if (!failed.length) {
             toast.success(
-              `${created.length} account${created.length === 1 ? "" : "s"} created`,
+              `${created.length} account${created.length === 1 ? "" : "s"} created — sign-in details emailed`,
             );
             navigate("/users");
             return;

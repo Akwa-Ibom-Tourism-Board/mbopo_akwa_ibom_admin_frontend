@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Pencil, UserCheck, UserX } from "lucide-react";
+import { KeyRound, Pencil, UserCheck, UserX } from "lucide-react";
 import {
   Button,
   Select,
@@ -26,6 +26,21 @@ const columns: DataTableColumn<AdminUser>[] = [
     header: "Email",
     sortValue: (u) => u.email,
     cell: (u) => u.email,
+  },
+  {
+    id: "password",
+    header: "Password",
+    sortValue: (u) => u.passwordChangedAt,
+    cell: (u) => (
+      <span title="Passwords are never shown. Use Reset to email a new temporary one.">
+        <span aria-label="Hidden password" style={{ letterSpacing: 2 }}>
+          ••••••••
+        </span>
+        <small style={{ display: "block", opacity: 0.65 }}>
+          Changed {formatDate(u.passwordChangedAt)}
+        </small>
+      </span>
+    ),
   },
   {
     id: "role",
@@ -58,11 +73,13 @@ export function UserTable({
   isLoading,
   onEdit,
   onToggleActive,
+  onResetPassword,
 }: {
   users: AdminUser[] | undefined;
   isLoading: boolean;
   onEdit: (u: AdminUser) => void;
   onToggleActive: (u: AdminUser) => void;
+  onResetPassword: (u: AdminUser) => void;
 }) {
   const { user: me, role: myRole } = useAuth();
   const [role, setRole] = useState(ALL);
@@ -89,29 +106,35 @@ export function UserTable({
       emptyMessage="No users match."
       filters={
         <>
-          <Select value={role} onValueChange={setRole}>
-            <SelectTrigger aria-label="Role" style={{ minWidth: 160 }}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All roles</SelectItem>
-              {ALL_ROLES.map((r) => (
-                <SelectItem key={r} value={r}>
-                  {ROLE_LABELS[r]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger aria-label="Status" style={{ minWidth: 150 }}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="deactivated">Deactivated</SelectItem>
-            </SelectContent>
-          </Select>
+          <div style={{ flex: "0 1 190px", minWidth: 150 }}>
+            <Select value={role} onValueChange={setRole}>
+              <SelectTrigger aria-label="Role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All roles</SelectItem>
+                {ALL_ROLES.filter(
+                  (r) => r !== "super_admin" || myRole === "super_admin",
+                ).map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {ROLE_LABELS[r]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div style={{ flex: "0 1 190px", minWidth: 150 }}>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger aria-label="Status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>All statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="deactivated">Deactivated</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </>
       }
       rowActions={(u) => {
@@ -120,6 +143,15 @@ export function UserTable({
         if (!canAssignRole(myRole, u.role)) return null;
         return (
           <span style={{ display: "inline-flex", gap: 4 }}>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label={`Reset password for ${u.firstName}`}
+              title="Email a new temporary password"
+              onClick={() => onResetPassword(u)}
+            >
+              <KeyRound size={16} />
+            </Button>
             <Button
               size="icon"
               variant="ghost"

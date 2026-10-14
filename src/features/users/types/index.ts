@@ -8,6 +8,9 @@ export interface AdminUser {
   role: Role;
   active: boolean;
   createdAt: string; // ISO
+  // When a temporary password was last emailed to them. Passwords themselves
+  // are never stored in a readable form or shown to anyone.
+  passwordChangedAt: string; // ISO
 }
 
 export interface NewUserInput {

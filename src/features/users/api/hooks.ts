@@ -3,6 +3,7 @@ import {
   createUser,
   createUsers,
   getUsers,
+  resetPassword,
   setUserActive,
   updateUser,
 } from ".";
@@ -22,6 +23,7 @@ function useInvalidating<A, R>(fn: (arg: A) => Promise<R>) {
 
 export const useCreateUser = () => useInvalidating(createUser);
 export const useCreateUsers = () => useInvalidating(createUsers);
+export const useResetPassword = () => useInvalidating(resetPassword);
 export const useUpdateUser = () =>
   useInvalidating(({ id, patch }: { id: string; patch: UserUpdate }) =>
     updateUser(id, patch),

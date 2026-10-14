@@ -98,7 +98,7 @@ export function UserForm({
       );
     } else {
       create.mutate(input, {
-        onSuccess: () => done("User created"),
+        onSuccess: () => done("User created — sign-in details emailed to them"),
         onError: (e) => toast.error(e.message),
       });
     }

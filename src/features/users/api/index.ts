@@ -19,7 +19,7 @@ const fullName = (u: Pick<AdminUser, "firstName" | "lastName">) =>
 function assertCanManage(target: AdminUser["role"]) {
   const actor = readSessionUser();
   if (!canAssignRole(actor?.role, target)) {
-    throw new Error(`You can't manage ${ROLE_LABELS[target]} accounts.`);
+    throw new Error("You can't manage that account.");
   }
 }
 
@@ -37,9 +37,14 @@ function assertSingleHeadJudge(candidateId: string | null) {
   }
 }
 
+// Who the signed-in person is allowed to know about. Only the Super Admin
+// ever sees Super Admin accounts; for everyone else they simply aren't there.
 export async function getUsers(): Promise<AdminUser[]> {
   await delay();
-  return users.map((u) => ({ ...u }));
+  const viewer = readSessionUser();
+  return users
+    .filter((u) => u.role !== "super_admin" || viewer?.role === "super_admin")
+    .map((u) => ({ ...u }));
 }
 
 export async function createUser(input: NewUserInput): Promise<AdminUser> {
@@ -54,6 +59,7 @@ export async function createUser(input: NewUserInput): Promise<AdminUser> {
     id: `u-${Math.random().toString(36).slice(2, 9)}`,
     active: true,
     createdAt: new Date().toISOString(),
+    passwordChangedAt: new Date().toISOString(),
   };
   users = [...users, user];
   recordActivity(
@@ -108,6 +114,28 @@ export async function setUserActive(
   return { ...next };
 }
 
+// Password recovery. Nobody can read a password, so "lost login" is solved by
+// issuing a fresh temporary one: it is generated here, emailed to the person's
+// address and kept only in scrambled form (in this dummy build it is simply
+// not kept — the real backend generates, hashes and emails it). The caller
+// never receives the password.
+export async function resetPassword(id: string): Promise<{ email: string }> {
+  await delay(300);
+  const current = users.find((u) => u.id === id);
+  if (!current) throw new Error("User not found.");
+  assertCanManage(current.role);
+  if (!current.active)
+    throw new Error("Reactivate this account before resetting its password.");
+  users = users.map((u) =>
+    u.id === id ? { ...u, passwordChangedAt: new Date().toISOString() } : u,
+  );
+  recordActivity(
+    "users",
+    `Reset the password of ${fullName(current)} — a new temporary password was emailed to them`,
+  );
+  return { email: current.email };
+}
+
 export interface BulkResult {
   created: AdminUser[];
   // Index into the submitted list, so the form can mark the right rows.
@@ -136,6 +164,7 @@ export async function createUsers(inputs: NewUserInput[]): Promise<BulkResult> {
         id: `u-${Math.random().toString(36).slice(2, 9)}`,
         active: true,
         createdAt: new Date().toISOString(),
+        passwordChangedAt: new Date().toISOString(),
       };
       users = [...users, user];
       created.push({ ...user });

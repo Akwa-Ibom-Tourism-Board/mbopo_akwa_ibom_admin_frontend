@@ -11,6 +11,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "super_admin",
     active: true,
     createdAt: "2026-05-01T09:00:00.000Z",
+    passwordChangedAt: "2026-05-01T09:00:00.000Z",
   },
   {
     id: "u-admin-1",
@@ -20,6 +21,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "admin",
     active: true,
     createdAt: "2026-05-04T09:00:00.000Z",
+    passwordChangedAt: "2026-05-04T09:00:00.000Z",
   },
   {
     id: "u-admin-2",
@@ -29,6 +31,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "admin",
     active: true,
     createdAt: "2026-05-20T09:00:00.000Z",
+    passwordChangedAt: "2026-05-20T09:00:00.000Z",
   },
   {
     id: "u-media-1",
@@ -38,6 +41,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "media",
     active: true,
     createdAt: "2026-06-02T09:00:00.000Z",
+    passwordChangedAt: "2026-06-02T09:00:00.000Z",
   },
   {
     id: "u-media-2",
@@ -47,6 +51,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "media",
     active: true,
     createdAt: "2026-06-10T09:00:00.000Z",
+    passwordChangedAt: "2026-06-10T09:00:00.000Z",
   },
   {
     id: "u-media-3",
@@ -56,6 +61,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "media",
     active: false,
     createdAt: "2026-06-12T09:00:00.000Z",
+    passwordChangedAt: "2026-06-12T09:00:00.000Z",
   },
   {
     id: "u-judge-1",
@@ -65,6 +71,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "judge",
     active: true,
     createdAt: "2026-07-01T09:00:00.000Z",
+    passwordChangedAt: "2026-07-01T09:00:00.000Z",
   },
   {
     id: "u-judge-2",
@@ -74,6 +81,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "judge",
     active: true,
     createdAt: "2026-07-01T09:30:00.000Z",
+    passwordChangedAt: "2026-07-01T09:30:00.000Z",
   },
   {
     id: "u-judge-3",
@@ -83,6 +91,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "judge",
     active: true,
     createdAt: "2026-07-02T09:00:00.000Z",
+    passwordChangedAt: "2026-07-02T09:00:00.000Z",
   },
   {
     id: "u-judge-4",
@@ -92,6 +101,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "judge",
     active: true,
     createdAt: "2026-10-11T09:00:00.000Z",
+    passwordChangedAt: "2026-10-11T09:00:00.000Z",
   },
   {
     id: "u-hj-1",
@@ -101,6 +111,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "head_judge",
     active: true,
     createdAt: "2026-06-28T09:00:00.000Z",
+    passwordChangedAt: "2026-06-28T09:00:00.000Z",
   },
   {
     id: "u-cs-1",
@@ -110,6 +121,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "customer_service",
     active: true,
     createdAt: "2026-07-15T09:00:00.000Z",
+    passwordChangedAt: "2026-07-15T09:00:00.000Z",
   },
   {
     id: "u-cs-2",
@@ -119,6 +131,7 @@ export const MOCK_USERS: AdminUser[] = [
     role: "customer_service",
     active: true,
     createdAt: "2026-07-15T10:00:00.000Z",
+    passwordChangedAt: "2026-07-15T10:00:00.000Z",
   },
   {
     id: "u-cs-3",
@@ -128,5 +141,6 @@ export const MOCK_USERS: AdminUser[] = [
     role: "customer_service",
     active: true,
     createdAt: "2026-08-01T09:00:00.000Z",
+    passwordChangedAt: "2026-08-01T09:00:00.000Z",
   },
 ];
