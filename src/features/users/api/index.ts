@@ -39,6 +39,29 @@ function assertSingleHeadJudge(candidateId: string | null) {
 
 // Who the signed-in person is allowed to know about. Only the Super Admin
 // ever sees Super Admin accounts; for everyone else they simply aren't there.
+// Sync helpers for other features' data layers (a real backend would query
+// these). The judge roster is every judge and Head Judge account, active or not.
+export function judgeRosterSync(): {
+  id: string;
+  name: string;
+  head: boolean;
+  active: boolean;
+}[] {
+  return users
+    .filter((u) => u.role === "judge" || u.role === "head_judge")
+    .map((u) => ({
+      id: u.id,
+      name: fullName(u),
+      head: u.role === "head_judge",
+      active: u.active,
+    }));
+}
+
+// Accounts the app has never heard of count as active.
+export function isUserActiveSync(id: string) {
+  return users.find((u) => u.id === id)?.active ?? true;
+}
+
 export async function getUsers(): Promise<AdminUser[]> {
   await delay();
   const viewer = readSessionUser();

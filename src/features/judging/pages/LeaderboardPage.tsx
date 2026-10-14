@@ -25,7 +25,7 @@ export function LeaderboardPage() {
   const active = chosen ? phase : (open ?? phase);
 
   const board = useLeaderboard(active);
-  const judges = useJudges();
+  const judges = useJudges(active);
   const [selected, setSelected] = useState<LeaderboardEntry | null>(null);
   const pending =
     states?.find((s) => s.phaseId === active)?.status === "pending";

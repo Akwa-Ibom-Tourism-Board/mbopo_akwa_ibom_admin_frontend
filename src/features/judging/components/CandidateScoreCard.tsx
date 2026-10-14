@@ -7,7 +7,7 @@ import { formatScore } from "../utils/scoring";
 // can("judging.leaderboard") — it fetches scores on mount.
 export function CandidateScoreCard({ candidate }: { candidate: Candidate }) {
   const board = useLeaderboard(candidate.phase);
-  const judges = useJudges();
+  const judges = useJudges(candidate.phase);
   const entry = board.data?.find((e) => e.candidate.id === candidate.id);
 
   return (

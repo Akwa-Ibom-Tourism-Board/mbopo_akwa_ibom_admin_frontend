@@ -13,6 +13,13 @@ export const MOCK_PHASE_STATES: PhaseState[] = PHASES.map((p) =>
         openedAt: "2026-08-03T08:00:00.000Z",
         openedBy: "Utibe Akpan",
         openedByRole: "admin" as const,
+        countedJudgeIds: [
+          "u-judge-1",
+          "u-judge-2",
+          "u-judge-3",
+          "u-judge-4",
+          "u-hj-1",
+        ],
         closedAt: "2026-09-18T16:00:00.000Z",
         closedBy: "Mbuk Inyang",
         passedIds: MOCK_CANDIDATES.filter((c) => c.status === "advanced").map(

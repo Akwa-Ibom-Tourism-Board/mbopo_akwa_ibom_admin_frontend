@@ -16,6 +16,9 @@ export interface PhaseState {
   closedAt?: string;
   closedBy?: string;
   closedByRole?: Role;
+  // Judges whose scores count in this stage's results, fixed when it is closed
+  // — deactivating a judge later changes nothing about a closed stage.
+  countedJudgeIds?: string[];
   // Results (who goes through) are submitted before the stage is closed. Once
   // submitted, scoring is locked; the stage stays "open" until it is closed.
   resultsSubmittedAt?: string;

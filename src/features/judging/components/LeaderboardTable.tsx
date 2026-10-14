@@ -91,7 +91,7 @@ export function LeaderboardTable({
     },
     ...judges.map<DataTableColumn<LeaderboardEntry>>((j) => ({
       id: `judge-${j.id}`,
-      header: j.name,
+      header: `${j.name}${j.active === false ? " (deactivated)" : ""}`,
       sortValue: (e) => e.perJudge[j.id]?.score ?? -1,
       cell: (e) => formatScore(e.perJudge[j.id]?.score),
     })),

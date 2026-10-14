@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "./AuthContext";
 import { DUMMY_ACCOUNTS, type SessionUser } from "../data/dummy-accounts";
 import { recordActivity } from "@/features/activity-log/api";
+import { isUserActiveSync } from "@/features/users/api";
 import { SESSION_KEY, readSessionUser } from "../session";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -18,6 +19,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
       if (!account)
         return { ok: false as const, error: "Incorrect email or password." };
+      // A deactivated account can't sign in.
+      if (!isUserActiveSync(account.id)) {
+        return {
+          ok: false as const,
+          error:
+            "This account has been deactivated. Please contact an administrator.",
+        };
+      }
       // Never carry one person's cached data (users, activity…) into the next
       // person's session — what each role may see differs.
       queryClient.clear();

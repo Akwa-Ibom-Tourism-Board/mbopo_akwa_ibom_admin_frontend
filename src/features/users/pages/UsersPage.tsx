@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/shared/ui";
 import { ConfirmDialog, PageHeader } from "@/shared/components";
 import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
+import { judgeEffectNote } from "../utils/effects";
 import { UserForm } from "../components/UserForm";
 import { UserTable } from "../components/UserTable";
 import { useSetUserActive, useSetUsersActive, useUsers } from "../api/hooks";
@@ -72,8 +73,8 @@ export function UsersPage() {
         description={
           toggling
             ? toggling.active
-              ? `${toggling.firstName} ${toggling.lastName} will no longer be able to sign in.`
-              : `${toggling.firstName} ${toggling.lastName} will be able to sign in again.`
+              ? `${toggling.firstName} ${toggling.lastName} will no longer be able to sign in. ${judgeEffectNote([toggling], false) ?? ""}`
+              : `${toggling.firstName} ${toggling.lastName} will be able to sign in again. ${judgeEffectNote([toggling], true) ?? ""}`
             : undefined
         }
         destructive={!!toggling?.active}
@@ -119,7 +120,7 @@ export function UsersPage() {
                 bulk.active
                   ? "will be able to sign in again."
                   : "will no longer be able to sign in."
-              }`
+              } ${judgeEffectNote(bulk.users, bulk.active) ?? ""}`
             : undefined
         }
         destructive={!!bulk && !bulk.active}

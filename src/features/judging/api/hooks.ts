@@ -19,7 +19,7 @@ export const judgingKeys = {
   myScores: (judgeId: string, key: string) =>
     ["judging", "scores", judgeId, key] as const,
   leaderboard: (phase: PhaseId) => ["judging", "leaderboard", phase] as const,
-  judges: ["judging", "judges"] as const,
+  judges: (phase: PhaseId) => ["judging", "judges", phase] as const,
 };
 
 export const useMyPhaseScores = (judgeId: string, phase: PhaseId) =>
@@ -47,8 +47,11 @@ export const useFinalizeStatus = (phase: PhaseId, enabled = true) =>
     enabled,
   });
 
-export const useJudges = () =>
-  useQuery({ queryKey: judgingKeys.judges, queryFn: getJudges });
+export const useJudges = (phase: PhaseId) =>
+  useQuery({
+    queryKey: judgingKeys.judges(phase),
+    queryFn: () => getJudges(phase),
+  });
 
 export function useInvalidateJudging() {
   const qc = useQueryClient();

@@ -12,6 +12,7 @@ import {
   setPhaseState,
 } from "@/features/stages/api";
 import { participantsOf, inField } from "@/features/stages/utils/participants";
+import { isUserActiveSync, judgeRosterSync } from "@/features/users/api";
 import { can, isJudgeRole } from "@/lib/rbac";
 import {
   PHASES,
@@ -59,12 +60,47 @@ const describe = (cs: Candidate[]) =>
       ? cs.map((c) => c.name).join(", ")
       : `${cs.length} LGAs`;
 
+// A deactivated account can't act, even if its session is still open.
+function assertActive(actor: { id: string }) {
+  if (!isUserActiveSync(actor.id)) {
+    throw new Error("This account has been deactivated.");
+  }
+}
+
 function requireJudge() {
   const actor = readSessionUser();
   if (!actor || !isJudgeRole(actor.role)) {
     throw new Error("Only judges can do that.");
   }
+  assertActive(actor);
   return actor;
+}
+
+// WHOSE SCORES COUNT in a stage:
+//  • a stage that isn't closed yet counts every judge whose account is ACTIVE
+//    right now — deactivating a judge removes their scores from it, and
+//    reactivating brings them back (their scores are kept, just not counted);
+//  • a closed stage counts exactly the judges it was closed with. Deactivating
+//    someone afterwards changes nothing about it.
+function countedJudges(phase: PhaseId): Judge[] {
+  const roster = judgeRosterSync();
+  const byId = new Map(roster.map((r) => [r.id, r]));
+  const state = phaseStateSync(phase);
+  if (state.status === "closed") {
+    const ids = state.countedJudgeIds ?? JUDGES.map((j) => j.id);
+    return ids.map((id) => {
+      const r = byId.get(id);
+      return {
+        id,
+        name: r?.name ?? JUDGES.find((j) => j.id === id)?.name ?? id,
+        head: r?.head ?? JUDGES.find((j) => j.id === id)?.head,
+        active: r?.active ?? false,
+      };
+    });
+  }
+  return roster
+    .filter((r) => r.active)
+    .map((r) => ({ id: r.id, name: r.name, head: r.head, active: true }));
 }
 
 function requireOpen(phase: PhaseId) {
@@ -87,9 +123,10 @@ export async function getStages(): Promise<StageConfig[]> {
   return STAGES;
 }
 
-export async function getJudges(): Promise<Judge[]> {
+// The judges whose scores count in `phase` (see countedJudges).
+export async function getJudges(phase: PhaseId): Promise<Judge[]> {
   await delay(0);
-  return JUDGES;
+  return countedJudges(phase);
 }
 
 // A judge's own scores (drafts included). Reading someone else's is refused.
@@ -219,6 +256,7 @@ export async function getResultsStandings(
 async function buildStandings(phase: PhaseId): Promise<LeaderboardEntry[]> {
   if (phaseStateSync(phase).status === "pending") return [];
   const rounds = roundsOf(phase);
+  const judges = countedJudges(phase);
   const candidates = await getCandidates();
 
   return participantsOf(phase, candidates)
@@ -227,7 +265,7 @@ async function buildStandings(phase: PhaseId): Promise<LeaderboardEntry[]> {
       const perJudge: LeaderboardEntry["perJudge"] = {};
       const perRound: LeaderboardEntry["perRound"] = {};
       for (const r of rounds) perRound[r.id] = {};
-      for (const j of JUDGES) {
+      for (const j of judges) {
         const mine = scores.filter(
           (s) => s.judgeId === j.id && s.candidateId === candidate.id,
         );
@@ -256,7 +294,7 @@ async function buildStandings(phase: PhaseId): Promise<LeaderboardEntry[]> {
 
 function finalizeStatusFor(phase: PhaseId, field: Candidate[]): FinalizeStatus {
   const rounds = roundsOf(phase);
-  const judges = JUDGES.map((j) => ({
+  const judges = countedJudges(phase).map((j) => ({
     id: j.id,
     name: j.name,
     head: j.head,
@@ -282,6 +320,7 @@ function finalizeStatusFor(phase: PhaseId, field: Candidate[]): FinalizeStatus {
     ready:
       state.status === "open" &&
       field.length > 0 &&
+      judges.length > 0 &&
       judges.every((j) => j.outstanding === 0),
   };
 }
@@ -308,6 +347,7 @@ export async function submitResults(phase: PhaseId, passedIds: string[]) {
   if (!can(actor?.role, "results.submit")) {
     throw new Error("Only the Head Judge can submit results.");
   }
+  assertActive(actor!);
   requireOpen(phase);
   const field = (await getCandidates()).filter((c) => inField(c, phase));
   if (!can(actor?.role, "results.submitAnytime")) {
@@ -400,6 +440,7 @@ export async function closeStage(phase: PhaseId) {
   if (!can(actor?.role, "stages.close")) {
     throw new Error("You can't close a stage.");
   }
+  assertActive(actor!);
   const state = phaseStateSync(phase);
   if (state.status !== "open") {
     throw new Error(`${phaseTitle(phase)} isn't open, so it can't be closed.`);
@@ -417,6 +458,8 @@ export async function closeStage(phase: PhaseId) {
     closedAt: new Date().toISOString(),
     closedBy: actor ? `${actor.firstName} ${actor.lastName}` : undefined,
     closedByRole: actor?.role,
+    // Freeze whose scores counted: later deactivations must not touch this.
+    countedJudgeIds: countedJudges(phase).map((j) => j.id),
   });
   recordActivity("judging", `Closed ${phaseTitle(phase)}`);
 }

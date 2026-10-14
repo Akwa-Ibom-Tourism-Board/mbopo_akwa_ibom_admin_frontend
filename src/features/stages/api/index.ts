@@ -28,6 +28,7 @@ let states: PhaseState[] = MOCK_PHASE_STATES.map((s) => ({
 const clone = (s: PhaseState): PhaseState => ({
   ...s,
   passedIds: s.passedIds ? [...s.passedIds] : undefined,
+  countedJudgeIds: s.countedJudgeIds ? [...s.countedJudgeIds] : undefined,
 });
 
 export async function getPhaseStates(): Promise<PhaseState[]> {

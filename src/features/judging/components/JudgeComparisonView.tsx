@@ -66,7 +66,10 @@ export function JudgeComparisonView({
                 <tr>
                   <th>Round</th>
                   {judges.map((j) => (
-                    <th key={j.id}>{j.name}</th>
+                    <th key={j.id}>
+                      {j.name}
+                      {j.active === false ? " (deactivated)" : ""}
+                    </th>
                   ))}
                 </tr>
               </thead>

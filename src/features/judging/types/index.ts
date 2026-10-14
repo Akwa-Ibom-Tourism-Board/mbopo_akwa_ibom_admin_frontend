@@ -35,8 +35,11 @@ export interface StageConfig {
 export interface Judge {
   id: string;
   name: string;
-  // The Head Judge also scores; they additionally finalize the stage.
+  // The Head Judge also scores; they additionally submit the results.
   head?: boolean;
+  // False once the account is deactivated (their scores then stop counting in
+  // any stage that isn't closed).
+  active?: boolean;
 }
 
 export type ScoreStatus = "draft" | "submitted";
