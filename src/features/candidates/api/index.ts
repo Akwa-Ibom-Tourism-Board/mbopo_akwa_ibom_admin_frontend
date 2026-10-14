@@ -3,6 +3,11 @@ import { readSessionUser } from "@/features/auth/session";
 import { LGA_TO_DISTRICT } from "@/lib/constants";
 import { can } from "@/lib/rbac";
 import { toSentenceCase } from "@/lib/validation";
+import {
+  buildPublicId,
+  getSlot,
+  validateDocumentFile,
+} from "../data/documents";
 import { MOCK_CANDIDATE_EVENTS } from "../data/mock-events";
 import { MOCK_CANDIDATES } from "../data/mock-candidates";
 import {
@@ -15,6 +20,7 @@ import type {
   Candidate,
   CandidateEvent,
   CandidateEventKind,
+  DocumentField,
   PublicProfileUpdate,
 } from "../types";
 import { deriveDisplayFields } from "../utils/derive";
@@ -70,15 +76,31 @@ export async function getCandidateEvents(
     .sort((a, b) => b.at.localeCompare(a.at));
 }
 
+// What the signed-in person may know about a candidate. Media work only on
+// public profiles, so they get a name and the public-profile content and
+// NOTHING else — no stage, status, location, application, documents or scores.
+// Enforced here (not just by hiding screens) so it holds when the real API
+// replaces this layer.
+function forViewer(c: Candidate): Candidate {
+  if (readSessionUser()?.role !== "media") return { ...c };
+  return {
+    id: c.id,
+    name: c.name,
+    bio: c.bio,
+    additionalPhotos: c.additionalPhotos,
+    additionalVideos: c.additionalVideos,
+  } as Candidate;
+}
+
 export async function getCandidates(): Promise<Candidate[]> {
   await delay();
-  return store.map((c) => ({ ...c }));
+  return store.map(forViewer);
 }
 
 export async function getCandidate(id: string): Promise<Candidate | null> {
   await delay();
   const found = store.find((c) => c.id === id);
-  return found ? { ...found } : null;
+  return found ? forViewer(found) : null;
 }
 
 const count = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -149,7 +171,7 @@ export async function updateCandidateProfile(
       `Public profile updated — ${changes[0]!.toLowerCase()}${changes.slice(1)}`,
     );
   }
-  return { ...next };
+  return forViewer(next);
 }
 
 const FIELD_LABELS: Record<string, string> = Object.fromEntries(
@@ -242,6 +264,73 @@ export async function updateCandidateDetails(
       : `Updated ${names} on ${next.name}'s application`,
   );
   recordCandidateEvents([id], "staff", `Application updated — ${names}`);
+  return { ...next };
+}
+
+export interface UploadedFile {
+  url: string; // in the real flow, the Cloudinary secure_url
+  fileName: string;
+  mimeType: string;
+  bytes: number;
+}
+
+// Adds or replaces one of an applicant's documents. Admin / Super Admin only.
+// Mirrors the backend: the same slots, formats and size limits, and the same
+// deterministic Cloudinary public_id (so a replacement overwrites the old
+// asset). The profile photo is part of the verified identity and can't be
+// replaced; nothing is ever removed — every required slot stays filled.
+// Real flow: ask the backend for an upload signature, send the file straight to
+// Cloudinary, then save the returned url + public_id on the application.
+export async function uploadCandidateDocument(
+  id: string,
+  field: DocumentField,
+  file: UploadedFile,
+): Promise<Candidate> {
+  await delay(300);
+  const actor = readSessionUser();
+  if (!can(actor?.role, "candidates.editDetails")) {
+    throw new Error("Only an administrator can upload documents.");
+  }
+  if (field === "avatar") {
+    throw new Error(
+      "The profile photo comes from the verified identity and can't be replaced.",
+    );
+  }
+  const current = store.find((c) => c.id === id);
+  if (!current) throw new Error("Candidate not found");
+  const problem = validateDocumentFile(field, file);
+  if (problem) throw new Error(problem);
+
+  const slot = getSlot(field);
+  const replaced = !!current.documents[field];
+  const next = deriveDisplayFields({
+    ...current,
+    documents: {
+      ...current.documents,
+      [field]: {
+        url: file.url,
+        publicId: buildPublicId(id, field),
+        fileName: file.fileName,
+        mimeType: file.mimeType,
+        bytes: file.bytes,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: actor ? `${actor.firstName} ${actor.lastName}` : "Staff",
+        uploadedByRole: actor?.role ?? "admin",
+      },
+    },
+  } as Candidate);
+  store = store.map((c) => (c.id === id ? next : c));
+
+  const verb = replaced ? "Replaced" : "Uploaded";
+  recordActivity(
+    "candidates",
+    `${verb} the ${slot.label.toLowerCase()} of ${next.name}`,
+  );
+  recordCandidateEvents(
+    [id],
+    "document",
+    `${verb} the ${slot.label.toLowerCase()} (by staff)`,
+  );
   return { ...next };
 }
 

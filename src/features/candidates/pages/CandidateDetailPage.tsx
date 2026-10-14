@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { ArrowLeft, Lock, Pencil, UploadCloud } from "lucide-react";
 import { Button } from "@/shared/ui";
 import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
@@ -15,6 +15,8 @@ import type { SectionId } from "../schemas";
 import { PhaseBadge, StatusBadge } from "../components/Badges";
 import { CandidateProfilePanel } from "../components/CandidateProfilePanel";
 import { DocumentsTab } from "../components/DocumentsTab";
+import { UploadDocumentDialog } from "../components/UploadDocumentDialog";
+import type { DocumentSlot } from "../data/documents";
 import { OverviewTab } from "../components/OverviewTab";
 
 const Back = styled(Link)`
@@ -29,6 +31,12 @@ const Back = styled(Link)`
   &:hover {
     color: ${({ theme }) => theme.colors.foreground};
   }
+`;
+
+const MediaTitle = styled.h2`
+  margin: 0 0 20px;
+  font-family: ${({ theme }) => theme.fonts.display};
+  font-size: 1.75rem;
 `;
 
 const Hero = styled.div`
@@ -88,6 +96,7 @@ export function CandidateDetailPage() {
   const [params, setParams] = useSearchParams();
   const requested = params.get("tab");
   const [editing, setEditing] = useState<SectionId | null>(null);
+  const [uploading, setUploading] = useState<DocumentSlot | null>(null);
   // The Activity tab is for Admin / Super Admin only.
   const canSeeActivity = can("candidates.viewActivity");
   const tabs = useMemo(
@@ -108,6 +117,20 @@ export function CandidateDetailPage() {
           <ArrowLeft size={16} /> All candidates
         </Back>
         <EmptyState>We couldn't find that candidate.</EmptyState>
+      </>
+    );
+  }
+
+  // Media see a name and the public-profile tools — no stage, status, tabs or
+  // application. (Their data is also stripped in the api.)
+  if (!can("candidates.viewDetails")) {
+    return (
+      <>
+        <Back to="/candidates">
+          <ArrowLeft size={16} /> All candidates
+        </Back>
+        <MediaTitle>{c.name}</MediaTitle>
+        <CandidateProfilePanel key={c.id} candidate={c} editable />
       </>
     );
   }
@@ -168,12 +191,40 @@ export function CandidateDetailPage() {
           }
         />
       )}
-      {tab === "documents" && <DocumentsTab candidate={c} />}
+      {tab === "documents" && (
+        <DocumentsTab
+          candidate={c}
+          actions={
+            can("candidates.editDetails")
+              ? (slot, doc) =>
+                  slot.field === "avatar" ? (
+                    <Badge $tone="neutral">
+                      <Lock size={11} style={{ marginRight: 4 }} />
+                      Locked — verified identity
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant={doc ? "outline" : "default"}
+                      onClick={() => setUploading(slot)}
+                    >
+                      <UploadCloud size={14} /> {doc ? "Replace" : "Upload"}
+                    </Button>
+                  )
+              : undefined
+          }
+        />
+      )}
       {tab === "activity" && <ActivityTab candidateId={c.id} />}
       <EditSectionDialog
         candidate={c}
         section={editing}
         onClose={() => setEditing(null)}
+      />
+      <UploadDocumentDialog
+        candidate={c}
+        slot={uploading}
+        onClose={() => setUploading(null)}
       />
       {tab === "profile" && (
         // Keyed so the editor's local form state resets per candidate.

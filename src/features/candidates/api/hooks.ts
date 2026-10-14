@@ -5,7 +5,10 @@ import {
   getCandidates,
   updateCandidateDetails,
   updateCandidateProfile,
+  uploadCandidateDocument,
+  type UploadedFile,
 } from ".";
+import type { DocumentField } from "../types";
 import type { SectionId } from "../schemas";
 import type { PublicProfileUpdate } from "../types";
 
@@ -59,3 +62,22 @@ export const useCandidateEvents = (id: string, enabled: boolean) =>
     queryFn: () => getCandidateEvents(id),
     enabled,
   });
+
+export function useUploadCandidateDocument(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      field,
+      file,
+    }: {
+      field: DocumentField;
+      file: UploadedFile;
+    }) => uploadCandidateDocument(id, field, file),
+    onSuccess: () =>
+      Promise.all([
+        qc.invalidateQueries({ queryKey: candidateKeys.all }),
+        qc.invalidateQueries({ queryKey: ["candidate-events", id] }),
+        qc.invalidateQueries({ queryKey: ["activity"] }),
+      ]),
+  });
+}

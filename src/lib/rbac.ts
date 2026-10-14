@@ -33,6 +33,12 @@ export type Capability =
   // Admin / Super Admin only: see the full NIN/VIN (everyone else sees them
   // masked), edit an applicant's details and upload or replace documents.
   | "candidates.viewIdentity"
+  // Everything about a candidate beyond their name: stage, status, location,
+  // application, documents. Media deliberately does NOT have this — they see
+  // names and work only on public profiles.
+  | "candidates.viewDetails"
+  // The stages of elimination: their pages, candidates in them, status.
+  | "stages.view"
   | "candidates.editDetails"
   // Admin / Super Admin: a candidate's own activity history.
   | "candidates.viewActivity"
@@ -77,6 +83,8 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "candidates.view": ["super_admin", "admin", "media", "judge", "head_judge"],
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],
   "candidates.viewIdentity": ["super_admin", "admin"],
+  "candidates.viewDetails": ["super_admin", "admin", "judge", "head_judge"],
+  "stages.view": ["super_admin", "admin", "judge", "head_judge"],
   "candidates.editDetails": ["super_admin", "admin"],
   "candidates.viewActivity": ["super_admin", "admin"],
 

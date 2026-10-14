@@ -73,3 +73,35 @@ export function buildPublicId(applicantId: string, field: DocumentField) {
   const scope = field === "avatar" ? "users" : "applications";
   return `mbopo/development/${scope}/${applicantId}/${field}`;
 }
+
+const MIME_BY_KIND: Record<DocumentSlot["kind"], readonly string[]> = {
+  image: ["image/jpeg", "image/png"],
+  document: ["image/jpeg", "image/png", "application/pdf"],
+  video: ["video/mp4", "video/webm"],
+};
+
+export interface PickedFile {
+  fileName: string;
+  mimeType: string;
+  bytes: number;
+}
+
+// The same checks Cloudinary enforces for the backend's signed upload (allowed
+// formats and size) — returns a message, or null if the file is fine.
+export function validateDocumentFile(
+  field: DocumentField,
+  file: PickedFile,
+): string | null {
+  const slot = getSlot(field);
+  const ext = file.fileName.split(".").pop()?.toLowerCase() ?? "";
+  if (
+    !slot.formats.includes(ext) ||
+    !MIME_BY_KIND[slot.kind].includes(file.mimeType)
+  ) {
+    return `${slot.label} must be ${slot.formats.map((f) => f.toUpperCase()).join(", ")}.`;
+  }
+  if (file.bytes > slot.maxBytes) {
+    return `That file is ${(file.bytes / (1024 * 1024)).toFixed(1)}MB — the limit is ${slot.maxBytes / (1024 * 1024)}MB.`;
+  }
+  return null;
+}

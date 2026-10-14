@@ -46,7 +46,7 @@ function stageItem(id: PhaseId, icon: LucideIcon | undefined): NavItemConfig {
     title: phaseTitle(id),
     icon,
     phaseId: id,
-    capability: "candidates.view",
+    capability: "stages.view",
   };
 }
 
@@ -83,7 +83,7 @@ export const NAV_GROUPS: NavGroupConfig[] = [
       {
         label: "Grand Finale",
         icon: Crown,
-        capability: "candidates.view",
+        capability: "stages.view",
         children: PHASES.filter((p) => p.group === "Grand Finale").map((p) =>
           stageItem(p.id, undefined),
         ),

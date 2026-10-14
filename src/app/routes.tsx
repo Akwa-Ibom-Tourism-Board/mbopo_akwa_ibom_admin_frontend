@@ -35,7 +35,7 @@ export function AppRoutes() {
             <Route path="/candidates/:id" element={<CandidateDetailPage />} />
           </Route>
 
-          <Route element={<RoleGuard capability="candidates.view" />}>
+          <Route element={<RoleGuard capability="stages.view" />}>
             <Route path="/stages/:phaseId" element={<StagePage />} />
           </Route>
 
