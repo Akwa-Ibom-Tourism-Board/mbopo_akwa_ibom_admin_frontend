@@ -30,13 +30,15 @@ export function RoleGuard({ capability }: { capability: Capability }) {
 
 function AccessDenied() {
   return (
-    <EmptyState>
-      <ShieldAlert size={32} />
-      <h3>You don't have access to this page</h3>
-      <p>Your role doesn't include this area of the portal.</p>
-      <Button asChild>
-        <Link to="/dashboard">Back to dashboard</Link>
-      </Button>
-    </EmptyState>
+    <EmptyState
+      icon={<ShieldAlert size={26} />}
+      title="You don't have access to this page"
+      message="Your role doesn't include this area of the portal."
+      action={
+        <Button asChild>
+          <Link to="/dashboard">Back to dashboard</Link>
+        </Button>
+      }
+    />
   );
 }
