@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   Input,
+  LoadingState,
   Select,
   SelectContent,
   SelectItem,
@@ -187,7 +188,7 @@ export function ActivityLogPage() {
       </Tabs>
 
       {activity.isLoading || users.isLoading ? (
-        <EmptyState>Loading…</EmptyState>
+        <LoadingState />
       ) : tab === "person" ? (
         <Split>
           <Panel>

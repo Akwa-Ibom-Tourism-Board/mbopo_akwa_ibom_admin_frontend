@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, Check, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
 import { Badge, ConfirmDialog, EmptyState } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
@@ -94,7 +94,7 @@ export function ApplicantDetailPage() {
   const [toggling, setToggling] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  if (isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (isLoading) return <LoadingState />;
   if (!a) {
     return (
       <>

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import styled from "styled-components";
 import { EmptyState } from "@/shared/components";
+import { LoadingState } from "@/shared/ui";
 import { useCandidates } from "@/features/candidates/api/hooks";
 import { JudgeStageTable, ResultsPanel } from "@/features/judging";
 import { STAGES, roundsOf } from "@/features/judging/data/mock-stages";
@@ -54,7 +55,7 @@ export function StagePage() {
 
   if (!valid) return <EmptyState>We couldn't find that stage.</EmptyState>;
   const state = states.data?.find((s) => s.phaseId === phaseId);
-  if (!state || candidates.isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (!state || candidates.isLoading) return <LoadingState />;
 
   const def = getPhaseDef(phaseId);
   const stageConfig = STAGES.find((s) => s.id === def.stage)!;

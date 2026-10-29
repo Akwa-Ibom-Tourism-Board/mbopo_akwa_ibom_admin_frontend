@@ -90,8 +90,19 @@ export function LoginPage() {
           {errors.password && <ErrorText>{errors.password.message}</ErrorText>}
         </Field>
         {formError && <ErrorText role="alert">{formError}</ErrorText>}
-        <SubmitButton type="submit" size="lg" style={{ marginTop: 16 }} disabled={submitting}>
-          {submitting ? "Signing in…" : <>Sign in <ArrowRight size={18} /></>}
+        <SubmitButton
+          type="submit"
+          size="lg"
+          style={{ marginTop: 16 }}
+          disabled={submitting}
+        >
+          {submitting ? (
+            "Signing in…"
+          ) : (
+            <>
+              Sign in <ArrowRight size={18} />
+            </>
+          )}
         </SubmitButton>
       </FormBlock>
     </AuthLayout>

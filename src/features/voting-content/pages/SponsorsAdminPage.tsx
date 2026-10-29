@@ -2,7 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Card, CardContent } from "@/shared/ui";
+import { Button, Card, CardContent, LoadingState } from "@/shared/ui";
 import { ConfirmDialog, EmptyState, PageHeader } from "@/shared/components";
 import { SponsorEditor } from "../components/SponsorEditor";
 import { useDeleteSponsor, useSponsors } from "../api/hooks";
@@ -62,7 +62,7 @@ export function SponsorsAdminPage() {
         }
       />
       {isLoading ? (
-        <EmptyState>Loading…</EmptyState>
+        <LoadingState />
       ) : !data?.length ? (
         <EmptyState>No sponsors yet.</EmptyState>
       ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Input } from "@/shared/ui";
+import { Button, Input, LoadingState } from "@/shared/ui";
 import { Badge } from "@/shared/components";
 import { formatNaira } from "@/lib/formatting";
 import { useSaveVoteTiers, useVoteTiers } from "../api/hooks";
@@ -107,7 +107,7 @@ export function PricingEditor() {
   const update = (key: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
 
-  if (isLoading) return <p>Loading…</p>;
+  if (isLoading) return <LoadingState />;
 
   return (
     <>

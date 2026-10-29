@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, TriangleAlert } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
+import { Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { useAuth } from "@/features/auth";
 import { useCandidate } from "@/features/candidates/api/hooks";
@@ -133,7 +133,7 @@ export function CandidateScoringPage() {
   const [roundId, setRoundId] = useState<string | null>(null);
   const states = usePhaseStates().data;
 
-  if (isLoading || myScores.isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (isLoading || myScores.isLoading) return <LoadingState />;
   if (!c) return <EmptyState>We couldn't find that candidate.</EmptyState>;
   if (!c.phase) return <EmptyState>This candidate isn't in any stage yet.</EmptyState>;
   const phase = c.phase;

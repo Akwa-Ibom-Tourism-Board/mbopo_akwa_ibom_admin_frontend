@@ -15,3 +15,4 @@ export * from "./avatar";
 export * from "./switch";
 export * from "./otp-input";
 export { Toaster as SonnerToaster, toast as sonnerToast } from "./sonner";
+export * from "./spinner";

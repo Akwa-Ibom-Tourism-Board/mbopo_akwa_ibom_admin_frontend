@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import { Pencil } from "lucide-react";
 import { Badge, EmptyState } from "@/shared/components";
+import { LoadingState } from "@/shared/ui";
 import { ROLE_LABELS } from "@/lib/rbac";
 import { formatRelative } from "@/lib/formatting";
 import { useCandidateEvents } from "../api/hooks";
@@ -87,7 +88,7 @@ export function ActivityTab({ candidateId }: { candidateId: string }) {
     return out;
   }, [data]);
 
-  if (isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (isLoading) return <LoadingState />;
 
   return groups.length === 0 ? (
     <EmptyState>Nothing recorded yet.</EmptyState>

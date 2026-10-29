@@ -9,6 +9,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  LoadingState,
   Select,
   SelectContent,
   SelectItem,
@@ -71,7 +72,7 @@ export function ComplaintDetailPage() {
   const reassign = useReassign(id ?? "");
   const [draft, setDraft] = useState("");
 
-  if (isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (isLoading) return <LoadingState />;
   if (!c) {
     return (
       <>

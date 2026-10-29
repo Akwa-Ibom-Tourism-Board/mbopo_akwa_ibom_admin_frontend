@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
-import { Button, Checkbox, Input } from "@/shared/ui";
+import { Button, Checkbox, Input, LoadingState } from "@/shared/ui";
 import {
   BulkActions,
   BulkBar,
@@ -239,7 +239,7 @@ export function DataTable<T>({
             {isLoading ? (
               <tr>
                 <td colSpan={colSpan}>
-                  <StateBox>Loading…</StateBox>
+                  <LoadingState />
                 </td>
               </tr>
             ) : pageRows.length === 0 ? (

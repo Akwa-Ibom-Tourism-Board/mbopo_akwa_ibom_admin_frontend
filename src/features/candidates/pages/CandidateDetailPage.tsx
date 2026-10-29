@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, Pencil, UploadCloud } from "lucide-react";
-import { Button } from "@/shared/ui";
+import { Button, LoadingState } from "@/shared/ui";
 import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
 import { useCan } from "@/lib/rbac";
@@ -109,7 +109,7 @@ export function CandidateDetailPage() {
     [requested, tabs],
   );
 
-  if (isLoading) return <EmptyState>Loading…</EmptyState>;
+  if (isLoading) return <LoadingState />;
   if (!c) {
     return (
       <>
