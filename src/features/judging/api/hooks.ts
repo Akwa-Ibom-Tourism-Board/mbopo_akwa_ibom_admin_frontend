@@ -34,10 +34,11 @@ export const useMyCandidateScores = (judgeId: string, candidateId: string) =>
     queryFn: () => getMyScores(judgeId, { candidateId }),
   });
 
-export const useLeaderboard = (phase: PhaseId) =>
+export const useLeaderboard = (phase: PhaseId, enabled = true) =>
   useQuery({
     queryKey: judgingKeys.leaderboard(phase),
     queryFn: () => getLeaderboard(phase),
+    enabled,
   });
 
 export const useFinalizeStatus = (phase: PhaseId, enabled = true) =>
@@ -47,10 +48,11 @@ export const useFinalizeStatus = (phase: PhaseId, enabled = true) =>
     enabled,
   });
 
-export const useJudges = (phase: PhaseId) =>
+export const useJudges = (phase: PhaseId, enabled = true) =>
   useQuery({
     queryKey: judgingKeys.judges(phase),
     queryFn: () => getJudges(phase),
+    enabled,
   });
 
 export function useInvalidateJudging() {

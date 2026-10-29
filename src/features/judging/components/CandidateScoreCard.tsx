@@ -6,9 +6,12 @@ import { formatScore } from "../utils/scoring";
 // Judges-only block for the candidate detail page. Callers must gate it with
 // can("judging.leaderboard") — it fetches scores on mount.
 export function CandidateScoreCard({ candidate }: { candidate: Candidate }) {
-  const board = useLeaderboard(candidate.phase);
-  const judges = useJudges(candidate.phase);
+  const phase = candidate.phase;
+  const board = useLeaderboard(phase!, !!phase);
+  const judges = useJudges(phase!, !!phase);
   const entry = board.data?.find((e) => e.candidate.id === candidate.id);
+
+  if (!phase) return null;
 
   return (
     <Card>

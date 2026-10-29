@@ -5,8 +5,11 @@ import { toast } from "sonner";
 import { Button, Input } from "@/shared/ui";
 import { Badge } from "@/shared/components";
 import { formatNaira } from "@/lib/formatting";
-import { BASE_VOTE_PRICE_NAIRA } from "../data/mock-tiers";
 import { useSaveVoteTiers, useVoteTiers } from "../api/hooks";
+
+// Just a convenience default for the "reset to flat rate" button below —
+// not enforced anywhere; real pricing lives entirely in what's saved.
+const BASE_VOTE_PRICE_NAIRA = 100;
 
 const Card = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};

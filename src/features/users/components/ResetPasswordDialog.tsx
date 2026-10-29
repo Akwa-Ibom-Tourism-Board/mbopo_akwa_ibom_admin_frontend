@@ -122,12 +122,12 @@ export function ResetPasswordDialog({
           <DialogHeader>
             <DialogTitle>New temporary password</DialogTitle>
             <DialogDescription>
-              Give this to {user?.firstName} if the email doesn't reach them in
-              time.
+              Copy this now and give it to {user?.firstName} yourself — it
+              is not emailed to them.
             </DialogDescription>
           </DialogHeader>
           <Sent>
-            <MailCheck size={16} /> Emailed to {shown.email}
+            <MailCheck size={16} /> For {shown.email}
           </Sent>
           <Secret>
             <code aria-label="Temporary password">{shown.password}</code>
@@ -168,7 +168,7 @@ export function ResetPasswordDialog({
           <DialogTitle>Reset this password?</DialogTitle>
           <DialogDescription>
             {user
-              ? `A new temporary password will be generated and emailed to ${user.email}. You'll see it once on the next screen, in case the email is slow. The old password stops working.`
+              ? `A new temporary password will be generated for ${user.email}. You'll see it once on the next screen — it is not emailed, so copy it and pass it on yourself. The old password stops working.`
               : ""}
           </DialogDescription>
         </DialogHeader>
@@ -181,7 +181,7 @@ export function ResetPasswordDialog({
             Cancel
           </Button>
           <Button onClick={generate} disabled={reset.isPending}>
-            {reset.isPending ? "Working…" : "Generate & email"}
+            {reset.isPending ? "Working…" : "Generate password"}
           </Button>
         </DialogFooter>
       </DialogContent>

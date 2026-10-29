@@ -6,7 +6,7 @@ import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
 import { DOCUMENT_SLOTS } from "../data/documents";
-import type { Candidate } from "../types";
+import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
 import {
   eligibility,
   institutionLabel,
@@ -51,7 +51,7 @@ const Photos = styled.div`
 export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
   const can = useCan();
   const elig = eligibility(c.dateOfBirth);
-  const onFile = DOCUMENT_SLOTS.filter((s) => c.documents[s.field]).length;
+  const onFile = DOCUMENT_SLOTS.filter((s) => Boolean(c[DOCUMENT_URL_FIELDS[s.field]])).length;
 
   return (
     <Layout>
@@ -63,39 +63,38 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             { label: "District", value: c.senatorialDistrict },
             {
               label: "Age",
-              value: (
-                <>
-                  {elig.age}{" "}
-                  <Badge $tone={elig.eligible ? "primary" : "danger"}>
-                    {elig.eligible
-                      ? `Within ${elig.band}`
-                      : `Outside ${elig.band}`}
-                  </Badge>
-                </>
-              ),
+              value:
+                elig.age === null ? (
+                  "—"
+                ) : (
+                  <>
+                    {elig.age}{" "}
+                    <Badge $tone={elig.eligible ? "primary" : "danger"}>
+                      {elig.eligible ? `Within ${elig.band}` : `Outside ${elig.band}`}
+                    </Badge>
+                  </>
+                ),
             },
             { label: "Education", value: c.education },
             { label: "Institution", value: institutionLabel(c) },
             { label: "Occupation", value: occupationLabel(c) },
             { label: "Phone", value: c.phone },
-            { label: "Email", value: c.email },
             { label: "Reference", value: c.referenceCode },
             {
               label: "Documents",
               value: (
-                <Badge
-                  $tone={
-                    onFile === DOCUMENT_SLOTS.length ? "primary" : "secondary"
-                  }
-                >
+                <Badge $tone={onFile === DOCUMENT_SLOTS.length ? "primary" : "secondary"}>
                   {onFile} of {DOCUMENT_SLOTS.length} on file
                 </Badge>
               ),
             },
-            { label: "Applied", value: formatDate(c.appliedAt) },
+            {
+              label: "Submitted",
+              value: c.submittedAt ? formatDate(c.submittedAt) : "—",
+            },
             {
               label: "Votes",
-              value: (c.voteCount ?? 0).toLocaleString("en-NG"),
+              value: c.voteCount.toLocaleString("en-NG"),
             },
           ]}
         />
@@ -106,13 +105,20 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
           </CardHeader>
           <CardContent>
             <p style={{ margin: 0, lineHeight: 1.65 }}>{c.why}</p>
-            {c.applicantPhotos.length > 0 && (
-              <Photos>
-                {c.applicantPhotos.map((src, i) => (
-                  <img key={i} src={src} alt="" />
-                ))}
-              </Photos>
-            )}
+            {(() => {
+              const photos = [c.fullImageUrl, c.fullImageUrl2].filter(
+                (src): src is string => Boolean(src),
+              );
+              return (
+                photos.length > 0 && (
+                  <Photos>
+                    {photos.map((src, i) => (
+                      <img key={i} src={src} alt="" />
+                    ))}
+                  </Photos>
+                )
+              );
+            })()}
           </CardContent>
         </Card>
       </Column>

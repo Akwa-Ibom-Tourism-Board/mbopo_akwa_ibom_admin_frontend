@@ -12,8 +12,11 @@ import { EmptyState } from "@/shared/components";
 
 // Requires a signed-in user; renders the nested routes.
 export function RequireAuth() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const location = useLocation();
+  // A stored token is still being validated against /admin/auth/me — wait
+  // rather than bounce someone who's actually still signed in.
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
   return <Outlet />;
 }

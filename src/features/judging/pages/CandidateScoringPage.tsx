@@ -135,9 +135,11 @@ export function CandidateScoringPage() {
 
   if (isLoading || myScores.isLoading) return <EmptyState>Loading…</EmptyState>;
   if (!c) return <EmptyState>We couldn't find that candidate.</EmptyState>;
+  if (!c.phase) return <EmptyState>This candidate isn't in any stage yet.</EmptyState>;
+  const phase = c.phase;
 
-  const rounds = roundsOf(c.phase);
-  const phaseState = states?.find((st) => st.phaseId === c.phase);
+  const rounds = roundsOf(phase);
+  const phaseState = states?.find((st) => st.phaseId === phase);
   const index = Math.max(
     0,
     roundId ? rounds.findIndex((r) => r.id === roundId) : 0,
@@ -149,30 +151,30 @@ export function CandidateScoringPage() {
   // are still competing in it. A closed stage is locked for every judge.
   const stageLocked =
     phaseState?.status === "closed"
-      ? `${phaseTitle(c.phase)} is closed — scores are locked.`
+      ? `${phaseTitle(phase)} is closed — scores are locked.`
       : phaseState?.status === "pending"
-        ? `${phaseTitle(c.phase)} hasn't been opened yet.`
+        ? `${phaseTitle(phase)} hasn't been opened yet.`
         : phaseState?.resultsSubmittedAt
-          ? `Results for ${phaseTitle(c.phase)} have been submitted — scores are locked.`
+          ? `Results for ${phaseTitle(phase)} have been submitted — scores are locked.`
           : undefined;
-  const competing = candidateInField(c, c.phase);
+  const competing = candidateInField(c, phase);
   const locked = !phaseState || !!stageLocked || !competing;
   const lockReason =
-    c.status === "winner"
+    c.candidateStatus === "winner"
       ? "This candidate has been crowned winner; scoring is closed."
-      : c.status === "eliminated"
-        ? `Eliminated${c.eliminatedAt ? ` (${phaseTitle(c.eliminatedAt)})` : ""}. Scoring is closed.`
-        : c.status === "disqualified"
+      : c.candidateStatus === "eliminated"
+        ? `Eliminated${c.eliminatedAtPhase ? ` (${phaseTitle(c.eliminatedAtPhase)})` : ""}. Scoring is closed.`
+        : c.candidateStatus === "disqualified"
           ? `Disqualified${c.disqualificationReason ? `: ${c.disqualificationReason}` : ""}. Scoring is closed.`
           : (stageLocked ??
-            (c.status === "advanced"
-              ? `Finalized through ${phaseTitle(c.phase)}. Scoring is closed.`
+            (c.candidateStatus === "advanced"
+              ? `Finalized through ${phaseTitle(phase)}. Scoring is closed.`
               : undefined));
 
   return (
     <>
-      <Back to={`/stages/${c.phase}`}>
-        <ArrowLeft size={16} /> {phaseTitle(c.phase)}
+      <Back to={`/stages/${phase}`}>
+        <ArrowLeft size={16} /> {phaseTitle(phase)}
       </Back>
 
       <Layout>
@@ -181,12 +183,12 @@ export function CandidateScoringPage() {
           <Card>
             <CardContent style={{ paddingTop: 20 }}>
               <Head>
-                <img src={c.photo} alt={c.name} />
+                <img src={c.photo ?? undefined} alt={c.name} />
                 <div>
                   <h2>{c.name}</h2>
                   <Tags>
                     <PhaseBadge phase={c.phase} />
-                    <StatusBadge status={c.status} />
+                    <StatusBadge status={c.candidateStatus} />
                     <Badge>{c.lga}</Badge>
                   </Tags>
                 </div>
@@ -202,7 +204,7 @@ export function CandidateScoringPage() {
               <Small>
                 {occupationLabel(c)} · {c.education}
               </Small>
-              <Small>{c.story}</Small>
+              <Small>{c.why}</Small>
               {c.videoPitchUrl && (
                 <PitchPlayer
                   url={c.videoPitchUrl}
@@ -231,7 +233,7 @@ export function CandidateScoringPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{phaseTitle(c.phase)}</CardTitle>
+            <CardTitle>{phaseTitle(phase)}</CardTitle>
           </CardHeader>
           <CardContent>
             {locked && lockReason && (

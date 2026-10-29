@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,6 +14,7 @@ import {
   Input,
   Textarea,
 } from "@/shared/ui";
+import { uploadVotingContentImage } from "@/lib/cloudinary";
 import type { Sponsor } from "../types";
 import { useSaveSponsor } from "../api/hooks";
 import { FormRow, FormStack } from "@/shared/components/FormParts";
@@ -61,14 +62,22 @@ export function SponsorEditor({
     defaultValues: toValues(sponsor ?? undefined),
   });
 
+  const newIdRef = useRef(crypto.randomUUID());
+  const contentId = sponsor?.id ?? newIdRef.current;
+  const uploadLogo = (file: File) =>
+    uploadVotingContentImage("sponsor", contentId, file).then((r) => r.url);
+
   useEffect(() => {
-    if (open) reset(toValues(sponsor ?? undefined));
+    if (open) {
+      reset(toValues(sponsor ?? undefined));
+      if (!sponsor) newIdRef.current = crypto.randomUUID();
+    }
   }, [open, sponsor, reset]);
 
   const onSubmit = (v: Values) =>
     save.mutate(
       {
-        id: sponsor?.id,
+        id: contentId,
         name: v.name,
         logo: v.logo,
         description: v.description,
@@ -102,6 +111,7 @@ export function SponsorEditor({
               name="logo"
               render={({ field }) => (
                 <ImageUploadField
+                  onUpload={uploadLogo}
                   multiple={false}
                   label="Choose logo"
                   value={field.value ? [field.value] : []}

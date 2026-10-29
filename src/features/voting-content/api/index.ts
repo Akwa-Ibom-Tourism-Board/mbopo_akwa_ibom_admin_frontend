@@ -1,93 +1,100 @@
-import { recordActivity } from "@/features/activity-log/api";
-import { MOCK_NEWS } from "../data/mock-news";
-import { MOCK_SPONSORS } from "../data/mock-sponsors";
-import { MOCK_VOTE_TIERS } from "../data/mock-tiers";
+import { request } from "@/lib/http";
 import type { NewsPost, Sponsor, VoteTier } from "../types";
 
-// Dummy data layer: async signatures a real API would have, in-memory state.
-const delay = (ms = 150) => new Promise((r) => setTimeout(r, ms));
-const newId = (prefix: string) =>
-  `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
-
-let tiers: VoteTier[] = MOCK_VOTE_TIERS.map((t) => ({ ...t }));
-let news: NewsPost[] = MOCK_NEWS.map((n) => ({ ...n }));
-let sponsors: Sponsor[] = MOCK_SPONSORS.map((s) => ({ ...s }));
-
 export async function getVoteTiers(): Promise<VoteTier[]> {
-  await delay();
-  return tiers.map((t) => ({ ...t }));
+  return request<VoteTier[]>("/admin/voting-content/pricing");
 }
 
-// Replaces the whole tier list (the editor saves it as one unit).
 export async function saveVoteTiers(next: VoteTier[]): Promise<VoteTier[]> {
-  await delay();
-  const valid =
-    next.length > 0 &&
-    next.every(
-      (t) =>
-        Number.isInteger(t.votes) &&
-        t.votes > 0 &&
-        Number.isInteger(t.priceNaira) &&
-        t.priceNaira > 0,
-    ) &&
-    new Set(next.map((t) => t.votes)).size === next.length;
-  if (!valid) throw new Error("Tiers must be unique, positive whole numbers.");
-  tiers = [...next].sort((a, b) => a.votes - b.votes).map((t) => ({ ...t }));
-  recordActivity("voting", "Updated vote pricing");
-  return tiers.map((t) => ({ ...t }));
+  return request<VoteTier[]>("/admin/voting-content/pricing", {
+    method: "PUT",
+    body: JSON.stringify({ tiers: next }),
+  });
 }
+
+interface BackendNewsPost {
+  id: string;
+  title: string;
+  summary: string;
+  body: string[];
+  coverImageUrl: string | null;
+  images: string[];
+  videoUrls: string[];
+  publishedAt: string;
+}
+
+const fromBackendNews = (p: BackendNewsPost): NewsPost => ({
+  id: p.id,
+  title: p.title,
+  summary: p.summary,
+  coverImage: p.coverImageUrl ?? "",
+  images: p.images,
+  videoUrls: p.videoUrls,
+  body: p.body,
+  publishedAt: p.publishedAt,
+});
 
 export async function getNewsPosts(): Promise<NewsPost[]> {
-  await delay();
-  return [...news].sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+  const posts = await request<BackendNewsPost[]>("/admin/voting-content/news");
+  return posts.map(fromBackendNews);
 }
 
-export async function saveNewsPost(
-  post: Omit<NewsPost, "id"> & { id?: string },
-): Promise<NewsPost> {
-  await delay();
-  const saved: NewsPost = { ...post, id: post.id ?? newId("news") };
-  news = post.id
-    ? news.map((n) => (n.id === post.id ? saved : n))
-    : [saved, ...news];
-  recordActivity(
-    "voting",
-    `${post.id ? "Edited" : "Published"} picture news post “${saved.title}”`,
-  );
-  return saved;
+export async function saveNewsPost(post: Omit<NewsPost, "id"> & { id?: string }): Promise<NewsPost> {
+  const saved = await request<BackendNewsPost>("/admin/voting-content/news", {
+    method: "POST",
+    body: JSON.stringify({
+      id: post.id,
+      title: post.title,
+      summary: post.summary,
+      body: post.body,
+      coverImageUrl: post.coverImage || null,
+      images: post.images,
+      videoUrls: post.videoUrls,
+      publishedAt: post.publishedAt,
+    }),
+  });
+  return fromBackendNews(saved);
 }
 
 export async function deleteNewsPost(id: string): Promise<void> {
-  await delay();
-  const removed = news.find((n) => n.id === id);
-  news = news.filter((n) => n.id !== id);
-  if (removed)
-    recordActivity("voting", `Deleted picture news post “${removed.title}”`);
+  await request(`/admin/voting-content/news/${id}`, { method: "DELETE" });
 }
+
+interface BackendSponsor {
+  id: string;
+  name: string;
+  description: string | null;
+  websiteUrl: string | null;
+  logoUrl: string | null;
+}
+
+const fromBackendSponsor = (s: BackendSponsor): Sponsor => ({
+  id: s.id,
+  name: s.name,
+  logo: s.logoUrl ?? "",
+  description: s.description ?? "",
+  websiteUrl: s.websiteUrl ?? undefined,
+});
 
 export async function getSponsors(): Promise<Sponsor[]> {
-  await delay();
-  return sponsors.map((s) => ({ ...s }));
+  const sponsors = await request<BackendSponsor[]>("/admin/voting-content/sponsors");
+  return sponsors.map(fromBackendSponsor);
 }
 
-export async function saveSponsor(
-  sponsor: Omit<Sponsor, "id"> & { id?: string },
-): Promise<Sponsor> {
-  await delay();
-  const saved: Sponsor = { ...sponsor, id: sponsor.id ?? newId("sponsor") };
-  sponsors = sponsor.id
-    ? sponsors.map((s) => (s.id === sponsor.id ? saved : s))
-    : [...sponsors, saved];
-  recordActivity(
-    "voting",
-    `${sponsor.id ? "Edited" : "Added"} sponsor ${saved.name}`,
-  );
-  return saved;
+export async function saveSponsor(sponsor: Omit<Sponsor, "id"> & { id?: string }): Promise<Sponsor> {
+  const saved = await request<BackendSponsor>("/admin/voting-content/sponsors", {
+    method: "POST",
+    body: JSON.stringify({
+      id: sponsor.id,
+      name: sponsor.name,
+      description: sponsor.description || null,
+      websiteUrl: sponsor.websiteUrl || null,
+      logoUrl: sponsor.logo || null,
+    }),
+  });
+  return fromBackendSponsor(saved);
 }
 
 export async function deleteSponsor(id: string): Promise<void> {
-  await delay();
-  const removed = sponsors.find((s) => s.id === id);
-  sponsors = sponsors.filter((s) => s.id !== id);
-  if (removed) recordActivity("voting", `Deleted sponsor ${removed.name}`);
+  await request(`/admin/voting-content/sponsors/${id}`, { method: "DELETE" });
 }

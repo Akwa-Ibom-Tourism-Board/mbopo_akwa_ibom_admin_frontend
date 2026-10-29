@@ -68,31 +68,31 @@ const columns: DataTableColumn<Candidate>[] = [
     cell: (c) => (
       <NameCell>
         <Avatar>
-          <AvatarImage src={c.photo} alt="" />
+          <AvatarImage src={c.photo ?? undefined} alt="" />
           <AvatarFallback>{c.name[0]}</AvatarFallback>
         </Avatar>
         {c.name}
       </NameCell>
     ),
   },
-  { id: "lga", header: "LGA", sortValue: (c) => c.lga, cell: (c) => c.lga },
+  { id: "lga", header: "LGA", sortValue: (c) => c.lga ?? "", cell: (c) => c.lga },
   {
     id: "district",
     header: "District",
-    sortValue: (c) => c.senatorialDistrict,
+    sortValue: (c) => c.senatorialDistrict ?? "",
     cell: (c) => c.senatorialDistrict,
   },
   { id: "phase", header: "Stage", cell: (c) => <PhaseBadge phase={c.phase} /> },
   {
     id: "status",
     header: "Status",
-    cell: (c) => <StatusBadge status={c.status} />,
+    cell: (c) => <StatusBadge status={c.candidateStatus} />,
   },
   {
     id: "votes",
     header: "Votes",
-    sortValue: (c) => c.voteCount ?? 0,
-    cell: (c) => (c.voteCount ?? 0).toLocaleString("en-NG"),
+    sortValue: (c) => c.voteCount,
+    cell: (c) => c.voteCount.toLocaleString("en-NG"),
   },
 ];
 
@@ -116,7 +116,7 @@ export function CandidateTable({
           (stage === ALL || c.phase === stage) &&
           (lga === ALL || c.lga === lga) &&
           (district === ALL || c.senatorialDistrict === district) &&
-          (status === ALL || c.status === status),
+          (status === ALL || c.candidateStatus === status),
       ),
     [candidates, stage, lga, district, status],
   );

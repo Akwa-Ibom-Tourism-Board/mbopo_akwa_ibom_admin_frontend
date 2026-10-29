@@ -10,6 +10,7 @@ import {
   Tag,
   Trophy,
   UserCog,
+  UserPlus,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -59,8 +60,14 @@ export const NAV_GROUPS: NavGroupConfig[] = [
     label: "Pageant",
     items: [
       {
+        to: "/applicants",
+        label: "Applicants",
+        icon: UserPlus,
+        capability: "applicants.view",
+      },
+      {
         to: "/candidates",
-        label: "Candidates",
+        label: "Contestants",
         icon: Users,
         capability: "candidates.view",
       },

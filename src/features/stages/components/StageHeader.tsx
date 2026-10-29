@@ -15,7 +15,7 @@ import { useCan } from "@/lib/rbac";
 import { useAuth } from "@/features/auth";
 import { useReopenStage } from "@/features/judging/api/hooks";
 import { useOpenPhase } from "../api/hooks";
-import type { PhaseState } from "../types";
+import type { PhaseActor, PhaseState } from "../types";
 import { PhaseStatusBadge } from "./PhaseStatusBadge";
 
 const Card = styled.div`
@@ -100,10 +100,10 @@ export function StageHeader({
   const canReopenNow = can("stages.reopenAny") || !laterClosed;
   // Everyone but the Super Admin sees a Super Admin's actions as "an
   // administrator" — they simply don't know that role exists.
-  const who = (name: string | undefined, by: string | undefined) =>
-    !name
+  const who = (actor: PhaseActor | null | undefined) =>
+    !actor
       ? ""
-      : ` by ${by === "super_admin" && role !== "super_admin" ? "an administrator" : name}`;
+      : ` by ${actor.role === "super_admin" && role !== "super_admin" ? "an administrator" : actor.name}`;
 
   return (
     <Card>
@@ -119,15 +119,15 @@ export function StageHeader({
         {state.openedAt && (
           <Meta>
             Opened {formatDateTime(state.openedAt)}
-            {who(state.openedBy, state.openedByRole)}
+            {who(state.openedBy)}
             {state.reopenedAt
-              ? ` · Reopened ${formatDateTime(state.reopenedAt)}${who(state.reopenedBy, state.reopenedByRole)}`
+              ? ` · Reopened ${formatDateTime(state.reopenedAt)}${who(state.reopenedBy)}`
               : ""}
             {state.resultsSubmittedAt
-              ? ` · Results submitted ${formatDateTime(state.resultsSubmittedAt)}${who(state.resultsSubmittedBy, state.resultsSubmittedByRole)}`
+              ? ` · Results submitted ${formatDateTime(state.resultsSubmittedAt)}${who(state.resultsSubmittedBy)}`
               : ""}
             {state.closedAt
-              ? ` · Closed ${formatDateTime(state.closedAt)}${who(state.closedBy, state.closedByRole)}`
+              ? ` · Closed ${formatDateTime(state.closedAt)}${who(state.closedBy)}`
               : ""}
           </Meta>
         )}

@@ -14,8 +14,8 @@ export function CandidatesPage() {
     return (
       <>
         <PageHeader
-          title="Candidates"
-          description="Select a candidate to add or update their bio, photos and videos."
+          title="Contestants"
+          description="Select a contestant to add or update their bio, photos and videos."
         />
         <MediaCandidateTable candidates={data} isLoading={isLoading} />
       </>
@@ -25,8 +25,8 @@ export function CandidatesPage() {
   return (
     <>
       <PageHeader
-        title="Candidates"
-        description="Every applicant's record in one place. Select a candidate to see their application, judging state and public profile."
+        title="Contestants"
+        description="Every fully-submitted application, in one place. Select a contestant to see their application, judging state and public profile."
       />
       <CandidateTable candidates={data} isLoading={isLoading} />
     </>

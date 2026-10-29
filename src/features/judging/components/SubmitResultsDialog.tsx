@@ -57,10 +57,11 @@ function suggest(phase: PhaseId, standings: LeaderboardEntry[]) {
   if (quota) {
     const perLga = new Map<string, number>();
     for (const e of standings) {
-      const n = perLga.get(e.candidate.lga) ?? 0;
+      const lga = e.candidate.lga ?? "";
+      const n = perLga.get(lga) ?? 0;
       if (n < quota) {
         picked.add(e.candidate.id);
-        perLga.set(e.candidate.lga, n + 1);
+        perLga.set(lga, n + 1);
       }
     }
     return picked;
@@ -111,7 +112,8 @@ export function SubmitResultsDialog({
     const counts = new Map<string, number>();
     standings.forEach((e) => {
       if (passed.has(e.candidate.id)) {
-        counts.set(e.candidate.lga, (counts.get(e.candidate.lga) ?? 0) + 1);
+        const lga = e.candidate.lga ?? "";
+        counts.set(lga, (counts.get(lga) ?? 0) + 1);
       }
     });
     return [...counts].filter(([, n]) => n > quota).map(([lga]) => lga);

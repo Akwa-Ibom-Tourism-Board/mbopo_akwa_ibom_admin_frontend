@@ -13,6 +13,7 @@ import {
   Textarea,
 } from "@/shared/ui";
 import { parseYoutubeId } from "@/lib/youtube";
+import { uploadCandidatePhoto } from "@/lib/cloudinary";
 import {
   ImageUploadField,
   YoutubeEmbed,
@@ -119,7 +120,7 @@ export function CandidateProfilePanel({
   const save = () =>
     mutation.mutate(
       {
-        bio: bio.trim() || undefined,
+        bio: bio.trim() || null,
         additionalPhotos: photos,
         additionalVideos: videos.map((v) => ({
           title: v.title.trim(),
@@ -154,7 +155,11 @@ export function CandidateProfilePanel({
 
           <Field>
             <Label>Additional photos</Label>
-            <ImageUploadField value={photos} onChange={setPhotos} />
+            <ImageUploadField
+              value={photos}
+              onChange={setPhotos}
+              onUpload={(file) => uploadCandidatePhoto(candidate.id, file).then((r) => r.url)}
+            />
           </Field>
 
           <Field>

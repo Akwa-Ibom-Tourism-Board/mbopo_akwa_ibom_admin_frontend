@@ -6,7 +6,6 @@ import {
   updateCandidateDetails,
   updateCandidateProfile,
   uploadCandidateDocument,
-  type UploadedFile,
 } from ".";
 import type { DocumentField } from "../types";
 import type { SectionId } from "../schemas";
@@ -66,13 +65,8 @@ export const useCandidateEvents = (id: string, enabled: boolean) =>
 export function useUploadCandidateDocument(id: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      field,
-      file,
-    }: {
-      field: DocumentField;
-      file: UploadedFile;
-    }) => uploadCandidateDocument(id, field, file),
+    mutationFn: ({ field, file }: { field: DocumentField; file: File }) =>
+      uploadCandidateDocument(id, field, file),
     onSuccess: () =>
       Promise.all([
         qc.invalidateQueries({ queryKey: candidateKeys.all }),

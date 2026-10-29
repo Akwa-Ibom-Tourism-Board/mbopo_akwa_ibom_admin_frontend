@@ -27,6 +27,10 @@ export const ROLE_LABELS: Record<Role, string> = {
 };
 
 export type Capability =
+  // Applicants — every registered account, from sign-up, regardless of
+  // whether they ever finish. Customer Service can see but not manage.
+  | "applicants.view"
+  | "applicants.manage"
   // Candidates
   | "candidates.view"
   | "candidates.editPublicProfile"
@@ -86,6 +90,9 @@ const ALL_ROLES: Role[] = [
 
 // The permission matrix (BUILD_ME.md §3) as data: capability -> roles.
 export const PERMISSIONS: Record<Capability, readonly Role[]> = {
+  "applicants.view": ["super_admin", "admin", "customer_service"],
+  "applicants.manage": ["super_admin", "admin"],
+
   "candidates.view": ["super_admin", "admin", "media", "judge", "head_judge"],
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],
   "candidates.viewIdentity": ["super_admin", "admin"],

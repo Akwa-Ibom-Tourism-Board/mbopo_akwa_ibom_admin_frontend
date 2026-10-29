@@ -98,7 +98,13 @@ export function UserForm({
       );
     } else {
       create.mutate(input, {
-        onSuccess: () => done("User created — sign-in details emailed to them"),
+        onSuccess: ({ temporaryPassword }) => {
+          toast.success(
+            `User created. Temporary password (shown once — copy it now): ${temporaryPassword}`,
+            { duration: 20000 },
+          );
+          onOpenChange(false);
+        },
         onError: (e) => toast.error(e.message),
       });
     }
@@ -112,7 +118,7 @@ export function UserForm({
           <DialogDescription>
             {user
               ? "Update this staff member's details or role."
-              : "Dummy build: real account setup and invitations come with the backend."}
+              : "A temporary password is generated for them — you'll see it once, right after creating the account."}
           </DialogDescription>
         </DialogHeader>
         <FormStack onSubmit={handleSubmit(onSubmit)} noValidate>

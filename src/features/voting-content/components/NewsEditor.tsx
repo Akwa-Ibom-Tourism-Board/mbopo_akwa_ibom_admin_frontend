@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import {
   Textarea,
 } from "@/shared/ui";
 import { parseYoutubeId } from "@/lib/youtube";
+import { uploadVotingContentImage } from "@/lib/cloudinary";
 import type { NewsPost } from "../types";
 import { useSaveNewsPost } from "../api/hooks";
 import { FormRow, FormStack } from "@/shared/components/FormParts";
@@ -70,15 +71,25 @@ export function NewsEditor({
     defaultValues: toValues(post ?? undefined),
   });
   const videos = useFieldArray({ control, name: "videoUrls" });
+  // Minted once per dialog-open-for-a-new-post, so every image uploaded
+  // before Save lands under the same Cloudinary folder the saved record
+  // will end up at (see lib/cloudinary.ts's uploadVotingContentImage note).
+  const newIdRef = useRef(crypto.randomUUID());
+  const contentId = post?.id ?? newIdRef.current;
+  const uploadImage = (file: File) =>
+    uploadVotingContentImage("news", contentId, file).then((r) => r.url);
 
   useEffect(() => {
-    if (open) reset(toValues(post ?? undefined));
+    if (open) {
+      reset(toValues(post ?? undefined));
+      if (!post) newIdRef.current = crypto.randomUUID();
+    }
   }, [open, post, reset]);
 
   const onSubmit = (v: Values) =>
     save.mutate(
       {
-        id: post?.id,
+        id: contentId,
         title: v.title,
         summary: v.summary,
         coverImage: v.coverImage,
@@ -144,6 +155,7 @@ export function NewsEditor({
               name="coverImage"
               render={({ field }) => (
                 <ImageUploadField
+                  onUpload={uploadImage}
                   multiple={false}
                   label="Choose cover"
                   value={field.value ? [field.value] : []}
@@ -157,10 +169,7 @@ export function NewsEditor({
               control={control}
               name="images"
               render={({ field }) => (
-                <ImageUploadField
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                <ImageUploadField onUpload={uploadImage} value={field.value} onChange={field.onChange} />
               )}
             />
           </FormRow>

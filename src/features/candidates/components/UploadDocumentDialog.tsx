@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import { AlertTriangle, FileText, UploadCloud } from "lucide-react";
+import { AlertTriangle, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import {
   Button,
@@ -11,10 +11,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui";
-import { formatBytes } from "@/lib/formatting";
 import { useUploadCandidateDocument } from "../api/hooks";
 import { validateDocumentFile, type DocumentSlot } from "../data/documents";
-import type { Candidate } from "../types";
+import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
 
 const Drop = styled.button<{ $bad: boolean }>`
   display: flex;
@@ -49,13 +48,6 @@ const Preview = styled.div`
     object-fit: contain;
     background: ${({ theme }) => theme.colors.muted.DEFAULT};
   }
-
-  .doc {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 18px;
-  }
 `;
 
 const Meta = styled.p`
@@ -87,17 +79,10 @@ const Warn = styled.p`
   }
 `;
 
-const readAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
 // Choose a file for one document slot, see it checked against the backend's
-// format and size rules and previewed, then confirm. Replacing keeps the same
-// public_id, so the old asset is overwritten.
+// format and size rules and previewed, then confirm. The upload itself goes
+// straight to Cloudinary via a signature the backend issues for this exact
+// slot — replacing keeps the same public_id, so the old asset is overwritten.
 export function UploadDocumentDialog({
   candidate,
   slot,
@@ -109,43 +94,47 @@ export function UploadDocumentDialog({
 }) {
   const upload = useUploadCandidateDocument(candidate.id);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [picked, setPicked] = useState<{
-    url: string;
-    fileName: string;
-    mimeType: string;
-    bytes: number;
-  } | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
 
-  // Start fresh every time the dialog is opened for a slot.
   useEffect(() => {
-    setPicked(null);
+    setFile(null);
     setError(null);
   }, [slot?.field]);
 
-  if (!slot) return null;
-  const existing = candidate.documents[slot.field];
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
-  const choose = async (file: File | undefined) => {
-    if (!file) return;
+  if (!slot) return null;
+  const existingUrl = candidate[DOCUMENT_URL_FIELDS[slot.field]] as string | null | undefined;
+
+  const choose = (picked: File | undefined) => {
+    if (!picked) return;
     setError(null);
-    setPicked(null);
-    const meta = { fileName: file.name, mimeType: file.type, bytes: file.size };
-    const problem = validateDocumentFile(slot.field, meta);
+    const problem = validateDocumentFile(slot.field, {
+      fileName: picked.name,
+      mimeType: picked.type,
+      bytes: picked.size,
+    });
     if (problem) {
       setError(problem);
+      setFile(null);
       return;
     }
-    setPicked({ ...meta, url: await readAsDataUrl(file) });
+    setFile(picked);
   };
 
   const save = () =>
-    picked &&
+    file &&
     upload.mutate(
-      { field: slot.field, file: picked },
+      { field: slot.field, file },
       {
         onSuccess: () => {
-          toast.success(`${slot.label} ${existing ? "replaced" : "uploaded"}`);
+          toast.success(`${slot.label} ${existingUrl ? "replaced" : "uploaded"}`);
           onClose();
         },
         onError: (e) => setError(e.message),
@@ -157,7 +146,7 @@ export function UploadDocumentDialog({
       <DialogContent style={{ maxWidth: 520 }}>
         <DialogHeader>
           <DialogTitle>
-            {existing ? "Replace" : "Upload"} {slot.label.toLowerCase()}
+            {existingUrl ? "Replace" : "Upload"} {slot.label.toLowerCase()}
           </DialogTitle>
           <DialogDescription>
             {slot.formats.map((f) => f.toUpperCase()).join(", ")} · up to{" "}
@@ -171,17 +160,13 @@ export function UploadDocumentDialog({
           hidden
           accept={slot.formats.map((f) => `.${f}`).join(",")}
           onChange={(e) => {
-            void choose(e.target.files?.[0]);
+            choose(e.target.files?.[0]);
             e.target.value = "";
           }}
         />
 
-        {!picked ? (
-          <Drop
-            type="button"
-            $bad={!!error}
-            onClick={() => inputRef.current?.click()}
-          >
+        {!file ? (
+          <Drop type="button" $bad={!!error} onClick={() => inputRef.current?.click()}>
             <UploadCloud size={26} />
             Choose a file
           </Drop>
@@ -189,63 +174,33 @@ export function UploadDocumentDialog({
           <>
             <Preview>
               {slot.kind === "video" ? (
-                <video src={picked.url} controls preload="metadata" />
-              ) : picked.mimeType === "application/pdf" ? (
-                <div className="doc">
-                  <FileText size={28} /> {picked.fileName}
-                </div>
+                <video src={previewUrl!} controls preload="metadata" />
               ) : (
-                <img src={picked.url} alt="New file preview" />
+                <img src={previewUrl!} alt="New file preview" />
               )}
             </Preview>
-            <Meta>
-              New: {picked.fileName} · {formatBytes(picked.bytes)}
-              {existing && (
-                <>
-                  <br />
-                  Replaces: {existing.fileName ?? "current file"} ·{" "}
-                  {formatBytes(existing.bytes)}
-                </>
-              )}
-            </Meta>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              style={{ marginTop: 6 }}
-              onClick={() => inputRef.current?.click()}
-            >
+            <Meta>New: {file.name}</Meta>
+            <Button type="button" variant="ghost" size="sm" style={{ marginTop: 6 }} onClick={() => inputRef.current?.click()}>
               Choose a different file
             </Button>
           </>
         )}
         {error && <Err role="alert">{error}</Err>}
 
-        {slot.field === "videoPitch" &&
-          existing &&
-          candidate.applicationStatus === "submitted" && (
-            <Warn>
-              <AlertTriangle size={15} />
-              This application is already submitted, and applicants can't change
-              their video pitch after that. Replacing it is recorded in the
-              activity trail.
-            </Warn>
-          )}
+        {slot.field === "videoPitch" && existingUrl && candidate.status === "submitted" && (
+          <Warn>
+            <AlertTriangle size={15} />
+            This application is already submitted, and applicants can't change their video pitch
+            after that. Replacing it is recorded in the activity trail.
+          </Warn>
+        )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            disabled={!picked || upload.isPending}
-            onClick={save}
-          >
-            {upload.isPending
-              ? "Uploading…"
-              : existing
-                ? `Replace ${slot.label.toLowerCase()}`
-                : "Upload"}
+          <Button type="button" disabled={!file || upload.isPending} onClick={save}>
+            {upload.isPending ? "Uploading…" : existingUrl ? `Replace ${slot.label.toLowerCase()}` : "Upload"}
           </Button>
         </DialogFooter>
       </DialogContent>

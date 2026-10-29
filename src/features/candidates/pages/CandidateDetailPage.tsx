@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Lock, Pencil, UploadCloud } from "lucide-react";
+import { ArrowLeft, Pencil, UploadCloud } from "lucide-react";
 import { Button } from "@/shared/ui";
 import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
@@ -142,22 +142,22 @@ export function CandidateDetailPage() {
       </Back>
 
       <Hero>
-        <img src={c.photo} alt={c.name} />
+        <img src={c.photo ?? undefined} alt={c.name} />
         <div>
           <h2>{c.name}</h2>
           <Badges>
             <PhaseBadge phase={c.phase} />
-            <StatusBadge status={c.status} />
+            <StatusBadge status={c.candidateStatus} />
             <Badge>{c.lga}</Badge>
             <Badge>{c.senatorialDistrict}</Badge>
           </Badges>
-          {c.status === "eliminated" && (
+          {c.candidateStatus === "eliminated" && (
             <p style={{ margin: "12px 0 0", fontSize: "0.875rem" }}>
               Eliminated —{" "}
-              {c.eliminatedAt ? phaseTitle(c.eliminatedAt) : "not selected"}.
+              {c.eliminatedAtPhase ? phaseTitle(c.eliminatedAtPhase) : "not selected"}.
             </p>
           )}
-          {c.status === "disqualified" && c.disqualificationReason && (
+          {c.candidateStatus === "disqualified" && c.disqualificationReason && (
             <Reason>Disqualified: {c.disqualificationReason}</Reason>
           )}
         </div>
@@ -196,21 +196,11 @@ export function CandidateDetailPage() {
           candidate={c}
           actions={
             can("candidates.editDetails")
-              ? (slot, doc) =>
-                  slot.field === "avatar" ? (
-                    <Badge $tone="neutral">
-                      <Lock size={11} style={{ marginRight: 4 }} />
-                      Locked — verified identity
-                    </Badge>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant={doc ? "outline" : "default"}
-                      onClick={() => setUploading(slot)}
-                    >
-                      <UploadCloud size={14} /> {doc ? "Replace" : "Upload"}
-                    </Button>
-                  )
+              ? (slot, url) => (
+                  <Button size="sm" variant={url ? "outline" : "default"} onClick={() => setUploading(slot)}>
+                    <UploadCloud size={14} /> {url ? "Replace" : "Upload"}
+                  </Button>
+                )
               : undefined
           }
         />

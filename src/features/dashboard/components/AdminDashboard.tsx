@@ -61,7 +61,7 @@ export function AdminDashboard() {
         />
         <StatTile
           label="Candidates still competing"
-          value={count(candidates?.filter((c) => c.status === "active").length)}
+          value={count(candidates?.filter((c) => c.candidateStatus === "active").length)}
           hint="Status only — no scores"
         />
         <StatTile label="News posts" value={count(news?.length)} />

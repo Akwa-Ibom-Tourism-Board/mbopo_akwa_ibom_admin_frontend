@@ -1,20 +1,11 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { FileText, ImageOff, Maximize2 } from "lucide-react";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui";
+import { ImageOff, Maximize2 } from "lucide-react";
+import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
 import { Badge } from "@/shared/components";
-import { useAuth } from "@/features/auth";
-import { formatBytes, formatDateTime } from "@/lib/formatting";
 import { media } from "@/theme";
 import { DOCUMENT_SLOTS, type DocumentSlot } from "../data/documents";
-import type { Candidate, CandidateDocument } from "../types";
+import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
 
 const Grid = styled.div`
   display: grid;
@@ -47,7 +38,6 @@ const Preview = styled.div`
   overflow: hidden;
   background: ${({ theme }) => theme.colors.muted.DEFAULT};
 
-  /* Media fills the box and is cropped, never allowed to size it. */
   img,
   video {
     position: absolute;
@@ -98,24 +88,6 @@ const Body = styled.div`
   }
 `;
 
-const Meta = styled.dl`
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 4px 12px;
-  margin: 0;
-  font-size: 0.8125rem;
-
-  dt {
-    color: ${({ theme }) => theme.colors.muted.foreground};
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 600;
-    word-break: break-word;
-  }
-`;
-
 const Actions = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -124,52 +96,30 @@ const Actions = styled.div`
   padding-top: 6px;
 `;
 
-// A Super Admin's upload shows as "an administrator" to everyone else.
-function uploader(doc: CandidateDocument, viewerRole: string | null) {
-  if (doc.uploadedByRole === "super_admin" && viewerRole !== "super_admin") {
-    return "An administrator";
-  }
-  return doc.uploadedBy;
-}
-
 function DocumentCard({
   slot,
-  doc,
+  url,
   actions,
 }: {
   slot: DocumentSlot;
-  doc?: CandidateDocument;
-  actions?: (slot: DocumentSlot, doc?: CandidateDocument) => React.ReactNode;
+  url: string | null | undefined;
+  actions?: (slot: DocumentSlot, url: string | null | undefined) => React.ReactNode;
 }) {
-  const { role } = useAuth();
   const [zoom, setZoom] = useState(false);
-  const isPdf =
-    doc?.mimeType === "application/pdf" ||
-    doc?.url.startsWith("data:application/pdf");
 
   return (
     <Card>
       <Preview>
-        {!doc ? (
+        {!url ? (
           <Empty>
             <ImageOff size={28} />
             Nothing uploaded
           </Empty>
         ) : slot.kind === "video" ? (
-          <video
-            src={doc.url}
-            controls
-            preload="metadata"
-            aria-label={slot.label}
-          />
-        ) : isPdf ? (
-          <Empty>
-            <FileText size={36} />
-            PDF document
-          </Empty>
+          <video src={url} controls preload="metadata" aria-label={slot.label} />
         ) : (
           <>
-            <img src={doc.url} alt={slot.label} />
+            <img src={url} alt={slot.label} />
             <Button
               className="expand"
               size="icon"
@@ -185,54 +135,24 @@ function DocumentCard({
       <Body>
         <h3>
           {slot.label}
-          {!doc && (
+          {!url && (
             <Badge $tone={slot.requiredAtSubmit ? "danger" : "neutral"}>
               {slot.requiredAtSubmit ? "Required" : "Optional"}
             </Badge>
           )}
         </h3>
         <p>{slot.hint}</p>
-        {doc && (
-          <Meta>
-            <dt>File</dt>
-            <dd>{doc.fileName ?? "—"}</dd>
-            <dt>Size</dt>
-            <dd>{formatBytes(doc.bytes)}</dd>
-            <dt>Added</dt>
-            <dd>
-              {formatDateTime(doc.uploadedAt)} · {uploader(doc, role)}
-            </dd>
-          </Meta>
-        )}
-        <Actions>
-          {doc && isPdf && (
-            <Button asChild size="sm" variant="outline">
-              <a
-                href={doc.url}
-                target="_blank"
-                rel="noreferrer"
-                download={doc.fileName}
-              >
-                Open PDF
-              </a>
-            </Button>
-          )}
-          {actions?.(slot, doc)}
-        </Actions>
+        <Actions>{actions?.(slot, url)}</Actions>
       </Body>
 
-      {doc && slot.kind !== "video" && !isPdf && (
+      {url && slot.kind !== "video" && (
         <Dialog open={zoom} onOpenChange={setZoom}>
           <DialogContent style={{ maxWidth: 720 }}>
             <DialogHeader>
               <DialogTitle>{slot.label}</DialogTitle>
-              <DialogDescription>{doc.fileName}</DialogDescription>
+              <DialogDescription />
             </DialogHeader>
-            <img
-              src={doc.url}
-              alt={slot.label}
-              style={{ width: "100%", maxHeight: "70vh", objectFit: "contain" }}
-            />
+            <img src={url} alt={slot.label} style={{ width: "100%", maxHeight: "70vh", objectFit: "contain" }} />
           </DialogContent>
         </Dialog>
       )}
@@ -240,15 +160,15 @@ function DocumentCard({
   );
 }
 
-// Every file slot the backend keeps for an applicant (UPLOAD_FIELDS), with a
-// preview, file details and who added it. Upload/replace actions plug in via
-// `actions` once the editing stage lands.
+// The 4 file slots the backend keeps for a submitted application, each a
+// plain URL (no upload metadata is tracked server-side — see types/index.ts's
+// note on Candidate). Upload/replace actions plug in via `actions`.
 export function DocumentsTab({
   candidate,
   actions,
 }: {
   candidate: Candidate;
-  actions?: (slot: DocumentSlot, doc?: CandidateDocument) => React.ReactNode;
+  actions?: (slot: DocumentSlot, url: string | null | undefined) => React.ReactNode;
 }) {
   return (
     <Grid>
@@ -256,7 +176,7 @@ export function DocumentsTab({
         <DocumentCard
           key={slot.field}
           slot={slot}
-          doc={candidate.documents[slot.field]}
+          url={candidate[DOCUMENT_URL_FIELDS[slot.field]] as string | null | undefined}
           actions={actions}
         />
       ))}

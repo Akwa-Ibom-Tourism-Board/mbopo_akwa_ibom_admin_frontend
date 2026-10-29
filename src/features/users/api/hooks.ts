@@ -8,7 +8,7 @@ import {
   setUsersActive,
   updateUser,
 } from ".";
-import type { UserUpdate } from "../types";
+import type { AdminUser, UserUpdate } from "../types";
 
 const KEY = ["users"] as const;
 
@@ -35,8 +35,9 @@ export function useResetPassword() {
   });
 }
 export const useSetUsersActive = () =>
-  useInvalidating(({ ids, active }: { ids: string[]; active: boolean }) =>
-    setUsersActive(ids, active),
+  useInvalidating(
+    ({ ids, active, users }: { ids: string[]; active: boolean; users: AdminUser[] }) =>
+      setUsersActive(ids, active, users),
   );
 export const useUpdateUser = () =>
   useInvalidating(({ id, patch }: { id: string; patch: UserUpdate }) =>

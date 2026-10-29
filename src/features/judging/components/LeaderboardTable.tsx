@@ -71,7 +71,7 @@ export function LeaderboardTable({
           }}
         >
           <Avatar>
-            <AvatarImage src={e.candidate.photo} alt="" />
+            <AvatarImage src={e.candidate.photo ?? undefined} alt="" />
             <AvatarFallback>{e.candidate.name[0]}</AvatarFallback>
           </Avatar>
           {e.candidate.name}
@@ -81,13 +81,13 @@ export function LeaderboardTable({
     {
       id: "lga",
       header: "LGA",
-      sortValue: (e) => e.candidate.lga,
+      sortValue: (e) => e.candidate.lga ?? "",
       cell: (e) => e.candidate.lga,
     },
     {
       id: "status",
       header: "Status",
-      cell: (e) => <StatusBadge status={e.candidate.status} />,
+      cell: (e) => <StatusBadge status={e.candidate.candidateStatus} />,
     },
     ...judges.map<DataTableColumn<LeaderboardEntry>>((j) => ({
       id: `judge-${j.id}`,

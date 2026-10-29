@@ -29,7 +29,7 @@ export function UsersPage() {
     <>
       <PageHeader
         title="Users"
-        description="Staff accounts. Passwords are stored scrambled and never listed — if someone loses theirs, reset it: a new temporary one is emailed and shown to you once."
+        description="Staff accounts. Passwords are stored scrambled and never listed — if someone loses theirs, reset it: a new temporary one is shown to you once, to pass on yourself."
         actions={
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             <Button asChild variant="outline">
@@ -129,7 +129,7 @@ export function UsersPage() {
         onConfirm={() =>
           bulk &&
           setMany.mutate(
-            { ids: bulk.users.map((u) => u.id), active: bulk.active },
+            { ids: bulk.users.map((u) => u.id), active: bulk.active, users: data ?? [] },
             {
               onSuccess: ({ changed, skipped }) => {
                 const verb = bulk.active ? "reactivated" : "deactivated";

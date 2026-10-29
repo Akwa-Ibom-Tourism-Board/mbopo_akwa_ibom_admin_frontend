@@ -109,7 +109,7 @@ export function StageCandidateTable({
       cell: ({ candidate: c }) => (
         <NameCell>
           <Avatar>
-            <AvatarImage src={c.photo} alt="" />
+            <AvatarImage src={c.photo ?? undefined} alt="" />
             <AvatarFallback>{c.name[0]}</AvatarFallback>
           </Avatar>
           {c.name}
@@ -119,13 +119,13 @@ export function StageCandidateTable({
     {
       id: "lga",
       header: "LGA",
-      sortValue: (r) => r.candidate.lga,
+      sortValue: (r) => r.candidate.lga ?? "",
       cell: (r) => r.candidate.lga,
     },
     {
       id: "district",
       header: "District",
-      sortValue: (r) => r.candidate.senatorialDistrict,
+      sortValue: (r) => r.candidate.senatorialDistrict ?? "",
       cell: (r) => r.candidate.senatorialDistrict,
     },
     {

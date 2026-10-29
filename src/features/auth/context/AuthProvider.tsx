@@ -1,61 +1,78 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { setUnauthorizedHandler, friendlyMessage } from "@/lib/http";
+import { localStore, STORAGE_KEYS } from "@/lib/storage";
 import { AuthContext } from "./AuthContext";
-import { DUMMY_ACCOUNTS, type SessionUser } from "../data/dummy-accounts";
-import { recordActivity } from "@/features/activity-log/api";
-import { isUserActiveSync } from "@/features/users/api";
-import { SESSION_KEY, readSessionUser } from "../session";
+import { clearSession, fetchMe, login as loginRequest, logout as logoutRequest } from "../api";
+import type { AdminUser } from "../types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser | null>(readSessionUser);
+  const [user, setUser] = useState<AdminUser | null>(() =>
+    localStore.get<AdminUser>(STORAGE_KEYS.authUser) ?? null,
+  );
+  // Starts true whenever a token might still be valid, so RequireAuth
+  // doesn't bounce an already-signed-in person to /login while /me is
+  // still in flight on page load.
+  const [loading, setLoading] = useState(
+    () => Boolean(localStore.get(STORAGE_KEYS.authToken) || localStore.get(STORAGE_KEYS.authRefreshToken)),
+  );
   const queryClient = useQueryClient();
 
+  useEffect(() => {
+    if (!loading) return;
+    fetchMe()
+      .then(setUser)
+      .catch(() => {
+        clearSession();
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+    // Runs once, on mount, regardless of dependency changes — this is a
+    // one-time session restore, not something to re-run on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const signOutLocally = useCallback(() => {
+    clearSession();
+    queryClient.clear();
+    setUser(null);
+  }, [queryClient]);
+
+  // A 401/403 from any request (expired refresh token, deactivated
+  // account) ends the session immediately — no second network call, since
+  // the one that just failed already proved the session is gone.
+  useEffect(() => {
+    setUnauthorizedHandler(signOutLocally);
+    return () => setUnauthorizedHandler(null);
+  }, [signOutLocally]);
+
   const login = useCallback(
-    (email: string, password: string) => {
-      const account = DUMMY_ACCOUNTS.find(
-        (a) =>
-          a.email.toLowerCase() === email.trim().toLowerCase() &&
-          a.password === password,
-      );
-      if (!account)
-        return { ok: false as const, error: "Incorrect email or password." };
-      // A deactivated account can't sign in.
-      if (!isUserActiveSync(account.id)) {
-        return {
-          ok: false as const,
-          error:
-            "This account has been deactivated. Please contact an administrator.",
-        };
-      }
-      // Never carry one person's cached data (users, activity…) into the next
-      // person's session — what each role may see differs.
-      queryClient.clear();
-      setUser(account);
+    async (email: string, password: string) => {
       try {
-        sessionStorage.setItem(SESSION_KEY, account.id);
-      } catch {
-        /* storage unavailable — session lasts until reload */
+        // Never carry one person's cached data (candidates, users…) into
+        // the next person's session — what each role may see differs.
+        queryClient.clear();
+        const admin = await loginRequest(email, password);
+        setUser(admin);
+        return { ok: true as const };
+      } catch (error) {
+        return { ok: false as const, error: friendlyMessage(error, "Incorrect email or password.") };
       }
-      recordActivity("access", "Signed in");
-      return { ok: true as const };
     },
     [queryClient],
   );
 
-  const logout = useCallback(() => {
-    recordActivity("access", "Signed out");
-    queryClient.clear();
-    setUser(null);
+  const logout = useCallback(async () => {
     try {
-      sessionStorage.removeItem(SESSION_KEY);
-    } catch {
-      /* ignore */
+      await logoutRequest();
+    } finally {
+      signOutLocally();
     }
-  }, [queryClient]);
+  }, [signOutLocally]);
 
   const value = useMemo(
-    () => ({ user, role: user?.role ?? null, login, logout }),
-    [user, login, logout],
+    () => ({ user, role: user?.role ?? null, loading, login, logout }),
+    [user, loading, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

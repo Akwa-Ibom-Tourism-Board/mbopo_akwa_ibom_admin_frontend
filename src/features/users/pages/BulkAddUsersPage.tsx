@@ -240,7 +240,8 @@ export function BulkAddUsersPage() {
         onSuccess: ({ created, failed }) => {
           if (!failed.length) {
             toast.success(
-              `${created.length} account${created.length === 1 ? "" : "s"} created — sign-in details emailed`,
+              `${created.length} account${created.length === 1 ? "" : "s"} created. Use Reset Password on each one (Users page) to get its sign-in credentials.`,
+              { duration: 10000 },
             );
             navigate("/users");
             return;

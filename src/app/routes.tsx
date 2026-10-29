@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/features/auth";
+import { ApplicantDetailPage, ApplicantsPage } from "@/features/applicants";
 import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { ActivityLogPage } from "@/features/activity-log";
 import { ComplaintDetailPage, ComplaintsPage } from "@/features/complaints";
@@ -29,6 +30,11 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+
+          <Route element={<RoleGuard capability="applicants.view" />}>
+            <Route path="/applicants" element={<ApplicantsPage />} />
+            <Route path="/applicants/:id" element={<ApplicantDetailPage />} />
+          </Route>
 
           <Route element={<RoleGuard capability="candidates.view" />}>
             <Route path="/candidates" element={<CandidatesPage />} />

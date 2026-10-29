@@ -86,9 +86,9 @@ export function ResultsPanel({
   const anytime = can("results.submitAnytime");
   // A Super Admin's submission shows to everyone else as an administrator's.
   const by =
-    state.resultsSubmittedByRole === "super_admin" && role !== "super_admin"
+    state.resultsSubmittedBy?.role === "super_admin" && role !== "super_admin"
       ? "an administrator"
-      : state.resultsSubmittedBy;
+      : state.resultsSubmittedBy?.name;
 
   if (submitted) {
     return (

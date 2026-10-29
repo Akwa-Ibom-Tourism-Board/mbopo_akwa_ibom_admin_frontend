@@ -30,14 +30,14 @@ const columns: DataTableColumn<AdminUser>[] = [
   {
     id: "password",
     header: "Password",
-    sortValue: (u) => u.passwordChangedAt,
+    sortValue: (u) => u.passwordChangedAt ?? "",
     cell: (u) => (
       <span title="Passwords are stored scrambled. Use Reset to issue a new temporary one.">
         <span aria-label="Hidden password" style={{ letterSpacing: 2 }}>
           ••••••••
         </span>
         <small style={{ display: "block", opacity: 0.65 }}>
-          Changed {formatDate(u.passwordChangedAt)}
+          {u.passwordChangedAt ? `Changed ${formatDate(u.passwordChangedAt)}` : "Never changed"}
         </small>
       </span>
     ),

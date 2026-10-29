@@ -19,15 +19,6 @@ export const VIDEO_PITCH_MAX_BYTES = 10 * 1024 * 1024;
 
 export const DOCUMENT_SLOTS: readonly DocumentSlot[] = [
   {
-    field: "avatar",
-    label: "Profile photo",
-    hint: "The applicant's account photo.",
-    kind: "image",
-    formats: ["jpg", "jpeg", "png"],
-    maxBytes: MAX_IMAGE_BYTES,
-    requiredAtSubmit: false,
-  },
-  {
     field: "certificateOfOrigin",
     label: "Certificate of origin",
     hint: "Proof of local government origin. Image or PDF.",
@@ -67,12 +58,6 @@ export const DOCUMENT_SLOTS: readonly DocumentSlot[] = [
 
 export const getSlot = (field: DocumentField) =>
   DOCUMENT_SLOTS.find((s) => s.field === field)!;
-
-// Same deterministic scheme as the backend's buildPublicId().
-export function buildPublicId(applicantId: string, field: DocumentField) {
-  const scope = field === "avatar" ? "users" : "applications";
-  return `mbopo/development/${scope}/${applicantId}/${field}`;
-}
 
 const MIME_BY_KIND: Record<DocumentSlot["kind"], readonly string[]> = {
   image: ["image/jpeg", "image/png"],

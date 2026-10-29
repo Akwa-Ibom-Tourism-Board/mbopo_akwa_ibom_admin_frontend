@@ -40,55 +40,57 @@ const Remove = styled.button`
   cursor: pointer;
 `;
 
-const Error = styled.p`
+const ErrorText = styled.p`
   margin: 8px 0 0;
   color: ${({ theme }) => theme.colors.destructive.DEFAULT};
   font-size: 0.8125rem;
 `;
 
-// Dummy upload: reads the file into a data URL. Swap `readFile` for the real
-// Cloudinary upload (same pattern as the applicant platform) when wiring the
-// backend — the component's value stays a list of image URLs either way.
-const readFile = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-
+// Real upload: `onUpload` is supplied by the caller (each has its own real
+// signed-upload target — a voting-content image, a candidate's additional
+// photo, etc. — see lib/cloudinary.ts), so this component stays a plain,
+// reusable picker/preview rather than knowing about any one of them.
 export function ImageUploadField({
   value,
   onChange,
+  onUpload,
   multiple = true,
   label = "Add photo",
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
+  onUpload: (file: File) => Promise<string>;
   multiple?: boolean;
   label?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setError(null);
-    const added: string[] = [];
-    for (const file of Array.from(files)) {
-      if (!file.type.startsWith("image/")) {
-        setError(`${file.name} isn't an image.`);
-        continue;
+    setUploading(true);
+    try {
+      const added: string[] = [];
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) {
+          setError(`${file.name} isn't an image.`);
+          continue;
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+          setError(`${file.name} is over the 5MB limit.`);
+          continue;
+        }
+        added.push(await onUpload(file));
       }
-      if (file.size > MAX_IMAGE_BYTES) {
-        setError(`${file.name} is over the 5MB limit.`);
-        continue;
-      }
-      added.push(await readFile(file));
+      if (added.length) onChange(multiple ? [...value, ...added] : added.slice(0, 1));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
     }
-    if (added.length)
-      onChange(multiple ? [...value, ...added] : added.slice(0, 1));
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -119,12 +121,13 @@ export function ImageUploadField({
         type="button"
         variant="outline"
         size="sm"
+        disabled={uploading}
         style={{ marginTop: value.length ? 12 : 0 }}
         onClick={() => inputRef.current?.click()}
       >
-        <ImagePlus size={16} /> {label}
+        <ImagePlus size={16} /> {uploading ? "Uploading…" : label}
       </Button>
-      {error && <Error role="alert">{error}</Error>}
+      {error && <ErrorText role="alert">{error}</ErrorText>}
     </div>
   );
 }

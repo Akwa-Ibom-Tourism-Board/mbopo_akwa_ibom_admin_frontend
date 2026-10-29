@@ -19,14 +19,15 @@ export function participantsOf(
   const idx = phaseIndex(phaseId);
   const out: Participant[] = [];
   for (const c of candidates) {
+    if (!c.phase) continue;
     const ci = phaseIndex(c.phase);
     if (ci > idx) out.push({ candidate: c, outcome: "advanced" });
     else if (ci === idx) {
       out.push({
         candidate: c,
-        outcome: c.status === "active" ? "competing" : c.status,
+        outcome: c.candidateStatus === "active" ? "competing" : (c.candidateStatus ?? "competing"),
       });
-    } else if (ci === idx - 1 && c.status === "advanced") {
+    } else if (ci === idx - 1 && c.candidateStatus === "advanced") {
       out.push({ candidate: c, outcome: "incoming" });
     }
   }
@@ -35,4 +36,4 @@ export function participantsOf(
 
 // Candidates judges score in a stage: in it, and still competing.
 export const inField = (c: Candidate, phaseId: PhaseId) =>
-  c.phase === phaseId && c.status === "active";
+  c.phase === phaseId && c.candidateStatus === "active";

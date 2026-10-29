@@ -1,152 +1,106 @@
 import type { Lga, SenatorialDistrict } from "@/lib/constants";
 import type { Role } from "@/lib/rbac";
-
 import type { CandidateStage, PhaseId } from "@/lib/phases";
 
 export type { CandidateStage };
 
-// "eliminated" = not selected by the judges at a cut (a normal competitive
-// outcome); "disqualified" = broke a rule and always carries a reason.
-export type CandidateStatus =
-  "active" | "advanced" | "eliminated" | "disqualified" | "winner";
+export type CandidateStatus = "active" | "advanced" | "eliminated" | "disqualified" | "winner";
 
 export interface CandidateVideo {
   title: string;
   youtubeUrl: string;
 }
 
-export type Gender = "male" | "female";
 export type ApplicationStatus = "draft" | "submitted";
 
-// The file slots an applicant has, named exactly as the backend names them
-// (configurations/cloudinary.ts UPLOAD_FIELDS). "avatar" lives on the account
-// (User.avatarUrl); the rest are on the Application.
-export type DocumentField =
-  "avatar" | "certificateOfOrigin" | "fullImage" | "fullImage2" | "videoPitch";
+// The 4 application file slots an admin may replace (never "avatar" — that
+// comes from the verified NIN identity and is locked everywhere). Named
+// exactly as the backend names them (configurations/cloudinary.ts PhotoField).
+export type DocumentField = "certificateOfOrigin" | "fullImage" | "fullImage2" | "videoPitch";
 
-// One uploaded file. `publicId` is the Cloudinary public_id the backend keeps
-// beside every URL (mbopo/<env>/applications/<applicantId>/<field>).
-export interface CandidateDocument {
-  url: string;
-  publicId: string;
-  fileName?: string;
-  mimeType?: string;
-  bytes?: number;
-  uploadedAt: string; // ISO
-  // "Applicant" for their own upload, otherwise the staff member's name. The
-  // role lets the page show "an administrator" for a Super Admin's upload.
-  uploadedBy: string;
-  uploadedByRole: Role | "applicant";
-}
-
-// Mirrors the backend's User + Application tables (mbopo_akwa_ibom_backend:
-// auth/User.ts and applicants/application/Application.ts). Field names follow
-// the backend, with two readability exceptions the whole admin app already
-// uses: `lga` is the backend's `localGovernment`, and `why` also appears as the
-// derived `story`.
+/**
+ * Mirrors exactly what GET /admin/contestants/:id (serializeCandidateForViewer)
+ * returns — a flat, already-redacted record, not the backend's raw User +
+ * Application tables. Fields below `candidates.view`'s base tier are
+ * optional: Media only ever gets the base fields; `details`-tier fields
+ * require `candidates.viewDetails`; `identity`-tier fields require
+ * `candidates.viewIdentity`. See admin/helpers/candidate.helpers.ts.
+ */
 export interface Candidate {
+  // ── Base tier (candidates.view — every role that can see candidates at all)
   id: string;
-
-  // ── Account identity (User) — comes from the applicant's NIN/VIN check
-  firstName: string;
-  lastName: string;
-  middleName?: string;
-  gender: Gender;
-  dateOfBirth: string; // ISO date
-  nin: string; // 11 digits
-  vin: string; // 19 characters
-  ward?: string;
-  lga: Lga; // backend: localGovernment
-  senatorialDistrict: SenatorialDistrict; // derived from lga
-  identityVerified: boolean;
-  // null = no submit-time VIN check has run yet — NOT "failed".
-  isVinVerified: boolean | null;
-  vinVerificationFailedReason?: string;
-  email: string;
-  emailVerified: boolean;
-
-  // ── Application
-  phone: string;
-  socialMedia?: string;
-  nextOfKin: string;
-  nextOfKinPhone: string;
-  nextOfKinRelationship: string;
-  village: string;
-  residenceState: string;
-  city: string;
-  address: string;
-  education: string;
-  institution?: string;
-  institutionOther?: string; // only when institution is "Other"
-  occupation: string;
-  occupationOther?: string; // only when occupation is "Other"
-  talents: string;
-  languages: string;
-  initiative?: string;
-  why: string;
-  declarationIdentity: boolean;
-  declarationAccuracy: boolean;
-  declarationTerms: boolean;
-  applicationStatus: ApplicationStatus;
-  referenceCode: string;
-  submittedAt?: string; // ISO
-  appliedAt: string; // ISO — when the application was started
-
-  // ── Uploaded files
-  documents: Partial<Record<DocumentField, CandidateDocument>>;
-
-  // ── Display fields derived from the above (see utils/derive.ts) so the rest
-  // of the app can keep using short names. Never edit these directly.
+  applicantId: string;
   name: string;
-  photo: string;
-  applicantPhotos: string[];
-  videoPitchUrl?: string;
-  story: string;
+  photo: string | null;
+  lga: Lga | null;
+  senatorialDistrict?: SenatorialDistrict;
+  status: ApplicationStatus;
+  referenceCode: string | null;
+  submittedAt: string | null; // ISO
+  bio: string | null;
+  additionalPhotos: string[];
+  additionalVideos: CandidateVideo[];
+  voteCount: number;
 
-  // ── Judging state. `phase` is the stage of elimination the candidate is in
-  // (or last competed in); `stage` is the broader stage it belongs to, kept in
-  // sync. `advanced` means the Head Judge has finalized them through that
-  // phase and they wait there until an Admin opens the next one. Only the
-  // judging workflow changes these.
-  phase: PhaseId;
-  stage: CandidateStage;
-  status: CandidateStatus;
-  disqualificationReason?: string;
-  // The phase where an eliminated / disqualified candidate's run ended.
-  eliminatedAt?: PhaseId;
-  disqualifiedAt?: PhaseId;
+  // ── Details tier (candidates.viewDetails — Judge/Head Judge/Admin/Super Admin)
+  stage?: CandidateStage | null;
+  phase?: PhaseId | null;
+  candidateStatus?: CandidateStatus | null;
+  disqualificationReason?: string | null;
+  eliminatedAtPhase?: PhaseId | null;
+  disqualifiedAtPhase?: PhaseId | null;
+  middleName?: string | null;
+  gender?: "male" | "female" | null;
+  dateOfBirth?: string | null;
+  phone?: string | null;
+  socialMedia?: string | null;
+  nextOfKin?: string | null;
+  nextOfKinPhone?: string | null;
+  nextOfKinRelationship?: string | null;
+  village?: string | null;
+  residenceState?: string | null;
+  city?: string | null;
+  address?: string | null;
+  education?: string | null;
+  institution?: string | null;
+  institutionOther?: string | null;
+  occupation?: string | null;
+  occupationOther?: string | null;
+  talents?: string | null;
+  languages?: string | null;
+  initiative?: string | null;
+  why?: string | null;
+  certificateOfOriginUrl?: string | null;
+  fullImageUrl?: string | null;
+  fullImageUrl2?: string | null;
+  videoPitchUrl?: string | null;
 
-  // ── Public profile content (Media-managed)
-  bio?: string;
-  additionalPhotos?: string[];
-  additionalVideos?: CandidateVideo[];
-
-  // ── Voting (read from the voting platform's own data)
-  voteCount?: number;
+  // ── Identity tier (candidates.viewIdentity — Admin/Super Admin only)
+  nin?: string | null;
+  vin?: string | null;
+  draftVin?: string | null;
+  isVinVerified?: boolean | null;
+  vinVerificationFailedReason?: string | null;
 }
 
-// One line in a candidate's own activity history: what the applicant did on the
-// applicant platform and what staff did to their record. Shown to Admin and
-// Super Admin on the candidate's Activity tab.
-export type CandidateEventKind =
-  "account" | "identity" | "application" | "document" | "judging" | "staff";
+export const DOCUMENT_URL_FIELDS: Record<DocumentField, keyof Candidate> = {
+  certificateOfOrigin: "certificateOfOriginUrl",
+  fullImage: "fullImageUrl",
+  fullImage2: "fullImageUrl2",
+  videoPitch: "videoPitchUrl",
+};
 
+export type PublicProfileUpdate = Pick<Candidate, "bio" | "additionalPhotos" | "additionalVideos">;
+
+// One line in a candidate's own Activity tab (GET /admin/activity/candidate/:id).
 export interface CandidateEvent {
   id: string;
-  candidateId: string;
   at: string; // ISO
-  actorType: "applicant" | "staff" | "system";
+  actorId: string | null;
   actorName: string;
-  // For staff, so a Super Admin's actions can be hidden from an Admin.
-  actorRole?: Role;
-  kind: CandidateEventKind;
+  actorRole?: Role | null;
   summary: string;
 }
-
-export type PublicProfileUpdate = Pick<
-  Candidate,
-  "bio" | "additionalPhotos" | "additionalVideos"
->;
 
 export const STAGE_LABELS: Record<CandidateStage, string> = {
   lga_selection: "Local Government",

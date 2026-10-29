@@ -10,10 +10,12 @@ const STATUS_TONE: Record<CandidateStatus, BadgeTone> = {
   winner: "success",
 };
 
-export function PhaseBadge({ phase }: { phase: PhaseId }) {
+export function PhaseBadge({ phase }: { phase: PhaseId | null | undefined }) {
+  if (!phase) return <Badge $tone="neutral">—</Badge>;
   return <Badge $tone="secondary">{phaseTitle(phase)}</Badge>;
 }
 
-export function StatusBadge({ status }: { status: CandidateStatus }) {
+export function StatusBadge({ status }: { status: CandidateStatus | null | undefined }) {
+  if (!status) return <Badge $tone="neutral">—</Badge>;
   return <Badge $tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>;
 }
