@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import styled from "styled-components";
+import { SearchX } from "lucide-react";
 import {
   Input,
   LoadingState,
@@ -275,7 +276,11 @@ export function ActivityLogPage() {
             {categorySelect}
           </div>
           {allRows.length === 0 ? (
-            <EmptyState>No activity matches.</EmptyState>
+            <EmptyState
+              icon={<SearchX size={26} />}
+              title="No activity matches"
+              message="Try a different search or category."
+            />
           ) : (
             <ActivityFeed entries={allRows} />
           )}

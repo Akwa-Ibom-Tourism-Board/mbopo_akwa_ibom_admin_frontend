@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Pencil, UploadCloud } from "lucide-react";
+import { ArrowLeft, Pencil, SearchX, UploadCloud } from "lucide-react";
 import { Button, LoadingState } from "@/shared/ui";
 import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
@@ -116,7 +116,16 @@ export function CandidateDetailPage() {
         <Back to="/candidates">
           <ArrowLeft size={16} /> All candidates
         </Back>
-        <EmptyState>We couldn't find that candidate.</EmptyState>
+        <EmptyState
+          icon={<SearchX size={26} />}
+          title="Candidate not found"
+          message="We couldn't find that candidate."
+          action={
+            <Button asChild>
+              <Link to="/candidates">Back to contestants</Link>
+            </Button>
+          }
+        />
       </>
     );
   }

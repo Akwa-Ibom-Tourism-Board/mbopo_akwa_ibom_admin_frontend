@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Check, Trash2, UserX } from "lucide-react";
+import { ArrowLeft, Check, SearchX, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
 import { Badge, ConfirmDialog, EmptyState } from "@/shared/components";
@@ -101,7 +101,16 @@ export function ApplicantDetailPage() {
         <Back to="/applicants">
           <ArrowLeft size={16} /> All applicants
         </Back>
-        <EmptyState>We couldn't find that applicant.</EmptyState>
+        <EmptyState
+          icon={<SearchX size={26} />}
+          title="Applicant not found"
+          message="We couldn't find that applicant."
+          action={
+            <Button asChild>
+              <Link to="/applicants">Back to applicants</Link>
+            </Button>
+          }
+        />
       </>
     );
   }

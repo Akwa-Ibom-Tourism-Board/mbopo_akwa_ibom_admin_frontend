@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import {
   Button,
@@ -79,7 +79,16 @@ export function ComplaintDetailPage() {
         <Back to="/complaints">
           <ArrowLeft size={16} /> All complaints
         </Back>
-        <EmptyState>We couldn't find that complaint.</EmptyState>
+        <EmptyState
+          icon={<SearchX size={26} />}
+          title="Complaint not found"
+          message="We couldn't find that complaint."
+          action={
+            <Button asChild>
+              <Link to="/complaints">Back to complaints</Link>
+            </Button>
+          }
+        />
       </>
     );
   }

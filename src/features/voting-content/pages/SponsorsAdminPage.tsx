@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Handshake, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button, Card, CardContent, LoadingState } from "@/shared/ui";
 import { ConfirmDialog, EmptyState, PageHeader } from "@/shared/components";
@@ -64,7 +64,21 @@ export function SponsorsAdminPage() {
       {isLoading ? (
         <LoadingState />
       ) : !data?.length ? (
-        <EmptyState>No sponsors yet.</EmptyState>
+        <EmptyState
+          icon={<Handshake size={26} />}
+          title="No sponsors yet"
+          message="Add a sponsor to show their card on the public voting site."
+          action={
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setOpen(true);
+              }}
+            >
+              <Plus size={16} /> Add sponsor
+            </Button>
+          }
+        />
       ) : (
         <Grid>
           {data.map((s) => (

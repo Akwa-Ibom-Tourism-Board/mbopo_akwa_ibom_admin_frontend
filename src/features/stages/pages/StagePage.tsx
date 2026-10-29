@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import styled from "styled-components";
+import { SearchX, Users } from "lucide-react";
 import { EmptyState } from "@/shared/components";
 import { LoadingState } from "@/shared/ui";
 import { useCandidates } from "@/features/candidates/api/hooks";
@@ -53,7 +54,9 @@ export function StagePage() {
     [valid, phaseId, candidates.data],
   );
 
-  if (!valid) return <EmptyState>We couldn't find that stage.</EmptyState>;
+  if (!valid) {
+    return <EmptyState icon={<SearchX size={26} />} title="Stage not found" message="We couldn't find that stage." />;
+  }
   const state = states.data?.find((s) => s.phaseId === phaseId);
   if (!state || candidates.isLoading) return <LoadingState />;
 
@@ -104,7 +107,7 @@ export function StagePage() {
         state.status === "open" &&
         rows.length > 0 && <ResultsPanel phaseId={phaseId} state={state} />}
       {rows.length === 0 ? (
-        <EmptyState>{emptyMessage}</EmptyState>
+        <EmptyState icon={<Users size={26} />} message={emptyMessage} />
       ) : can("judging.access") ? (
         <JudgeStageTable phaseId={phaseId} state={state} rows={rows} />
       ) : (

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import { EmptyState, PageHeader } from "@/shared/components";
 import { usePhaseStates } from "@/features/stages/api/hooks";
 import { phaseTitle, type PhaseId } from "@/lib/phases";
@@ -46,9 +47,11 @@ export function LeaderboardPage() {
         }
       />
       {pending ? (
-        <EmptyState>
-          {phaseTitle(active)} hasn't been opened yet, so there are no scores.
-        </EmptyState>
+        <EmptyState
+          icon={<Lock size={26} />}
+          title="Stage not opened yet"
+          message={`${phaseTitle(active)} hasn't been opened yet, so there are no scores.`}
+        />
       ) : (
         <LeaderboardTable
           entries={board.data}

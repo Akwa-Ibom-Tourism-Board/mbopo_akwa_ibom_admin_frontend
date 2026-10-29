@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { Button, Checkbox, Input, LoadingState } from "@/shared/ui";
+import { EmptyState } from "./PageParts";
 import {
   BulkActions,
   BulkBar,
@@ -9,7 +10,6 @@ import {
   Pager,
   Scroll,
   SortButton,
-  StateBox,
   Table,
   Td,
   Th,
@@ -245,7 +245,7 @@ export function DataTable<T>({
             ) : pageRows.length === 0 ? (
               <tr>
                 <td colSpan={colSpan}>
-                  <StateBox>{emptyMessage}</StateBox>
+                  <EmptyState message={emptyMessage} />
                 </td>
               </tr>
             ) : (

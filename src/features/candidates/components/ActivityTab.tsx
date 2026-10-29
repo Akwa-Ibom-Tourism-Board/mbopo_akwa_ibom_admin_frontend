@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import styled from "styled-components";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
-import { Pencil } from "lucide-react";
+import { History, Pencil } from "lucide-react";
 import { Badge, EmptyState } from "@/shared/components";
 import { LoadingState } from "@/shared/ui";
 import { ROLE_LABELS } from "@/lib/rbac";
@@ -91,7 +91,11 @@ export function ActivityTab({ candidateId }: { candidateId: string }) {
   if (isLoading) return <LoadingState />;
 
   return groups.length === 0 ? (
-    <EmptyState>Nothing recorded yet.</EmptyState>
+    <EmptyState
+      icon={<History size={26} />}
+      title="Nothing recorded yet"
+      message="Staff actions on this candidate will show up here."
+    />
   ) : (
     <Panel>
       {groups.map((g) => (

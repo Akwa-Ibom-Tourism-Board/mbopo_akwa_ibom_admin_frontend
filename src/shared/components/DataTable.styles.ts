@@ -106,12 +106,6 @@ export const CheckCell = styled.td`
   padding: 12px 0 12px 16px;
 `;
 
-export const StateBox = styled.div`
-  padding: 40px 16px;
-  color: ${({ theme }) => theme.colors.muted.foreground};
-  text-align: center;
-  font-size: 0.9375rem;
-`;
 
 export const Footer = styled.div`
   display: flex;

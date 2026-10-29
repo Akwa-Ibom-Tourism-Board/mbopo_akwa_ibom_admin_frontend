@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Hourglass, SearchX, TriangleAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { useAuth } from "@/features/auth";
@@ -134,8 +134,18 @@ export function CandidateScoringPage() {
   const states = usePhaseStates().data;
 
   if (isLoading || myScores.isLoading) return <LoadingState />;
-  if (!c) return <EmptyState>We couldn't find that candidate.</EmptyState>;
-  if (!c.phase) return <EmptyState>This candidate isn't in any stage yet.</EmptyState>;
+  if (!c) {
+    return <EmptyState icon={<SearchX size={26} />} title="Candidate not found" message="We couldn't find that candidate." />;
+  }
+  if (!c.phase) {
+    return (
+      <EmptyState
+        icon={<Hourglass size={26} />}
+        title="Not in a stage yet"
+        message="This candidate isn't in any stage yet."
+      />
+    );
+  }
   const phase = c.phase;
 
   const rounds = roundsOf(phase);
