@@ -221,8 +221,8 @@ export function ComplaintDetailPage() {
             </form>
           ) : (
             <Meta style={{ marginTop: 24 }}>
-              Replies are handled by Customer Service. You have read access and
-              can reassign this ticket.
+              You don't have permission to reply to this complaint. You have
+              read access and can reassign this ticket.
             </Meta>
           )}
         </CardContent>

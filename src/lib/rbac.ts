@@ -122,7 +122,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "users.delete": ["super_admin"],
 
   "complaints.view": ["super_admin", "admin", "customer_service"],
-  "complaints.respond": ["customer_service"],
+  "complaints.respond": ["super_admin", "admin", "customer_service"],
   "complaints.reassign": ["super_admin", "admin"],
 
   "activity.view": ["super_admin", "admin"],
