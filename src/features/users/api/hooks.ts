@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createUser,
   createUsers,
+  deleteUser,
   getUsers,
   resetPassword,
   setUserActive,
@@ -47,3 +48,4 @@ export const useSetUserActive = () =>
   useInvalidating(({ id, active }: { id: string; active: boolean }) =>
     setUserActive(id, active),
   );
+export const useDeleteUser = () => useInvalidating(deleteUser);

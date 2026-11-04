@@ -70,8 +70,10 @@ export type Capability =
   | "voting.pricing"
   | "voting.news"
   | "voting.sponsors"
-  // Users
+  // Users — "manage" is create/edit/activate/reset-password, shared with
+  // Admin; "delete" is Super Admin only.
   | "users.manage"
+  | "users.delete"
   // Complaints
   | "complaints.view"
   | "complaints.respond"
@@ -117,6 +119,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "voting.sponsors": ["super_admin", "admin", "media"],
 
   "users.manage": ["super_admin", "admin"],
+  "users.delete": ["super_admin"],
 
   "complaints.view": ["super_admin", "admin", "customer_service"],
   "complaints.respond": ["customer_service"],

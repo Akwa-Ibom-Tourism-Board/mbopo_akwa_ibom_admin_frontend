@@ -6,7 +6,7 @@ import ariseLogo from "@/assets/arise-logo-main.png";
 import mbopoLogo from "@/assets/mbopo-logo-dark.webp";
 import { useAuth } from "@/features/auth";
 import { usePhaseStates } from "@/features/stages/api/hooks";
-import { can, ROLE_LABELS } from "@/lib/rbac";
+import { can, ROLE_LABELS, type Role } from "@/lib/rbac";
 import { NAV_GROUPS, matchNavItem, type NavItemConfig } from "./navigation";
 import {
   SidebarFrame,
@@ -31,10 +31,10 @@ export interface AdminSidebarProps {
   onClose: () => void;
 }
 
-function useOpenPhases() {
-  // Only roles that can see candidates see stage items, and the stage states
-  // carry no scores, so this is safe for every signed-in role that gets there.
-  const { data } = usePhaseStates();
+function useOpenPhases(role: Role | null) {
+  // Media and Customer Service never hold "stages.view" — the backend
+  // would 403 this request, so skip it entirely rather than ask.
+  const { data } = usePhaseStates(can(role, "stages.view"));
   return new Set(
     data?.filter((p) => p.status === "open").map((p) => p.phaseId),
   );
@@ -44,7 +44,7 @@ export function AdminSidebar({ open, onClose }: AdminSidebarProps) {
   const { pathname } = useLocation();
   const { role } = useAuth();
   const activeTo = matchNavItem(pathname)?.to;
-  const openPhases = useOpenPhases();
+  const openPhases = useOpenPhases(role);
 
   // Only groups with at least one item this role may use are rendered.
   const groups = NAV_GROUPS.map((g) => ({

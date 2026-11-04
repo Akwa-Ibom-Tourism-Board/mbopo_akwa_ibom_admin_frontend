@@ -70,6 +70,10 @@ export async function resetPassword(id: string): Promise<TemporaryPassword> {
   });
 }
 
+export async function deleteUser(id: string): Promise<void> {
+  await request(`/admin/users/${id}`, { method: "DELETE" });
+}
+
 export interface BulkResult {
   created: (AdminUser & TemporaryPassword)[];
   // Index into the submitted list, so the form can mark the right rows.

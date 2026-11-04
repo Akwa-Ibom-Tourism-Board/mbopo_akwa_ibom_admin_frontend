@@ -46,9 +46,17 @@ function captureRotatedTokens(response: Response): void {
   if (nextRefreshToken) localStore.set(STORAGE_KEYS.authRefreshToken, nextRefreshToken);
 }
 
-// Set by AuthProvider so the http layer can force a sign-out on a 401/403
-// without importing the auth feature here (that would be a circular
-// dependency — auth imports this module to make its own requests).
+// A 403 the backend's authenticateAdmin middleware itself produces when the
+// account has just been deactivated — this is the one 403 that really does
+// mean "your session is no longer valid," unlike requireCapability's 403
+// ("you're signed in fine, you just can't do this one thing"), which must
+// never sign anyone out. Matched by exact text since both are 403s.
+const DEACTIVATED_MESSAGE = "This account has been deactivated.";
+
+// Set by AuthProvider so the http layer can force a sign-out on a 401 (or
+// the deactivation 403 above) without importing the auth feature here (that
+// would be a circular dependency — auth imports this module to make its
+// own requests).
 let onUnauthorized: (() => void) | null = null;
 export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
@@ -73,7 +81,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const body = (await response.json().catch(() => undefined)) as ApiEnvelope<T> | undefined;
 
   if (!response.ok) {
-    if ((response.status === 401 || response.status === 403) && accessToken) {
+    const isAuthFailure =
+      response.status === 401 || (response.status === 403 && body?.message === DEACTIVATED_MESSAGE);
+    if (isAuthFailure && accessToken) {
       onUnauthorized?.();
     }
     throw new ApiError(body?.message ?? response.statusText, response.status, body?.errors);

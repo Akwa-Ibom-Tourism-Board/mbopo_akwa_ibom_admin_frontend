@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { KeyRound, Pencil, UserCheck, UserX } from "lucide-react";
+import { KeyRound, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 import {
   Button,
   Select,
@@ -10,7 +10,7 @@ import {
 } from "@/shared/ui";
 import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
 import { useAuth } from "@/features/auth";
-import { ALL_ROLES, ROLE_LABELS, canAssignRole } from "@/lib/rbac";
+import { ALL_ROLES, ROLE_LABELS, canAssignRole, useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import type { AdminUser } from "../types";
 
@@ -74,6 +74,7 @@ export function UserTable({
   onEdit,
   onToggleActive,
   onResetPassword,
+  onDelete,
   onBulkSetActive,
 }: {
   users: AdminUser[] | undefined;
@@ -81,6 +82,7 @@ export function UserTable({
   onEdit: (u: AdminUser) => void;
   onToggleActive: (u: AdminUser) => void;
   onResetPassword: (u: AdminUser) => void;
+  onDelete: (u: AdminUser) => void;
   onBulkSetActive: (
     users: AdminUser[],
     active: boolean,
@@ -88,6 +90,7 @@ export function UserTable({
   ) => void;
 }) {
   const { user: me, role: myRole } = useAuth();
+  const can = useCan();
   const [role, setRole] = useState(ALL);
   const [status, setStatus] = useState(ALL);
 
@@ -201,6 +204,17 @@ export function UserTable({
                 onClick={() => onToggleActive(u)}
               >
                 {u.active ? <UserX size={16} /> : <UserCheck size={16} />}
+              </Button>
+            )}
+            {u.id !== me?.id && can("users.delete") && (
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={`Delete ${u.firstName}`}
+                title="Permanently delete this account"
+                onClick={() => onDelete(u)}
+              >
+                <Trash2 size={16} />
               </Button>
             )}
           </span>

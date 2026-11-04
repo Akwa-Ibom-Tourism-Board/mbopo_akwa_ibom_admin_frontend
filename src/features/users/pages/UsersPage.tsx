@@ -8,16 +8,18 @@ import { ResetPasswordDialog } from "../components/ResetPasswordDialog";
 import { judgeEffectNote } from "../utils/effects";
 import { UserForm } from "../components/UserForm";
 import { UserTable } from "../components/UserTable";
-import { useSetUserActive, useSetUsersActive, useUsers } from "../api/hooks";
+import { useDeleteUser, useSetUserActive, useSetUsersActive, useUsers } from "../api/hooks";
 import type { AdminUser } from "../types";
 
 export function UsersPage() {
   const { data, isLoading } = useUsers();
   const setActive = useSetUserActive();
+  const deleteUser = useDeleteUser();
   const [editing, setEditing] = useState<AdminUser | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [toggling, setToggling] = useState<AdminUser | null>(null);
   const [resetting, setResetting] = useState<AdminUser | null>(null);
+  const [deleting, setDeleting] = useState<AdminUser | null>(null);
   const setMany = useSetUsersActive();
   const [bulk, setBulk] = useState<{
     users: AdminUser[];
@@ -57,6 +59,7 @@ export function UsersPage() {
         }}
         onToggleActive={setToggling}
         onResetPassword={setResetting}
+        onDelete={setDeleting}
         onBulkSetActive={(users, active, clear) =>
           setBulk({ users, active, clear })
         }
@@ -156,6 +159,32 @@ export function UsersPage() {
       <ResetPasswordDialog
         user={resetting}
         onClose={() => setResetting(null)}
+      />
+      <ConfirmDialog
+        open={!!deleting}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title="Delete this account?"
+        description={
+          deleting
+            ? `${deleting.firstName} ${deleting.lastName}'s account will be permanently deleted. This can't be undone.`
+            : undefined
+        }
+        destructive
+        confirmLabel="Delete"
+        loading={deleteUser.isPending}
+        onConfirm={() =>
+          deleting &&
+          deleteUser.mutate(deleting.id, {
+            onSuccess: () => {
+              toast.success("Account deleted");
+              setDeleting(null);
+            },
+            onError: (e) => {
+              toast.error(e.message);
+              setDeleting(null);
+            },
+          })
+        }
       />
     </>
   );

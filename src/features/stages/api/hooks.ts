@@ -5,8 +5,8 @@ import { getPhaseStates, openPhase } from ".";
 
 export const stageKeys = { all: ["stages"] as const };
 
-export const usePhaseStates = () =>
-  useQuery({ queryKey: stageKeys.all, queryFn: getPhaseStates });
+export const usePhaseStates = (enabled = true) =>
+  useQuery({ queryKey: stageKeys.all, queryFn: getPhaseStates, enabled });
 
 export function useOpenPhase() {
   const qc = useQueryClient();
