@@ -1,5 +1,6 @@
 import styled from "styled-components";
-import { formatDateTime } from "@/lib/formatting";
+import { Paperclip } from "lucide-react";
+import { formatDateTime, formatBytes } from "@/lib/formatting";
 import type { ComplaintMessage } from "../types";
 
 const List = styled.div`
@@ -29,6 +30,33 @@ const Meta = styled.p`
   font-weight: 600;
 `;
 
+const Attachments = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+`;
+
+const AttachmentLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: ${({ theme }) => theme.colors.primary.DEFAULT};
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  span {
+    color: ${({ theme }) => theme.colors.muted.foreground};
+    font-weight: 500;
+  }
+`;
+
 export function ComplaintThread({
   messages,
 }: {
@@ -42,6 +70,21 @@ export function ComplaintThread({
             {m.authorName} · {formatDateTime(m.at)}
           </Meta>
           {m.body}
+          {m.attachments && m.attachments.length > 0 && (
+            <Attachments>
+              {m.attachments.map((a, i) => (
+                <AttachmentLink
+                  key={`${m.id}-attachment-${i}`}
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Paperclip size={14} />
+                  {a.filename} <span>({formatBytes(a.bytes)})</span>
+                </AttachmentLink>
+              ))}
+            </Attachments>
+          )}
         </Bubble>
       ))}
     </List>
