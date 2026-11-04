@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, LogOut, Menu } from "lucide-react";
+import { ChevronDown, LogOut, Menu, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth";
 import { ROLE_LABELS } from "@/lib/rbac";
@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/shared/ui";
 import {
   TopbarFrame,
@@ -81,6 +82,11 @@ export function AdminTopbar({ title, onOpenSidebar }: AdminTopbarProps) {
               {user && (
                 <DropdownGreeting>Welcome {user.firstName}!</DropdownGreeting>
               )}
+              <DropdownMenuItem onSelect={() => navigate("/settings")}>
+                <Settings size={16} />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 destructive
                 onSelect={() => setConfirmOpen(true)}

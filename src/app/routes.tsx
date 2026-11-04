@@ -5,6 +5,7 @@ import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
 import { ActivityLogPage } from "@/features/activity-log";
 import { ComplaintDetailPage, ComplaintsPage } from "@/features/complaints";
 import { DashboardPage } from "@/features/dashboard";
+import { SettingsPage } from "@/features/settings";
 import { BulkAddUsersPage, UsersPage } from "@/features/users";
 import {
   PictureNewsAdminPage,
@@ -30,6 +31,9 @@ export function AppRoutes() {
       <Route element={<RequireAuth />}>
         <Route element={<AdminShell />}>
           <Route path="/dashboard" element={<DashboardPage />} />
+
+          {/* No RoleGuard — every signed-in role manages their own password here. */}
+          <Route path="/settings" element={<SettingsPage />} />
 
           <Route element={<RoleGuard capability="applicants.view" />}>
             <Route path="/applicants" element={<ApplicantsPage />} />

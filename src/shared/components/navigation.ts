@@ -7,6 +7,7 @@ import {
   LifeBuoy,
   Newspaper,
   Handshake,
+  Settings,
   Tag,
   Trophy,
   UserCog,
@@ -147,6 +148,11 @@ export const NAV_GROUPS: NavGroupConfig[] = [
         capability: "complaints.view",
       },
     ],
+  },
+  {
+    label: "Account",
+    // No capability — every signed-in role manages their own password.
+    items: [{ to: "/settings", label: "Settings", icon: Settings }],
   },
 ];
 
