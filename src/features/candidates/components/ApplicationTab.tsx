@@ -8,6 +8,7 @@ import {
   educationLabel,
   eligibility,
   institutionLabel,
+  maritalFlag,
   maskId,
   occupationLabel,
 } from "../utils/derive";
@@ -53,6 +54,7 @@ export function ApplicationTab({
   const can = useCan();
   const seeIdentity = can("candidates.viewIdentity");
   const elig = eligibility(c.dateOfBirth);
+  const marital = maritalFlag(c.maritalStatus);
 
   const vinOutcome =
     c.isVinVerified === true ? (
@@ -100,7 +102,17 @@ export function ApplicationTab({
         ),
     },
     { label: "Phone", value: c.phone },
-    { label: "Marital status", value: c.maritalStatus },
+    {
+      label: "Marital status",
+      value: !marital ? (
+        "—"
+      ) : (
+        <>
+          {marital.status}{" "}
+          {!marital.eligible && <Badge $tone="danger">Not single</Badge>}
+        </>
+      ),
+    },
     { label: "Social media", value: c.socialMedia },
   ];
 

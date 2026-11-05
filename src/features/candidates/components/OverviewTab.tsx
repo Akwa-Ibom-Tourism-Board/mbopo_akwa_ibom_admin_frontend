@@ -11,6 +11,7 @@ import {
   educationLabel,
   eligibility,
   institutionLabel,
+  maritalFlag,
   occupationLabel,
 } from "../utils/derive";
 import { FactCard } from "./Facts";
@@ -52,6 +53,7 @@ const Photos = styled.div`
 export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
   const can = useCan();
   const elig = eligibility(c.dateOfBirth);
+  const marital = maritalFlag(c.maritalStatus);
   const onFile = DOCUMENT_SLOTS.filter((s) =>
     Boolean(c[DOCUMENT_URL_FIELDS[s.field]]),
   ).length;
@@ -79,6 +81,19 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
                     </Badge>
                   </>
                 ),
+            },
+            {
+              label: "Marital status",
+              value: !marital ? (
+                "—"
+              ) : (
+                <>
+                  {marital.status}{" "}
+                  {!marital.eligible && (
+                    <Badge $tone="danger">Not single</Badge>
+                  )}
+                </>
+              ),
             },
             { label: "Education", value: educationLabel(c) },
             { label: "Institution", value: institutionLabel(c) },

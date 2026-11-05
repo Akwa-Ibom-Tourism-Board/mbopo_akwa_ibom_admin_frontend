@@ -26,6 +26,14 @@ export function eligibility(dateOfBirth: string | null | undefined) {
   };
 }
 
+// Eligibility requires applicants to be single, but — same as age via
+// eligibility() above — that's a judge/organiser decision, not a hard
+// submission block: a married applicant can still submit. This only flags
+// it for admin/judge review. Null when marital status hasn't been
+// collected (applications registered before this field existed).
+export const maritalFlag = (status: string | null | undefined) =>
+  status ? { status, eligible: status === "Single" } : null;
+
 // "Other" in a dropdown is replaced by what was typed beside it.
 export const educationLabel = (
   c: Pick<Candidate, "education" | "educationOther">,

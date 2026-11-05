@@ -11,10 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui";
-import { DataTable, type DataTableColumn } from "@/shared/components";
+import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
 import { PHASES, phaseTitle } from "@/lib/phases";
 import { AKWA_IBOM_LGAS, SENATORIAL_DISTRICTS } from "@/lib/constants";
 import { STATUS_LABELS, type Candidate, type CandidateStatus } from "../types";
+import { maritalFlag } from "../utils/derive";
 import { PhaseBadge, StatusBadge } from "./Badges";
 
 const NameCell = styled.div`
@@ -75,7 +76,12 @@ const columns: DataTableColumn<Candidate>[] = [
       </NameCell>
     ),
   },
-  { id: "lga", header: "LGA", sortValue: (c) => c.lga ?? "", cell: (c) => c.lga },
+  {
+    id: "lga",
+    header: "LGA",
+    sortValue: (c) => c.lga ?? "",
+    cell: (c) => c.lga,
+  },
   {
     id: "district",
     header: "District",
@@ -83,6 +89,20 @@ const columns: DataTableColumn<Candidate>[] = [
     cell: (c) => c.senatorialDistrict,
   },
   { id: "phase", header: "Stage", cell: (c) => <PhaseBadge phase={c.phase} /> },
+  {
+    id: "marital",
+    header: "Marital",
+    sortValue: (c) => c.maritalStatus ?? "",
+    cell: (c) => {
+      const marital = maritalFlag(c.maritalStatus);
+      if (!marital) return "—";
+      return marital.eligible ? (
+        marital.status
+      ) : (
+        <Badge $tone="danger">{marital.status}</Badge>
+      );
+    },
+  },
   {
     id: "status",
     header: "Status",
