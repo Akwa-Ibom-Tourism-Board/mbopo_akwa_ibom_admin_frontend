@@ -1,5 +1,8 @@
 import { differenceInYears, parseISO } from "date-fns";
-import { MAXIMUM_ELIGIBLE_AGE, MINIMUM_ELIGIBLE_AGE } from "@/lib/applicationOptions";
+import {
+  MAXIMUM_ELIGIBLE_AGE,
+  MINIMUM_ELIGIBLE_AGE,
+} from "@/lib/applicationOptions";
 import type { Candidate } from "../types";
 
 export const ageOf = (dateOfBirth: string, on: Date = new Date()) =>
@@ -9,7 +12,12 @@ export const ageOf = (dateOfBirth: string, on: Date = new Date()) =>
 // than enforce it. Null when the viewer's role doesn't carry
 // candidates.viewDetails (dateOfBirth is only ever present then anyway).
 export function eligibility(dateOfBirth: string | null | undefined) {
-  if (!dateOfBirth) return { age: null, eligible: null, band: `${MINIMUM_ELIGIBLE_AGE}–${MAXIMUM_ELIGIBLE_AGE}` };
+  if (!dateOfBirth)
+    return {
+      age: null,
+      eligible: null,
+      band: `${MINIMUM_ELIGIBLE_AGE}–${MAXIMUM_ELIGIBLE_AGE}`,
+    };
   const age = ageOf(dateOfBirth);
   return {
     age,
@@ -19,13 +27,28 @@ export function eligibility(dateOfBirth: string | null | undefined) {
 }
 
 // "Other" in a dropdown is replaced by what was typed beside it.
-export const occupationLabel = (c: Pick<Candidate, "occupation" | "occupationOther">) =>
-  c.occupation === "Other" && c.occupationOther ? c.occupationOther : c.occupation;
+export const educationLabel = (
+  c: Pick<Candidate, "education" | "educationOther">,
+) =>
+  c.education === "Other" && c.educationOther ? c.educationOther : c.education;
 
-export const institutionLabel = (c: Pick<Candidate, "institution" | "institutionOther">) =>
-  c.institution === "Other" && c.institutionOther ? c.institutionOther : c.institution;
+export const occupationLabel = (
+  c: Pick<Candidate, "occupation" | "occupationOther">,
+) =>
+  c.occupation === "Other" && c.occupationOther
+    ? c.occupationOther
+    : c.occupation;
+
+export const institutionLabel = (
+  c: Pick<Candidate, "institution" | "institutionOther">,
+) =>
+  c.institution === "Other" && c.institutionOther
+    ? c.institutionOther
+    : c.institution;
 
 // NIN / VIN are masked for anyone without the identity capability, keeping only
 // the last few characters so a record can still be told apart.
 export const maskId = (value: string | null | undefined, visible = 3) =>
-  !value ? "—" : `${"•".repeat(Math.max(value.length - visible, 4))}${value.slice(-visible)}`;
+  !value
+    ? "—"
+    : `${"•".repeat(Math.max(value.length - visible, 4))}${value.slice(-visible)}`;

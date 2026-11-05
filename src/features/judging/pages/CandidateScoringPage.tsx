@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, Hourglass, SearchX, TriangleAlert } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  LoadingState,
+} from "@/shared/ui";
 import { Badge, EmptyState } from "@/shared/components";
 import { useAuth } from "@/features/auth";
 import { useCandidate } from "@/features/candidates/api/hooks";
@@ -10,7 +16,10 @@ import {
   PhaseBadge,
   StatusBadge,
 } from "@/features/candidates/components/Badges";
-import { occupationLabel } from "@/features/candidates/utils/derive";
+import {
+  educationLabel,
+  occupationLabel,
+} from "@/features/candidates/utils/derive";
 import { PitchPlayer } from "@/features/candidates/components/MediaPlayers";
 import { usePhaseStates } from "@/features/stages/api/hooks";
 import { inField as candidateInField } from "@/features/stages/utils/participants";
@@ -135,7 +144,13 @@ export function CandidateScoringPage() {
 
   if (isLoading || myScores.isLoading) return <LoadingState />;
   if (!c) {
-    return <EmptyState icon={<SearchX size={26} />} title="Candidate not found" message="We couldn't find that candidate." />;
+    return (
+      <EmptyState
+        icon={<SearchX size={26} />}
+        title="Candidate not found"
+        message="We couldn't find that candidate."
+      />
+    );
   }
   if (!c.phase) {
     return (
@@ -212,7 +227,7 @@ export function CandidateScoringPage() {
             </CardHeader>
             <CardContent>
               <Small>
-                {occupationLabel(c)} · {c.education}
+                {occupationLabel(c)} · {educationLabel(c)}
               </Small>
               <Small>{c.why}</Small>
               {c.videoPitchUrl && (

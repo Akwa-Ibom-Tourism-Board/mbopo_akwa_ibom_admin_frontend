@@ -8,6 +8,7 @@ import { media } from "@/theme";
 import { DOCUMENT_SLOTS } from "../data/documents";
 import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
 import {
+  educationLabel,
   eligibility,
   institutionLabel,
   occupationLabel,
@@ -51,7 +52,9 @@ const Photos = styled.div`
 export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
   const can = useCan();
   const elig = eligibility(c.dateOfBirth);
-  const onFile = DOCUMENT_SLOTS.filter((s) => Boolean(c[DOCUMENT_URL_FIELDS[s.field]])).length;
+  const onFile = DOCUMENT_SLOTS.filter((s) =>
+    Boolean(c[DOCUMENT_URL_FIELDS[s.field]]),
+  ).length;
 
   return (
     <Layout>
@@ -70,12 +73,14 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
                   <>
                     {elig.age}{" "}
                     <Badge $tone={elig.eligible ? "primary" : "danger"}>
-                      {elig.eligible ? `Within ${elig.band}` : `Outside ${elig.band}`}
+                      {elig.eligible
+                        ? `Within ${elig.band}`
+                        : `Outside ${elig.band}`}
                     </Badge>
                   </>
                 ),
             },
-            { label: "Education", value: c.education },
+            { label: "Education", value: educationLabel(c) },
             { label: "Institution", value: institutionLabel(c) },
             { label: "Occupation", value: occupationLabel(c) },
             { label: "Phone", value: c.phone },
@@ -83,7 +88,11 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             {
               label: "Documents",
               value: (
-                <Badge $tone={onFile === DOCUMENT_SLOTS.length ? "primary" : "secondary"}>
+                <Badge
+                  $tone={
+                    onFile === DOCUMENT_SLOTS.length ? "primary" : "secondary"
+                  }
+                >
                   {onFile} of {DOCUMENT_SLOTS.length} on file
                 </Badge>
               ),

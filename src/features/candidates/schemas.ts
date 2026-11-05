@@ -3,6 +3,7 @@ import { AKWA_IBOM_LGAS } from "@/lib/constants";
 import {
   EDUCATION_LEVELS,
   INSTITUTION_OPTIONS,
+  MARITAL_STATUSES,
   NEXT_OF_KIN_RELATIONSHIPS,
   NIGERIAN_PHONE_REGEX,
   NIGERIAN_STATES,
@@ -59,6 +60,7 @@ const oneOf = <T extends readonly string[]>(options: T, message: string) =>
 const shapes = {
   personal: {
     phone,
+    maritalStatus: oneOf(MARITAL_STATUSES, "Choose a marital status"),
     socialMedia: optionalText(200),
   },
   origin: {
@@ -81,6 +83,7 @@ const shapes = {
   },
   work: {
     education: oneOf(EDUCATION_LEVELS, "Choose an education level"),
+    educationOther: optionalText(100),
     institution: oneOf(INSTITUTION_OPTIONS, "Choose an institution"),
     institutionOther: optionalText(150),
     occupation: oneOf(OCCUPATIONS, "Choose an occupation"),
@@ -100,6 +103,13 @@ const shapes = {
 // "Other" in a dropdown requires the typed value beside it (backend: Joi
 // .when("occupation"/"institution", is: "Other")).
 const workSchema = z.object(shapes.work).superRefine((v, ctx) => {
+  if (v.education === "Other" && !v.educationOther?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["educationOther"],
+      message: "Enter the qualification",
+    });
+  }
   if (v.institution === "Other" && !v.institutionOther?.trim()) {
     ctx.addIssue({
       code: "custom",
@@ -147,6 +157,12 @@ export interface FieldDef {
 export const SECTION_FIELDS: Record<SectionId, FieldDef[]> = {
   personal: [
     { name: "phone", label: "Phone", kind: "tel", placeholder: "08012345678" },
+    {
+      name: "maritalStatus",
+      label: "Marital status",
+      kind: "select",
+      options: MARITAL_STATUSES,
+    },
     {
       name: "socialMedia",
       label: "Social media",
@@ -196,6 +212,12 @@ export const SECTION_FIELDS: Record<SectionId, FieldDef[]> = {
       label: "Education",
       kind: "select",
       options: EDUCATION_LEVELS,
+    },
+    {
+      name: "educationOther",
+      label: "Education (other)",
+      kind: "text",
+      showWhen: { field: "education", equals: "Other" },
     },
     {
       name: "institution",
@@ -255,6 +277,7 @@ export const SENTENCE_CASE_FIELDS = [
   "languages",
   "initiative",
   "why",
+  "educationOther",
   "occupationOther",
   "institutionOther",
 ] as const;

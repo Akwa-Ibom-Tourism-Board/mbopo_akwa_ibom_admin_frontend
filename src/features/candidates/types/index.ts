@@ -4,7 +4,8 @@ import type { CandidateStage, PhaseId } from "@/lib/phases";
 
 export type { CandidateStage };
 
-export type CandidateStatus = "active" | "advanced" | "eliminated" | "disqualified" | "winner";
+export type CandidateStatus =
+  "active" | "advanced" | "eliminated" | "disqualified" | "winner";
 
 export interface CandidateVideo {
   title: string;
@@ -16,7 +17,8 @@ export type ApplicationStatus = "draft" | "submitted";
 // The 4 application file slots an admin may replace (never "avatar" — that
 // comes from the verified NIN identity and is locked everywhere). Named
 // exactly as the backend names them (configurations/cloudinary.ts PhotoField).
-export type DocumentField = "certificateOfOrigin" | "fullImage" | "fullImage2" | "videoPitch";
+export type DocumentField =
+  "certificateOfOrigin" | "fullImage" | "fullImage2" | "videoPitch";
 
 /**
  * Mirrors exactly what GET /admin/contestants/:id (serializeCandidateForViewer)
@@ -53,6 +55,7 @@ export interface Candidate {
   gender?: "male" | "female" | null;
   dateOfBirth?: string | null;
   phone?: string | null;
+  maritalStatus?: string | null;
   socialMedia?: string | null;
   nextOfKin?: string | null;
   nextOfKinPhone?: string | null;
@@ -62,6 +65,7 @@ export interface Candidate {
   city?: string | null;
   address?: string | null;
   education?: string | null;
+  educationOther?: string | null;
   institution?: string | null;
   institutionOther?: string | null;
   occupation?: string | null;
@@ -90,7 +94,10 @@ export const DOCUMENT_URL_FIELDS: Record<DocumentField, keyof Candidate> = {
   videoPitch: "videoPitchUrl",
 };
 
-export type PublicProfileUpdate = Pick<Candidate, "bio" | "additionalPhotos" | "additionalVideos">;
+export type PublicProfileUpdate = Pick<
+  Candidate,
+  "bio" | "additionalPhotos" | "additionalVideos"
+>;
 
 // One line in a candidate's own Activity tab (GET /admin/activity/candidate/:id).
 export interface CandidateEvent {

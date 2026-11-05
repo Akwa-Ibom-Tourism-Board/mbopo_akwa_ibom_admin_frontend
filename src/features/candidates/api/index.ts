@@ -2,11 +2,17 @@ import { request } from "@/lib/http";
 import { uploadCandidateDocument as uploadDocumentToCloudinary } from "@/lib/cloudinary";
 import { LGA_TO_DISTRICT } from "@/lib/constants";
 import { sectionSchemas, type SectionId } from "../schemas";
-import type { Candidate, CandidateEvent, DocumentField, PublicProfileUpdate } from "../types";
-
+import type {
+  Candidate,
+  CandidateEvent,
+  DocumentField,
+  PublicProfileUpdate,
+} from "../types";
 
 export async function getCandidates(): Promise<Candidate[]> {
-  const result = await request<{ contestants: Candidate[] }>("/admin/contestants");
+  const result = await request<{ contestants: Candidate[] }>(
+    "/admin/contestants",
+  );
   return result.contestants;
 }
 
@@ -28,7 +34,9 @@ export async function updateCandidateProfile(
   });
 }
 
-export async function getCandidateEvents(id: string): Promise<CandidateEvent[]> {
+export async function getCandidateEvents(
+  id: string,
+): Promise<CandidateEvent[]> {
   return request<CandidateEvent[]>(`/admin/activity/candidate/${id}`);
 }
 
@@ -37,7 +45,11 @@ export async function getCandidateEvents(id: string): Promise<CandidateEvent[]> 
 // sees its own field names. "ward" has no backend column (legacy, unused —
 // see the registration rework) so it's dropped rather than sent.
 function toBackendPayload(section: SectionId, values: Record<string, unknown>) {
-  const { ward: _ward, lga, ...rest } = values as Record<string, unknown> & {
+  const {
+    ward: _ward,
+    lga,
+    ...rest
+  } = values as Record<string, unknown> & {
     ward?: unknown;
     lga?: string;
   };
@@ -55,6 +67,7 @@ export async function updateCandidateDetails(
   }
   const values = { ...(parsed.data as Record<string, string | undefined>) };
   if (section === "work") {
+    if (values.education !== "Other") values.educationOther = undefined;
     if (values.institution !== "Other") values.institutionOther = undefined;
     if (values.occupation !== "Other") values.occupationOther = undefined;
   }
@@ -77,7 +90,12 @@ export async function uploadCandidateDocument(
   file: File,
   options: UploadProgress = {},
 ): Promise<Candidate> {
-  const { url, publicId } = await uploadDocumentToCloudinary(id, field, file, options);
+  const { url, publicId } = await uploadDocumentToCloudinary(
+    id,
+    field,
+    file,
+    options,
+  );
   return request<Candidate>(`/admin/contestants/${id}/document`, {
     method: "PATCH",
     body: JSON.stringify({ field, url, publicId }),

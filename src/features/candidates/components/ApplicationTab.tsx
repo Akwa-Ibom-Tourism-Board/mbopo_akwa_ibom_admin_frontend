@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
 import type { Candidate } from "../types";
 import {
+  educationLabel,
   eligibility,
   institutionLabel,
   maskId,
@@ -88,7 +89,9 @@ export function ApplicationTab({
           "—"
         ) : (
           <>
-            {seeIdentity && c.dateOfBirth ? `${formatDate(c.dateOfBirth)} · ` : ""}
+            {seeIdentity && c.dateOfBirth
+              ? `${formatDate(c.dateOfBirth)} · `
+              : ""}
             {elig.age} years{" "}
             <Badge $tone={elig.eligible ? "primary" : "danger"}>
               {elig.eligible ? `Within ${elig.band}` : `Outside ${elig.band}`}
@@ -97,6 +100,7 @@ export function ApplicationTab({
         ),
     },
     { label: "Phone", value: c.phone },
+    { label: "Marital status", value: c.maritalStatus },
     { label: "Social media", value: c.socialMedia },
   ];
 
@@ -122,7 +126,7 @@ export function ApplicationTab({
   ];
 
   const work: Fact[] = [
-    { label: "Education", value: c.education },
+    { label: "Education", value: educationLabel(c) },
     { label: "Institution", value: institutionLabel(c) },
     { label: "Occupation", value: occupationLabel(c) },
   ];

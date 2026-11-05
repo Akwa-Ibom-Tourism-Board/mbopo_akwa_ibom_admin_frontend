@@ -18,6 +18,15 @@ export const EDUCATION_LEVELS = [
   "Bachelor's Degree",
   "Master's Degree",
   "PhD",
+  "Other",
+] as const;
+
+export const MARITAL_STATUSES = [
+  "Single",
+  "Married",
+  "Divorced",
+  "Widowed",
+  "Separated",
 ] as const;
 
 export const NIGERIAN_STATES = [
