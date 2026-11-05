@@ -28,3 +28,7 @@ export async function reassignComplaint(id: string, assignedToId: string): Promi
     body: JSON.stringify({ assignedToId }),
   });
 }
+
+export async function resendReplyEmail(id: string, replyId: string): Promise<void> {
+  await request(`/admin/complaints/${id}/replies/${replyId}/resend-email`, { method: "POST" });
+}

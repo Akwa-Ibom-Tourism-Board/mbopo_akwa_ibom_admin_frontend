@@ -11,6 +11,10 @@ export interface ComplaintAttachment {
   bytes: number;
 }
 
+// Whether a staff reply's notification email actually reached the
+// complainant — only ever set on messages with from: "staff".
+export type ReplyEmailStatus = "pending" | "sent" | "failed";
+
 export interface ComplaintMessage {
   id: string;
   from: "complainant" | "staff";
@@ -21,6 +25,8 @@ export interface ComplaintMessage {
   // files attached at submit time) and on any complainant follow-up email
   // that had image/PDF attachments.
   attachments?: ComplaintAttachment[];
+  emailStatus?: ReplyEmailStatus;
+  emailError?: string;
 }
 
 export interface Complaint {

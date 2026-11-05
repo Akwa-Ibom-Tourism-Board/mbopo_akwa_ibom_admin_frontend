@@ -175,7 +175,7 @@ export function ComplaintDetailPage() {
             )}
           </Controls>
 
-          <ComplaintThread messages={c.messages} />
+          <ComplaintThread complaintId={c.id} messages={c.messages} />
 
           {canRespond ? (
             <form

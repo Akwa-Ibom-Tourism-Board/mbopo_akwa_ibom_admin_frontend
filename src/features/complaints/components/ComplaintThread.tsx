@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
 import styled from "styled-components";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Check, Clock, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/shared/ui";
 import { formatDateTime, formatBytes } from "@/lib/formatting";
+import { useResendReplyEmail } from "../api/hooks";
 import type { ComplaintMessage } from "../types";
 
 // A bounded, independently-scrolling chat panel (not the whole page) so the
@@ -72,9 +75,92 @@ const AttachmentLink = styled.a`
   }
 `;
 
+const EmailStatusRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.75rem;
+`;
+
+const EmailStatusLabel = styled.span<{ $tone: "pending" | "sent" | "failed" }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: ${({ theme, $tone }) =>
+    $tone === "sent"
+      ? theme.colors.primary.DEFAULT
+      : $tone === "failed"
+        ? theme.colors.destructive.DEFAULT
+        : theme.colors.muted.foreground};
+`;
+
+// A staff reply's email send is async and can fail after the reply already
+// shows as "sent" in the thread — this is how staff find out the
+// complainant never actually got it, and retry without retyping anything.
+function ReplyEmailStatus({
+  complaintId,
+  replyId,
+  status,
+  error,
+}: {
+  complaintId: string;
+  replyId: string;
+  status: "pending" | "sent" | "failed";
+  error?: string;
+}) {
+  const resend = useResendReplyEmail(complaintId);
+
+  if (status === "sent") {
+    return (
+      <EmailStatusRow>
+        <EmailStatusLabel $tone="sent">
+          <Check size={13} /> Email delivered
+        </EmailStatusLabel>
+      </EmailStatusRow>
+    );
+  }
+
+  if (status === "pending") {
+    return (
+      <EmailStatusRow>
+        <EmailStatusLabel $tone="pending">
+          <Clock size={13} /> Sending email…
+        </EmailStatusLabel>
+      </EmailStatusRow>
+    );
+  }
+
+  return (
+    <EmailStatusRow>
+      <EmailStatusLabel $tone="failed" title={error}>
+        <TriangleAlert size={13} /> Email failed to send
+      </EmailStatusLabel>
+      <Button
+        type="button"
+        variant="link"
+        size="sm"
+        style={{ height: "auto", padding: 0 }}
+        disabled={resend.isPending}
+        onClick={() =>
+          resend.mutate(replyId, {
+            onSuccess: () => toast.success("Resending email…"),
+            onError: (err) => toast.error(err.message),
+          })
+        }
+      >
+        {resend.isPending ? "Resending…" : "Resend"}
+      </Button>
+    </EmailStatusRow>
+  );
+}
+
 export function ComplaintThread({
+  complaintId,
   messages,
 }: {
+  complaintId: string;
   messages: ComplaintMessage[];
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -111,6 +197,14 @@ export function ComplaintThread({
                   </AttachmentLink>
                 ))}
               </Attachments>
+            )}
+            {m.from === "staff" && m.emailStatus && (
+              <ReplyEmailStatus
+                complaintId={complaintId}
+                replyId={m.id}
+                status={m.emailStatus}
+                error={m.emailError}
+              />
             )}
           </Bubble>
         ))}
