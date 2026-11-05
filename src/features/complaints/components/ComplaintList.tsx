@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
 import { useUsers } from "@/features/users";
 import { formatRelative } from "@/lib/formatting";
-import { SOURCE_LABELS, type Complaint } from "../types";
+import { CHANNEL_LABELS, SOURCE_LABELS, type Complaint } from "../types";
 import { ComplaintStatusBadge, StatusFilter } from "./StatusFilter";
 
 export function ComplaintList({
@@ -50,6 +50,11 @@ export function ComplaintList({
       id: "source",
       header: "Source",
       cell: (c) => <Badge>{SOURCE_LABELS[c.source]}</Badge>,
+    },
+    {
+      id: "channel",
+      header: "Channel",
+      cell: (c) => <Badge>{CHANNEL_LABELS[c.channel]}</Badge>,
     },
     {
       id: "status",

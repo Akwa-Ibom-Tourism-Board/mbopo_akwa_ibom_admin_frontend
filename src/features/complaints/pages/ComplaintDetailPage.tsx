@@ -29,7 +29,7 @@ import {
   useReply,
   useUpdateStatus,
 } from "../api/hooks";
-import { SOURCE_LABELS, STATUS_LABELS, type ComplaintStatus } from "../types";
+import { CHANNEL_LABELS, SOURCE_LABELS, STATUS_LABELS, type ComplaintStatus } from "../types";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -111,6 +111,7 @@ export function ComplaintDetailPage() {
           >
             <ComplaintStatusBadge status={c.status} />
             <Badge>{SOURCE_LABELS[c.source]}</Badge>
+            <Badge>{CHANNEL_LABELS[c.channel]}</Badge>
           </div>
           <Meta>
             {c.complainantName} · {c.complainantEmail} · received{" "}

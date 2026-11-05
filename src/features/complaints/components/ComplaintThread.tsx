@@ -1,12 +1,27 @@
+import { useEffect, useRef } from "react";
 import styled from "styled-components";
 import { Paperclip } from "lucide-react";
 import { formatDateTime, formatBytes } from "@/lib/formatting";
 import type { ComplaintMessage } from "../types";
 
+// A bounded, independently-scrolling chat panel (not the whole page) so the
+// thread reads like WhatsApp/any chat app: oldest at top, newest at the
+// bottom, and always opens already scrolled down to the latest message
+// instead of leaving staff to scroll past the whole history to find it.
+const ThreadPanel = styled.div`
+  max-height: min(60vh, 560px);
+  overflow-y: auto;
+  padding: 4px 4px 4px 2px;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radii.lg};
+  background: ${({ theme }) => theme.colors.background};
+`;
+
 const List = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 8px;
 `;
 
 const Bubble = styled.div<{ $staff: boolean }>`
@@ -62,31 +77,44 @@ export function ComplaintThread({
 }: {
   messages: ComplaintMessage[];
 }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Jump straight to the latest message whenever the thread first renders
+  // or grows (a new reply comes in) — scrolls only this inner panel (never
+  // the surrounding page) to its bottom, exactly like opening a WhatsApp
+  // chat already scrolled to the newest message.
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (panel) panel.scrollTop = panel.scrollHeight;
+  }, [messages.length]);
+
   return (
-    <List>
-      {messages.map((m) => (
-        <Bubble key={m.id} $staff={m.from === "staff"}>
-          <Meta>
-            {m.authorName} · {formatDateTime(m.at)}
-          </Meta>
-          {m.body}
-          {m.attachments && m.attachments.length > 0 && (
-            <Attachments>
-              {m.attachments.map((a, i) => (
-                <AttachmentLink
-                  key={`${m.id}-attachment-${i}`}
-                  href={a.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Paperclip size={14} />
-                  {a.filename} <span>({formatBytes(a.bytes)})</span>
-                </AttachmentLink>
-              ))}
-            </Attachments>
-          )}
-        </Bubble>
-      ))}
-    </List>
+    <ThreadPanel ref={panelRef}>
+      <List>
+        {messages.map((m) => (
+          <Bubble key={m.id} $staff={m.from === "staff"}>
+            <Meta>
+              {m.authorName} · {formatDateTime(m.at)}
+            </Meta>
+            {m.body}
+            {m.attachments && m.attachments.length > 0 && (
+              <Attachments>
+                {m.attachments.map((a, i) => (
+                  <AttachmentLink
+                    key={`${m.id}-attachment-${i}`}
+                    href={a.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Paperclip size={14} />
+                    {a.filename} <span>({formatBytes(a.bytes)})</span>
+                  </AttachmentLink>
+                ))}
+              </Attachments>
+            )}
+          </Bubble>
+        ))}
+      </List>
+    </ThreadPanel>
   );
 }
