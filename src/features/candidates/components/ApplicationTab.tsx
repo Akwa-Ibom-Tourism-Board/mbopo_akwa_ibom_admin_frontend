@@ -1,9 +1,12 @@
 import styled from "styled-components";
+import { toast } from "sonner";
+import { Button } from "@/shared/ui";
 import { Badge } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
 import type { Candidate } from "../types";
+import { useRetryVinVerification } from "../api/hooks";
 import {
   educationLabel,
   eligibility,
@@ -53,8 +56,10 @@ export function ApplicationTab({
 }) {
   const can = useCan();
   const seeIdentity = can("candidates.viewIdentity");
+  const canRetryVin = can("candidates.retryVinVerification");
   const elig = eligibility(c.dateOfBirth);
   const marital = maritalFlag(c.maritalStatus);
+  const retryVin = useRetryVinVerification(c.id);
 
   const vinOutcome =
     c.isVinVerified === true ? (
@@ -66,6 +71,28 @@ export function ApplicationTab({
           <span style={{ display: "block", marginTop: 4, fontWeight: 400 }}>
             {c.vinVerificationFailedReason}
           </span>
+        )}
+        {canRetryVin && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            style={{
+              display: "block",
+              height: "auto",
+              padding: 0,
+              marginTop: 4,
+            }}
+            disabled={retryVin.isPending}
+            onClick={() =>
+              retryVin.mutate(undefined, {
+                onSuccess: () => toast.success("VIN verification queued again"),
+                onError: (err) => toast.error(err.message),
+              })
+            }
+          >
+            {retryVin.isPending ? "Retrying…" : "Retry verification"}
+          </Button>
         )}
       </>
     ) : (

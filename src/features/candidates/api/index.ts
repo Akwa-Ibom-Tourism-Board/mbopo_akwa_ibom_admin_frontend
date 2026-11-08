@@ -34,6 +34,12 @@ export async function updateCandidateProfile(
   });
 }
 
+export async function retryVinVerification(id: string): Promise<Candidate> {
+  return request<Candidate>(`/admin/contestants/${id}/retry-vin-verification`, {
+    method: "POST",
+  });
+}
+
 export async function getCandidateEvents(
   id: string,
 ): Promise<CandidateEvent[]> {

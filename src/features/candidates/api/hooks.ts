@@ -3,11 +3,12 @@ import {
   getCandidate,
   getCandidateEvents,
   getCandidates,
+  retryVinVerification,
   updateCandidateDetails,
   updateCandidateProfile,
   uploadCandidateDocument,
 } from ".";
-import type { DocumentField } from "../types";
+import type { Candidate, DocumentField } from "../types";
 import type { SectionId } from "../schemas";
 import type { PublicProfileUpdate } from "../types";
 
@@ -24,6 +25,13 @@ export const useCandidate = (id: string | undefined) =>
     queryKey: candidateKeys.detail(id ?? ""),
     queryFn: () => getCandidate(id!),
     enabled: !!id,
+    // VIN verification runs in the background after submission (and again
+    // on a manual retry) — poll while it's still pending (null) so the
+    // outcome shows up without a manual refresh, then stop.
+    refetchInterval: (query) => {
+      const data = query.state.data as Candidate | null | undefined;
+      return data && data.isVinVerified === null ? 3000 : false;
+    },
   });
 
 export function useUpdateCandidateProfile(id: string) {
@@ -51,6 +59,15 @@ export function useUpdateCandidateDetails(id: string) {
         qc.invalidateQueries({ queryKey: ["candidate-events", id] }),
         qc.invalidateQueries({ queryKey: ["activity"] }),
       ]),
+  });
+}
+
+export function useRetryVinVerification(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => retryVinVerification(id),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: candidateKeys.detail(id) }),
   });
 }
 

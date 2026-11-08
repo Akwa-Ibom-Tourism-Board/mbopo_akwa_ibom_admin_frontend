@@ -46,6 +46,10 @@ export type Capability =
   | "candidates.editDetails"
   // Admin / Super Admin: a candidate's own activity history.
   | "candidates.viewActivity"
+  // Re-run VIN verification in the background (e.g. after a DVP outage) —
+  // granted to whoever can already see the outcome (viewDetails), not just
+  // editDetails, since it isn't an edit to the application itself.
+  | "candidates.retryVinVerification"
   // Judging — the two judge roles only. Deliberately granted to no other
   // role, including Super Admin: nobody outside the panel sees live scores.
   | "judging.access"
@@ -102,6 +106,12 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "stages.view": ["super_admin", "admin", "judge", "head_judge"],
   "candidates.editDetails": ["super_admin", "admin"],
   "candidates.viewActivity": ["super_admin", "admin"],
+  "candidates.retryVinVerification": [
+    "super_admin",
+    "admin",
+    "judge",
+    "head_judge",
+  ],
 
   "judging.access": ["judge", "head_judge"],
   "judging.score": ["judge", "head_judge"],
