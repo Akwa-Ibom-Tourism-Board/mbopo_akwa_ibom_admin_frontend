@@ -78,13 +78,16 @@ export interface Candidate {
   fullImageUrl?: string | null;
   fullImageUrl2?: string | null;
   videoPitchUrl?: string | null;
+  // VIN is verified in the background after submission, never blocking it —
+  // the outcome is a judging signal, so (unlike the raw VIN digits below)
+  // it's in the details tier, available to Judge/Head Judge too.
+  isVinVerified?: boolean | null;
+  vinVerificationFailedReason?: string | null;
 
   // ── Identity tier (candidates.viewIdentity — Admin/Super Admin only)
   nin?: string | null;
   vin?: string | null;
   draftVin?: string | null;
-  isVinVerified?: boolean | null;
-  vinVerificationFailedReason?: string | null;
 }
 
 export const DOCUMENT_URL_FIELDS: Record<DocumentField, keyof Candidate> = {
