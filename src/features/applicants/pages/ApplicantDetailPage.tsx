@@ -3,11 +3,28 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, Check, SearchX, Trash2, UserX } from "lucide-react";
 import { toast } from "sonner";
-import { Button, Card, CardContent, CardHeader, CardTitle, LoadingState } from "@/shared/ui";
-import { Badge, ConfirmDialog, EmptyState } from "@/shared/components";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  LoadingState,
+} from "@/shared/ui";
+import {
+  Badge,
+  ConfirmDialog,
+  EmailLink,
+  EmptyState,
+  PhoneLink,
+} from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
-import { useApplicant, useDeleteApplicant, useSetApplicantActive } from "../api/hooks";
+import {
+  useApplicant,
+  useDeleteApplicant,
+  useSetApplicantActive,
+} from "../api/hooks";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -124,7 +141,11 @@ export function ApplicantDetailPage() {
       </Back>
 
       <Head>
-        <h2>{a.firstName || a.lastName ? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim() : a.email}</h2>
+        <h2>
+          {a.firstName || a.lastName
+            ? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim()
+            : a.email}
+        </h2>
         {canManage && (
           <div style={{ display: "flex", gap: 10 }}>
             <Button variant="outline" onClick={() => setToggling(true)}>
@@ -146,10 +167,15 @@ export function ApplicantDetailPage() {
             <Dl>
               <dt>Email</dt>
               <dd>
-                {a.email} <Badge $tone={a.emailVerified ? "primary" : "neutral"}>{a.emailVerified ? "Verified" : "Unverified"}</Badge>
+                <EmailLink value={a.email} />{" "}
+                <Badge $tone={a.emailVerified ? "primary" : "neutral"}>
+                  {a.emailVerified ? "Verified" : "Unverified"}
+                </Badge>
               </dd>
               <dt>Phone</dt>
-              <dd>{a.phoneNumber ?? "—"}</dd>
+              <dd>
+                <PhoneLink value={a.phoneNumber} />
+              </dd>
               <dt>Identity</dt>
               <dd>
                 <Badge $tone={a.identityVerified ? "primary" : "neutral"}>
@@ -158,7 +184,9 @@ export function ApplicantDetailPage() {
               </dd>
               <dt>Account</dt>
               <dd>
-                <Badge $tone={a.active ? "primary" : "danger"}>{a.active ? "Active" : "Disabled"}</Badge>
+                <Badge $tone={a.active ? "primary" : "danger"}>
+                  {a.active ? "Active" : "Disabled"}
+                </Badge>
               </dd>
               <dt>Registered</dt>
               <dd>{formatDate(a.createdAt)}</dd>
@@ -211,7 +239,9 @@ export function ApplicantDetailPage() {
             { id: a.id, active: !a.active },
             {
               onSuccess: () => {
-                toast.success(a.active ? "Account disabled" : "Account reactivated");
+                toast.success(
+                  a.active ? "Account disabled" : "Account reactivated",
+                );
                 setToggling(false);
               },
               onError: (e) => {

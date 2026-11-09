@@ -1,7 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar, AvatarFallback } from "@/shared/ui";
-import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
+import {
+  Badge,
+  DataTable,
+  EmailLink,
+  PhoneLink,
+  type DataTableColumn,
+} from "@/shared/components";
 import { formatDate } from "@/lib/formatting";
 import type { Applicant } from "../types";
 
@@ -34,14 +40,28 @@ const columns: DataTableColumn<Applicant>[] = [
     cell: (a) => (
       <NameCell>
         <Avatar>
-          <AvatarFallback>{(a.firstName ?? a.email)[0]?.toUpperCase()}</AvatarFallback>
+          <AvatarFallback>
+            {(a.firstName ?? a.email)[0]?.toUpperCase()}
+          </AvatarFallback>
         </Avatar>
-        {a.firstName || a.lastName ? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim() : "—"}
+        {a.firstName || a.lastName
+          ? `${a.firstName ?? ""} ${a.lastName ?? ""}`.trim()
+          : "—"}
       </NameCell>
     ),
   },
-  { id: "email", header: "Email", sortValue: (a) => a.email, cell: (a) => a.email },
-  { id: "phone", header: "Phone", sortValue: (a) => a.phoneNumber ?? "", cell: (a) => a.phoneNumber ?? "—" },
+  {
+    id: "email",
+    header: "Email",
+    sortValue: (a) => a.email,
+    cell: (a) => <EmailLink value={a.email} />,
+  },
+  {
+    id: "phone",
+    header: "Phone",
+    sortValue: (a) => a.phoneNumber ?? "",
+    cell: (a) => <PhoneLink value={a.phoneNumber} />,
+  },
   {
     id: "progress",
     header: "Progress",
@@ -58,7 +78,11 @@ const columns: DataTableColumn<Applicant>[] = [
   {
     id: "active",
     header: "Account",
-    cell: (a) => <Badge $tone={a.active ? "primary" : "danger"}>{a.active ? "Active" : "Disabled"}</Badge>,
+    cell: (a) => (
+      <Badge $tone={a.active ? "primary" : "danger"}>
+        {a.active ? "Active" : "Disabled"}
+      </Badge>
+    ),
   },
   {
     id: "createdAt",
@@ -82,7 +106,9 @@ export function ApplicantTable({
       rows={applicants}
       getRowId={(a) => a.id}
       isLoading={isLoading}
-      searchText={(a) => `${a.firstName} ${a.lastName} ${a.email} ${a.phoneNumber}`}
+      searchText={(a) =>
+        `${a.firstName} ${a.lastName} ${a.email} ${a.phoneNumber}`
+      }
       searchPlaceholder="Search by name, email or phone"
       onRowClick={(a) => navigate(`/applicants/${a.id}`)}
       emptyMessage="No applicants yet."

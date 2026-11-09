@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
-import { Badge } from "@/shared/components";
+import { Badge, PhoneLink } from "@/shared/components";
 import { CandidateScoreCard } from "@/features/judging";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
@@ -98,7 +98,7 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             { label: "Education", value: educationLabel(c) },
             { label: "Institution", value: institutionLabel(c) },
             { label: "Occupation", value: occupationLabel(c) },
-            { label: "Phone", value: c.phone },
+            { label: "Phone", value: <PhoneLink value={c.phone} /> },
             { label: "Reference", value: c.referenceCode },
             {
               label: "Documents",

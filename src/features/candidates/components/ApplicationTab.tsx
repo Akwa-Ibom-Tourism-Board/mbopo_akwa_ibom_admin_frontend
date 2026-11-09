@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
-import { Badge } from "@/shared/components";
+import { Badge, PhoneLink } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
@@ -128,7 +128,7 @@ export function ApplicationTab({
           </>
         ),
     },
-    { label: "Phone", value: c.phone },
+    { label: "Phone", value: <PhoneLink value={c.phone} /> },
     {
       label: "Marital status",
       value: !marital ? (
@@ -161,7 +161,7 @@ export function ApplicationTab({
   const kin: Fact[] = [
     { label: "Name", value: c.nextOfKin },
     { label: "Relationship", value: c.nextOfKinRelationship },
-    { label: "Phone", value: c.nextOfKinPhone },
+    { label: "Phone", value: <PhoneLink value={c.nextOfKinPhone} /> },
   ];
 
   const work: Fact[] = [
