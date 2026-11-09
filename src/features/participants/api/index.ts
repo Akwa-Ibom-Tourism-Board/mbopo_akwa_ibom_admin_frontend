@@ -11,7 +11,7 @@ export async function getParticipant(id: string): Promise<Participant> {
 
 // Starts a complaint-style email thread with this participant — same
 // Message/MessageReply shapes a complaint reply uses, so the conversation
-// that results is just a normal row in the Complaints inbox (tagged
+// that results is just a normal row in the Messages inbox (tagged
 // channel: "admin") rather than a separate parallel system.
 export async function messageParticipant(
   id: string,

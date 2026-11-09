@@ -9,10 +9,10 @@ export function ComplaintsPage() {
   return (
     <>
       <PageHeader
-        title="Complaints"
+        title="Messages"
         description={
           can("complaints.respond")
-            ? "Reply to complaints from contestants and the public."
+            ? "Reply to messages from contestants, the public, and conversations staff have started."
             : "Read-only oversight of the support inbox. You can reassign a ticket from its page."
         }
       />

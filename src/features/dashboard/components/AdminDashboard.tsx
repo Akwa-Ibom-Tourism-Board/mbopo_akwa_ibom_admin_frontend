@@ -68,7 +68,7 @@ export function AdminDashboard() {
         />
         <StatTile label="News posts" value={count(news?.length)} />
         <StatTile
-          label="Open complaints"
+          label="Open messages"
           value={count(complaints?.filter((c) => c.status === "open").length)}
         />
       </StatGrid>
@@ -107,8 +107,8 @@ export function AdminDashboard() {
               icon: Users,
             },
             {
-              to: "/complaints",
-              title: "Complaints",
+              to: "/messages",
+              title: "Messages",
               text: "Oversight and reassignment.",
               icon: LifeBuoy,
             },

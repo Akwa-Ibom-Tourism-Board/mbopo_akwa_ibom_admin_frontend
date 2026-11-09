@@ -18,7 +18,7 @@ export function CustomerServiceDashboard() {
     <>
       <PageHeader
         title="Support desk"
-        description="Complaints from contestants and the public."
+        description="Messages from contestants and the public."
       />
       <StatGrid>
         <StatTile
@@ -34,8 +34,8 @@ export function CustomerServiceDashboard() {
         <QuickLinks
           links={[
             {
-              to: "/complaints",
-              title: "Complaints inbox",
+              to: "/messages",
+              title: "Messages inbox",
               text: "Reply to and resolve tickets.",
               icon: LifeBuoy,
             },
@@ -44,7 +44,7 @@ export function CustomerServiceDashboard() {
       </Section>
 
       <NoteBox>
-        Your access is limited to complaints. User accounts, judging, voting
+        Your access is limited to messages. User accounts, judging, voting
         content and pricing are handled by other roles.
       </NoteBox>
     </>

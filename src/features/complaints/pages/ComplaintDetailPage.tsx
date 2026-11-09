@@ -29,7 +29,12 @@ import {
   useReply,
   useUpdateStatus,
 } from "../api/hooks";
-import { CHANNEL_LABELS, SOURCE_LABELS, STATUS_LABELS, type ComplaintStatus } from "../types";
+import {
+  CHANNEL_LABELS,
+  SOURCE_LABELS,
+  STATUS_LABELS,
+  type ComplaintStatus,
+} from "../types";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -76,16 +81,16 @@ export function ComplaintDetailPage() {
   if (!c) {
     return (
       <>
-        <Back to="/complaints">
-          <ArrowLeft size={16} /> All complaints
+        <Back to="/messages">
+          <ArrowLeft size={16} /> All messages
         </Back>
         <EmptyState
           icon={<SearchX size={26} />}
-          title="Complaint not found"
-          message="We couldn't find that complaint."
+          title="Message not found"
+          message="We couldn't find that message."
           action={
             <Button asChild>
-              <Link to="/complaints">Back to complaints</Link>
+              <Link to="/messages">Back to messages</Link>
             </Button>
           }
         />
@@ -100,8 +105,8 @@ export function ComplaintDetailPage() {
 
   return (
     <>
-      <Back to="/complaints">
-        <ArrowLeft size={16} /> All complaints
+      <Back to="/messages">
+        <ArrowLeft size={16} /> All messages
       </Back>
       <Card>
         <CardHeader>
@@ -222,8 +227,8 @@ export function ComplaintDetailPage() {
             </form>
           ) : (
             <Meta style={{ marginTop: 24 }}>
-              You don't have permission to reply to this complaint. You have
-              read access and can reassign this ticket.
+              You don't have permission to reply to this message. You have read
+              access and can reassign this ticket.
             </Meta>
           )}
         </CardContent>

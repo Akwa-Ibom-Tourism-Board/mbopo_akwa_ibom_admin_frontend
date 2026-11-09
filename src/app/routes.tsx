@@ -95,8 +95,8 @@ export function AppRoutes() {
           </Route>
 
           <Route element={<RoleGuard capability="complaints.view" />}>
-            <Route path="/complaints" element={<ComplaintsPage />} />
-            <Route path="/complaints/:id" element={<ComplaintDetailPage />} />
+            <Route path="/messages" element={<ComplaintsPage />} />
+            <Route path="/messages/:id" element={<ComplaintDetailPage />} />
           </Route>
 
           <Route element={<RoleGuard capability="activity.view" />}>

@@ -17,7 +17,7 @@ import { useMessageParticipant } from "../api/hooks";
 
 // Starts a direct email conversation with a participant — opening this
 // dialog is the only new UI Stage 4 needed, since the resulting thread is
-// just a normal Complaints-inbox entry (channel: "admin"): sending here
+// just a normal Messages-inbox entry (channel: "admin"): sending here
 // hands off straight to the existing ComplaintDetailPage/ComplaintThread for
 // everything that follows (replies, email-delivery status, resend).
 export function MessageParticipantDialog({
@@ -54,7 +54,7 @@ export function MessageParticipantDialog({
           <DialogTitle>Message {participantName}</DialogTitle>
           <DialogDescription>
             Sent directly to their email. Their reply (and yours after that)
-            shows up as a normal conversation in Complaints.
+            shows up as a normal conversation in Messages.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,7 +101,7 @@ export function MessageParticipantDialog({
                     reset();
                     onOpenChange(false);
                     toast.success("Message sent");
-                    navigate(`/complaints/${messageId}`);
+                    navigate(`/messages/${messageId}`);
                   },
                   onError: (err) => toast.error(err.message),
                 },

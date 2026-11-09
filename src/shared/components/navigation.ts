@@ -135,8 +135,8 @@ export const NAV_GROUPS: NavGroupConfig[] = [
     label: "Support",
     items: [
       {
-        to: "/complaints",
-        label: "Complaints",
+        to: "/messages",
+        label: "Messages",
         icon: LifeBuoy,
         capability: "complaints.view",
       },

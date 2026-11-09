@@ -8,7 +8,7 @@ export const ACTIVITY_CATEGORY_LABELS: Record<ActivityCategory, string> = {
   judging: "Judging decisions",
   voting: "Voting content",
   candidates: "Candidate profiles",
-  complaints: "Complaints",
+  complaints: "Messages",
   access: "Sign-ins",
 };
 

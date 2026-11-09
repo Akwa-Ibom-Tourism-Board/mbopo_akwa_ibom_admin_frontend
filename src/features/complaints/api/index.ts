@@ -13,22 +13,42 @@ export async function getComplaint(id: string): Promise<Complaint | null> {
   }
 }
 
-export async function replyToComplaint(id: string, body: string): Promise<void> {
+export async function replyToComplaint(
+  id: string,
+  body: string,
+): Promise<void> {
   if (!body.trim()) throw new Error("Write a reply first.");
-  await request(`/admin/complaints/${id}/reply`, { method: "POST", body: JSON.stringify({ body }) });
+  await request(`/admin/complaints/${id}/reply`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
 }
 
-export async function updateStatus(id: string, status: ComplaintStatus): Promise<void> {
-  await request(`/admin/complaints/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+export async function updateStatus(
+  id: string,
+  status: ComplaintStatus,
+): Promise<void> {
+  await request(`/admin/complaints/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
 }
 
-export async function reassignComplaint(id: string, assignedToId: string): Promise<void> {
+export async function reassignComplaint(
+  id: string,
+  assignedToId: string,
+): Promise<void> {
   await request(`/admin/complaints/${id}/reassign`, {
     method: "PATCH",
     body: JSON.stringify({ assignedToId }),
   });
 }
 
-export async function resendReplyEmail(id: string, replyId: string): Promise<void> {
-  await request(`/admin/complaints/${id}/replies/${replyId}/resend-email`, { method: "POST" });
+export async function resendReplyEmail(
+  id: string,
+  replyId: string,
+): Promise<void> {
+  await request(`/admin/complaints/${id}/replies/${replyId}/resend-email`, {
+    method: "POST",
+  });
 }

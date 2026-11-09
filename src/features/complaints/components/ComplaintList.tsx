@@ -84,9 +84,9 @@ export function ComplaintList({
       searchText={(c) =>
         `${c.subject} ${c.complainantName} ${c.complainantEmail}`
       }
-      searchPlaceholder="Search complaints"
-      onRowClick={(c) => navigate(`/complaints/${c.id}`)}
-      emptyMessage="No complaints match."
+      searchPlaceholder="Search messages"
+      onRowClick={(c) => navigate(`/messages/${c.id}`)}
+      emptyMessage="No messages match."
       filters={
         <StatusFilter
           status={status}

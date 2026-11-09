@@ -110,8 +110,8 @@ export function SuperAdminDashboard() {
               icon: Users,
             },
             {
-              to: "/complaints",
-              title: "Complaints",
+              to: "/messages",
+              title: "Messages",
               text: `${count(open)} open — oversight and reassignment.`,
               icon: LifeBuoy,
             },
