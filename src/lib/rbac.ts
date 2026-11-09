@@ -37,6 +37,9 @@ export type Capability =
   // viewer is additionally refused (server-side) any record that isn't a
   // submitted Contestant.
   | "participants.view"
+  // Start a direct email conversation with a participant from their unified
+  // detail page — same roster as complaints.respond.
+  | "participants.message"
   // Candidates
   | "candidates.view"
   | "candidates.editPublicProfile"
@@ -113,6 +116,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
     "judge",
     "head_judge",
   ],
+  "participants.message": ["super_admin", "admin", "customer_service"],
 
   "candidates.view": ["super_admin", "admin", "media", "judge", "head_judge"],
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],

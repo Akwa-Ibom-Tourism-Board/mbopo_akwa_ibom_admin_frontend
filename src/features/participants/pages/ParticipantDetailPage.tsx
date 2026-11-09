@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Pencil, SearchX, UploadCloud } from "lucide-react";
+import { ArrowLeft, Mail, Pencil, SearchX, UploadCloud } from "lucide-react";
 import { Button, LoadingState } from "@/shared/ui";
 import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
@@ -9,6 +9,7 @@ import { useCan } from "@/lib/rbac";
 import { media } from "@/theme";
 import { useParticipant } from "../api/hooks";
 import { participantKind } from "../types";
+import { MessageParticipantDialog } from "../components/MessageParticipantDialog";
 import { ActivityTab } from "@/features/candidates/components/ActivityTab";
 import { ApplicationTab } from "@/features/candidates/components/ApplicationTab";
 import { EditSectionDialog } from "@/features/candidates/components/EditSectionDialog";
@@ -101,6 +102,7 @@ export function ParticipantDetailPage() {
   const requested = params.get("tab");
   const [editing, setEditing] = useState<SectionId | null>(null);
   const [uploading, setUploading] = useState<DocumentSlot | null>(null);
+  const [messaging, setMessaging] = useState(false);
 
   const isSubmitted = c?.status === "submitted";
   // Documents exist as soon as registration uploads them (well before
@@ -110,6 +112,7 @@ export function ParticipantDetailPage() {
   const hasApplication = !!c?.id;
   const canSeeActivity = can("candidates.viewActivity") && isSubmitted;
   const canEdit = can("candidates.editDetails") && isSubmitted;
+  const canMessage = can("participants.message");
 
   const tabs = useMemo(
     () =>
@@ -176,9 +179,28 @@ export function ParticipantDetailPage() {
 
   return (
     <>
-      <Back to={backTo}>
-        <ArrowLeft size={16} /> All participants
-      </Back>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
+        }}
+      >
+        <Back to={backTo}>
+          <ArrowLeft size={16} /> All participants
+        </Back>
+        {canMessage && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setMessaging(true)}
+          >
+            <Mail size={14} /> Message
+          </Button>
+        )}
+      </div>
 
       <Hero>
         <img src={c.photo ?? undefined} alt={c.name} />
@@ -214,6 +236,14 @@ export function ParticipantDetailPage() {
           )}
         </div>
       </Hero>
+      {canMessage && (
+        <MessageParticipantDialog
+          participantId={c.applicantId}
+          participantName={c.name}
+          open={messaging}
+          onOpenChange={setMessaging}
+        />
+      )}
 
       <Tabs
         tabs={tabs}

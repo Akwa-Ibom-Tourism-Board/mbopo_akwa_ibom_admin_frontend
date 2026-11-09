@@ -8,3 +8,18 @@ import type { Participant } from "../types";
 export async function getParticipant(id: string): Promise<Participant> {
   return request<Participant>(`/admin/participants/${id}`);
 }
+
+// Starts a complaint-style email thread with this participant — same
+// Message/MessageReply shapes a complaint reply uses, so the conversation
+// that results is just a normal row in the Complaints inbox (tagged
+// channel: "admin") rather than a separate parallel system.
+export async function messageParticipant(
+  id: string,
+  subject: string,
+  body: string,
+): Promise<{ messageId: string }> {
+  return request<{ messageId: string }>(`/admin/participants/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ subject, body }),
+  });
+}

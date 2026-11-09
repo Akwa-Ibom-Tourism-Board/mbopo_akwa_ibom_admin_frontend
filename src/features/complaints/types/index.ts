@@ -1,9 +1,9 @@
 export type ComplaintStatus = "open" | "in_progress" | "resolved";
 export type ComplaintSource = "contestant" | "public";
-// Where the complaint itself came in on — the "Ask Me" widget, or an email
+// Where the complaint itself came in on — the "Ask Me" widget, an email
 // sent straight to info@akhtdc.com.ng (picked up by the backend's Zoho
-// Mail sync).
-export type ComplaintChannel = "widget" | "email";
+// Mail sync), or started by staff from a participant's own detail page.
+export type ComplaintChannel = "widget" | "email" | "admin";
 
 export interface ComplaintAttachment {
   url: string;
@@ -57,4 +57,5 @@ export const SOURCE_LABELS: Record<ComplaintSource, string> = {
 export const CHANNEL_LABELS: Record<ComplaintChannel, string> = {
   widget: "Ask Me widget",
   email: "Email",
+  admin: "Started by staff",
 };
