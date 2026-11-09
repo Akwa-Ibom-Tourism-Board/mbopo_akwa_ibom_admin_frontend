@@ -16,8 +16,14 @@ const Link = styled.a`
 // the detail page.
 const stop = (event: MouseEvent) => event.stopPropagation();
 
-export function PhoneLink({ value }: { value: string | null | undefined }) {
-  if (!value) return <>—</>;
+export function PhoneLink({
+  value,
+  fallback = "—",
+}: {
+  value: string | null | undefined;
+  fallback?: string;
+}) {
+  if (!value) return <>{fallback}</>;
   return (
     <Link href={`tel:${value}`} onClick={stop}>
       {value}
@@ -25,8 +31,14 @@ export function PhoneLink({ value }: { value: string | null | undefined }) {
   );
 }
 
-export function EmailLink({ value }: { value: string | null | undefined }) {
-  if (!value) return <>—</>;
+export function EmailLink({
+  value,
+  fallback = "—",
+}: {
+  value: string | null | undefined;
+  fallback?: string;
+}) {
+  if (!value) return <>{fallback}</>;
   return (
     <Link href={`mailto:${value}`} onClick={stop}>
       {value}

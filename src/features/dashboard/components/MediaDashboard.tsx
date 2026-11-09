@@ -36,7 +36,7 @@ export function MediaDashboard() {
         <QuickLinks
           links={[
             {
-              to: "/candidates",
+              to: "/participants/contestants",
               title: "Candidate profiles",
               text: "Add bios, photos and YouTube videos.",
               icon: Users,

@@ -104,8 +104,8 @@ export function SuperAdminDashboard() {
               icon: Handshake,
             },
             {
-              to: "/candidates",
-              title: "Candidates",
+              to: "/participants/contestants",
+              title: "Contestants",
               text: "Records and public profiles.",
               icon: Users,
             },

@@ -27,6 +27,11 @@ export type DocumentField =
  * optional: Media only ever gets the base fields; `details`-tier fields
  * require `candidates.viewDetails`; `identity`-tier fields require
  * `candidates.viewIdentity`. See admin/helpers/candidate.helpers.ts.
+ *
+ * This list is always submitted-only, so `id`/`status` are never null here
+ * — contrast with features/participants' `Participant`, the wider version
+ * of this same shape returned by GET /admin/participants/:id, which can be
+ * a draft or have no application at all yet.
  */
 export interface Candidate {
   // ── Base tier (candidates.view — every role that can see candidates at all)
@@ -54,6 +59,7 @@ export interface Candidate {
   middleName?: string | null;
   gender?: "male" | "female" | null;
   dateOfBirth?: string | null;
+  email?: string | null;
   phone?: string | null;
   maritalStatus?: string | null;
   socialMedia?: string | null;

@@ -11,9 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/ui";
+import type { Participant } from "@/features/participants/types";
 import { useUploadCandidateDocument } from "../api/hooks";
 import { validateDocumentFile, type DocumentSlot } from "../data/documents";
-import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
+import { DOCUMENT_URL_FIELDS } from "../types";
 
 const Drop = styled.button<{ $bad: boolean }>`
   display: flex;
@@ -88,15 +89,18 @@ export function UploadDocumentDialog({
   slot,
   onClose,
 }: {
-  candidate: Candidate;
+  candidate: Participant;
   slot: DocumentSlot | null;
   onClose: () => void;
 }) {
-  const upload = useUploadCandidateDocument(candidate.id);
+  const upload = useUploadCandidateDocument(candidate.id ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
+  const previewUrl = useMemo(
+    () => (file ? URL.createObjectURL(file) : null),
+    [file],
+  );
 
   useEffect(() => {
     setFile(null);
@@ -110,7 +114,8 @@ export function UploadDocumentDialog({
   }, [previewUrl]);
 
   if (!slot) return null;
-  const existingUrl = candidate[DOCUMENT_URL_FIELDS[slot.field]] as string | null | undefined;
+  const existingUrl = candidate[DOCUMENT_URL_FIELDS[slot.field]] as
+    string | null | undefined;
 
   const choose = (picked: File | undefined) => {
     if (!picked) return;
@@ -134,7 +139,9 @@ export function UploadDocumentDialog({
       { field: slot.field, file },
       {
         onSuccess: () => {
-          toast.success(`${slot.label} ${existingUrl ? "replaced" : "uploaded"}`);
+          toast.success(
+            `${slot.label} ${existingUrl ? "replaced" : "uploaded"}`,
+          );
           onClose();
         },
         onError: (e) => setError(e.message),
@@ -166,7 +173,11 @@ export function UploadDocumentDialog({
         />
 
         {!file ? (
-          <Drop type="button" $bad={!!error} onClick={() => inputRef.current?.click()}>
+          <Drop
+            type="button"
+            $bad={!!error}
+            onClick={() => inputRef.current?.click()}
+          >
             <UploadCloud size={26} />
             Choose a file
           </Drop>
@@ -180,27 +191,44 @@ export function UploadDocumentDialog({
               )}
             </Preview>
             <Meta>New: {file.name}</Meta>
-            <Button type="button" variant="ghost" size="sm" style={{ marginTop: 6 }} onClick={() => inputRef.current?.click()}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              style={{ marginTop: 6 }}
+              onClick={() => inputRef.current?.click()}
+            >
               Choose a different file
             </Button>
           </>
         )}
         {error && <Err role="alert">{error}</Err>}
 
-        {slot.field === "videoPitch" && existingUrl && candidate.status === "submitted" && (
-          <Warn>
-            <AlertTriangle size={15} />
-            This application is already submitted, and applicants can't change their video pitch
-            after that. Replacing it is recorded in the activity trail.
-          </Warn>
-        )}
+        {slot.field === "videoPitch" &&
+          existingUrl &&
+          candidate.status === "submitted" && (
+            <Warn>
+              <AlertTriangle size={15} />
+              This application is already submitted, and applicants can't change
+              their video pitch after that. Replacing it is recorded in the
+              activity trail.
+            </Warn>
+          )}
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="button" disabled={!file || upload.isPending} onClick={save}>
-            {upload.isPending ? "Uploading…" : existingUrl ? `Replace ${slot.label.toLowerCase()}` : "Upload"}
+          <Button
+            type="button"
+            disabled={!file || upload.isPending}
+            onClick={save}
+          >
+            {upload.isPending
+              ? "Uploading…"
+              : existingUrl
+                ? `Replace ${slot.label.toLowerCase()}`
+                : "Upload"}
           </Button>
         </DialogFooter>
       </DialogContent>

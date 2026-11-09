@@ -1,2 +1,1 @@
-export { ApplicantsPage } from "./pages/ApplicantsPage";
-export { ApplicantDetailPage } from "./pages/ApplicantDetailPage";
+export type { Applicant } from "./types";

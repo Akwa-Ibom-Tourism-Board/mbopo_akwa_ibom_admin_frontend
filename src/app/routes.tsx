@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "@/features/auth";
-import { ApplicantDetailPage, ApplicantsPage } from "@/features/applicants";
-import { CandidateDetailPage, CandidatesPage } from "@/features/candidates";
+import {
+  ParticipantDetailPage,
+  ParticipantsPage,
+} from "@/features/participants";
 import { ActivityLogPage } from "@/features/activity-log";
 import { ComplaintDetailPage, ComplaintsPage } from "@/features/complaints";
 import { DashboardPage } from "@/features/dashboard";
@@ -35,14 +37,28 @@ export function AppRoutes() {
           {/* No RoleGuard — every signed-in role manages their own password here. */}
           <Route path="/settings" element={<SettingsPage />} />
 
-          <Route element={<RoleGuard capability="applicants.view" />}>
-            <Route path="/applicants" element={<ApplicantsPage />} />
-            <Route path="/applicants/:id" element={<ApplicantDetailPage />} />
-          </Route>
-
-          <Route element={<RoleGuard capability="candidates.view" />}>
-            <Route path="/candidates" element={<CandidatesPage />} />
-            <Route path="/candidates/:id" element={<CandidateDetailPage />} />
+          <Route element={<RoleGuard capability="participants.view" />}>
+            {/* The three tabs are literal paths (not a :tab param) so they
+                rank above /participants/:id in React Router's matching —
+                otherwise "candidates"/"applicants"/"contestants" would be
+                ambiguous with a real participant id at the same depth. */}
+            <Route path="/participants" element={<ParticipantsPage />} />
+            <Route
+              path="/participants/candidates"
+              element={<ParticipantsPage />}
+            />
+            <Route
+              path="/participants/applicants"
+              element={<ParticipantsPage />}
+            />
+            <Route
+              path="/participants/contestants"
+              element={<ParticipantsPage />}
+            />
+            <Route
+              path="/participants/:id"
+              element={<ParticipantDetailPage />}
+            />
           </Route>
 
           <Route element={<RoleGuard capability="stages.view" />}>

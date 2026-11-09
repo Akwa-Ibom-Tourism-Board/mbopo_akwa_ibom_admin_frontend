@@ -148,7 +148,7 @@ export function StageCandidateTable({
       getRowId={(r) => r.candidate.id}
       searchText={(r) => `${r.candidate.name} ${r.candidate.lga}`}
       searchPlaceholder="Search by name or LGA"
-      onRowClick={(r) => navigate(`/candidates/${r.candidate.id}`)}
+      onRowClick={(r) => navigate(`/participants/${r.candidate.applicantId}`)}
       emptyMessage="No candidates match these filters."
       rowActions={rowActions}
       bulkActions={bulkActions}

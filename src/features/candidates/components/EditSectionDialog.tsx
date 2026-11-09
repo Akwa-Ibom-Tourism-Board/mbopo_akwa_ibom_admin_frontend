@@ -29,11 +29,11 @@ import {
   type FieldDef,
   type SectionId,
 } from "../schemas";
-import type { Candidate } from "../types";
+import type { Participant } from "@/features/participants/types";
 
 type Values = Record<string, string>;
 
-const initialValues = (c: Candidate, section: SectionId): Values =>
+const initialValues = (c: Participant, section: SectionId): Values =>
   Object.fromEntries(
     SECTION_FIELDS[section].map((f) => [
       f.name,
@@ -53,11 +53,11 @@ function SectionForm({
   section,
   onClose,
 }: {
-  candidate: Candidate;
+  candidate: Participant;
   section: SectionId;
   onClose: () => void;
 }) {
-  const update = useUpdateCandidateDetails(candidate.id);
+  const update = useUpdateCandidateDetails(candidate.id ?? "");
   const fields = SECTION_FIELDS[section];
   const {
     register,
@@ -210,7 +210,7 @@ export function EditSectionDialog({
   section,
   onClose,
 }: {
-  candidate: Candidate;
+  candidate: Participant;
   section: SectionId | null;
   onClose: () => void;
 }) {

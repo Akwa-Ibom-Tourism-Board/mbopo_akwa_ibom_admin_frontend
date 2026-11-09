@@ -110,7 +110,7 @@ export function ApplicantTable({
         `${a.firstName} ${a.lastName} ${a.email} ${a.phoneNumber}`
       }
       searchPlaceholder="Search by name, email or phone"
-      onRowClick={(a) => navigate(`/applicants/${a.id}`)}
+      onRowClick={(a) => navigate(`/participants/${a.id}`)}
       emptyMessage="No applicants yet."
     />
   );

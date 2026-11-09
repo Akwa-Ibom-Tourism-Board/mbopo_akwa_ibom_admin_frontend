@@ -61,8 +61,8 @@ export function HeadJudgeDashboard() {
               icon: Trophy,
             },
             {
-              to: "/candidates",
-              title: "Candidates",
+              to: "/participants/contestants",
+              title: "Contestants",
               text: "Full application and public profile.",
               icon: Users,
             },

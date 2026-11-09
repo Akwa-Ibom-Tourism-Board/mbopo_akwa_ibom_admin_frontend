@@ -61,7 +61,9 @@ export function AdminDashboard() {
         />
         <StatTile
           label="Candidates still competing"
-          value={count(candidates?.filter((c) => c.candidateStatus === "active").length)}
+          value={count(
+            candidates?.filter((c) => c.candidateStatus === "active").length,
+          )}
           hint="Status only — no scores"
         />
         <StatTile label="News posts" value={count(news?.length)} />
@@ -99,8 +101,8 @@ export function AdminDashboard() {
               icon: Handshake,
             },
             {
-              to: "/candidates",
-              title: "Candidates",
+              to: "/participants/contestants",
+              title: "Contestants",
               text: "Records and public profiles.",
               icon: Users,
             },

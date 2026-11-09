@@ -1,11 +1,11 @@
 import styled from "styled-components";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui";
-import { Badge, PhoneLink } from "@/shared/components";
+import { Badge, EmailLink, PhoneLink } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
-import type { Candidate } from "../types";
+import type { Participant } from "@/features/participants/types";
 import { useRetryVinVerification } from "../api/hooks";
 import {
   educationLabel,
@@ -50,7 +50,7 @@ export function ApplicationTab({
   candidate: c,
   editAction,
 }: {
-  candidate: Candidate;
+  candidate: Participant;
   // Per-section "Edit" buttons arrive with the editing stage.
   editAction?: (section: string) => React.ReactNode;
 }) {
@@ -59,7 +59,11 @@ export function ApplicationTab({
   const canRetryVin = can("candidates.retryVinVerification");
   const elig = eligibility(c.dateOfBirth);
   const marital = maritalFlag(c.maritalStatus);
-  const retryVin = useRetryVinVerification(c.id);
+  const retryVin = useRetryVinVerification(c.id ?? "");
+  // A draft (or bare registration) has plenty of genuinely-still-empty
+  // fields — "Pending" reads better there than the usual "—" for missing
+  // data on an otherwise-complete record.
+  const emptyLabel = c.status === "submitted" ? "—" : "Pending";
 
   const vinOutcome =
     c.isVinVerified === true ? (
@@ -128,12 +132,17 @@ export function ApplicationTab({
           </>
         ),
     },
-    { label: "Phone", value: <PhoneLink value={c.phone} /> },
+    {
+      label: "Email",
+      value: <EmailLink value={c.email} fallback={emptyLabel} />,
+    },
+    {
+      label: "Phone",
+      value: <PhoneLink value={c.phone} fallback={emptyLabel} />,
+    },
     {
       label: "Marital status",
-      value: !marital ? (
-        "—"
-      ) : (
+      value: !marital ? undefined : (
         <>
           {marital.status}{" "}
           {!marital.eligible && <Badge $tone="danger">Not single</Badge>}
@@ -161,7 +170,10 @@ export function ApplicationTab({
   const kin: Fact[] = [
     { label: "Name", value: c.nextOfKin },
     { label: "Relationship", value: c.nextOfKinRelationship },
-    { label: "Phone", value: <PhoneLink value={c.nextOfKinPhone} /> },
+    {
+      label: "Phone",
+      value: <PhoneLink value={c.nextOfKinPhone} fallback={emptyLabel} />,
+    },
   ];
 
   const work: Fact[] = [
@@ -176,7 +188,11 @@ export function ApplicationTab({
       label: "Status",
       value: (
         <Badge $tone={c.status === "submitted" ? "primary" : "secondary"}>
-          {c.status === "submitted" ? "Submitted" : "Draft"}
+          {c.status === "submitted"
+            ? "Submitted"
+            : c.status === "draft"
+              ? "Draft"
+              : "Not started"}
         </Badge>
       ),
     },
@@ -194,6 +210,7 @@ export function ApplicationTab({
         title="Personal & contact"
         facts={personal}
         action={edit("personal")}
+        emptyLabel={emptyLabel}
         note={
           editAction
             ? "Locked fields come from the verified identity and can't be edited."
@@ -204,24 +221,40 @@ export function ApplicationTab({
         title="Identity & origin"
         facts={identity}
         action={edit("origin")}
+        emptyLabel={emptyLabel}
       />
       <FactCard
         title="Residence"
         facts={residence}
         action={edit("residence")}
+        emptyLabel={emptyLabel}
       />
-      <FactCard title="Next of kin" facts={kin} action={edit("kin")} />
-      <FactCard title="Education & work" facts={work} action={edit("work")} />
+      <FactCard
+        title="Next of kin"
+        facts={kin}
+        action={edit("kin")}
+        emptyLabel={emptyLabel}
+      />
+      <FactCard
+        title="Education & work"
+        facts={work}
+        action={edit("work")}
+        emptyLabel={emptyLabel}
+      />
       <FactCard title="Application record" facts={record} />
       <Wide>
         <FactCard
           title="About the applicant"
           action={edit("about")}
+          emptyLabel={emptyLabel}
           facts={[
             { label: "Talents", value: c.talents },
             { label: "Languages", value: c.languages },
             { label: "Initiative", value: c.initiative },
-            { label: "Why she should be Mbopo", value: <Prose>{c.why}</Prose> },
+            {
+              label: "Why she should be Mbopo",
+              value: c.why ? <Prose>{c.why}</Prose> : undefined,
+            },
           ]}
         />
       </Wide>

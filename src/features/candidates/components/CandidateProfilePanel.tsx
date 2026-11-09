@@ -19,8 +19,9 @@ import {
   YoutubeEmbed,
   YoutubeLinkField,
 } from "@/features/voting-content";
+import type { Participant } from "@/features/participants/types";
 import { useUpdateCandidateProfile } from "../api/hooks";
-import type { Candidate, CandidateVideo } from "../types";
+import type { CandidateVideo } from "../types";
 
 const Stack = styled.div`
   display: flex;
@@ -68,10 +69,10 @@ export function CandidateProfilePanel({
   candidate,
   editable,
 }: {
-  candidate: Candidate;
+  candidate: Participant;
   editable: boolean;
 }) {
-  const mutation = useUpdateCandidateProfile(candidate.id);
+  const mutation = useUpdateCandidateProfile(candidate.id ?? "");
   const [bio, setBio] = useState(candidate.bio ?? "");
   const [photos, setPhotos] = useState(candidate.additionalPhotos ?? []);
   const [videos, setVideos] = useState<CandidateVideo[]>(
@@ -158,7 +159,11 @@ export function CandidateProfilePanel({
             <ImageUploadField
               value={photos}
               onChange={setPhotos}
-              onUpload={(file) => uploadCandidatePhoto(candidate.id, file).then((r) => r.url)}
+              onUpload={(file) =>
+                uploadCandidatePhoto(candidate.id ?? "", file).then(
+                  (r) => r.url,
+                )
+              }
             />
           </Field>
 

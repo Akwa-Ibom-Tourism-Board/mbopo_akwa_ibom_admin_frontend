@@ -7,17 +7,21 @@ import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
 import { useCan } from "@/lib/rbac";
 import { media } from "@/theme";
-import { useCandidate } from "../api/hooks";
-import { ActivityTab } from "../components/ActivityTab";
-import { ApplicationTab } from "../components/ApplicationTab";
-import { EditSectionDialog } from "../components/EditSectionDialog";
-import type { SectionId } from "../schemas";
-import { PhaseBadge, StatusBadge } from "../components/Badges";
-import { CandidateProfilePanel } from "../components/CandidateProfilePanel";
-import { DocumentsTab } from "../components/DocumentsTab";
-import { UploadDocumentDialog } from "../components/UploadDocumentDialog";
-import type { DocumentSlot } from "../data/documents";
-import { OverviewTab } from "../components/OverviewTab";
+import { useParticipant } from "../api/hooks";
+import { participantKind } from "../types";
+import { ActivityTab } from "@/features/candidates/components/ActivityTab";
+import { ApplicationTab } from "@/features/candidates/components/ApplicationTab";
+import { EditSectionDialog } from "@/features/candidates/components/EditSectionDialog";
+import type { SectionId } from "@/features/candidates/schemas";
+import {
+  PhaseBadge,
+  StatusBadge,
+} from "@/features/candidates/components/Badges";
+import { CandidateProfilePanel } from "@/features/candidates/components/CandidateProfilePanel";
+import { DocumentsTab } from "@/features/candidates/components/DocumentsTab";
+import { UploadDocumentDialog } from "@/features/candidates/components/UploadDocumentDialog";
+import type { DocumentSlot } from "@/features/candidates/data/documents";
+import { OverviewTab } from "@/features/candidates/components/OverviewTab";
 
 const Back = styled(Link)`
   display: inline-flex;
@@ -81,7 +85,7 @@ const Reason = styled.p`
 
 type TabId = "overview" | "application" | "documents" | "profile" | "activity";
 
-const TABS: TabItem<TabId>[] = [
+const ALL_TABS: TabItem<TabId>[] = [
   { id: "overview", label: "Overview" },
   { id: "application", label: "Application" },
   { id: "documents", label: "Documents" },
@@ -89,19 +93,33 @@ const TABS: TabItem<TabId>[] = [
   { id: "activity", label: "Activity" },
 ];
 
-export function CandidateDetailPage() {
+export function ParticipantDetailPage() {
   const { id } = useParams();
-  const { data: c, isLoading } = useCandidate(id);
+  const { data: c, isLoading } = useParticipant(id);
   const can = useCan();
   const [params, setParams] = useSearchParams();
   const requested = params.get("tab");
   const [editing, setEditing] = useState<SectionId | null>(null);
   const [uploading, setUploading] = useState<DocumentSlot | null>(null);
-  // The Activity tab is for Admin / Super Admin only.
-  const canSeeActivity = can("candidates.viewActivity");
+
+  const isSubmitted = c?.status === "submitted";
+  // Documents exist as soon as registration uploads them (well before
+  // submit), so that tab shows for any draft with an Application on file —
+  // Profile and Activity are contestant-only concepts (public-profile
+  // content and the admin edit trail only ever apply once submitted).
+  const hasApplication = !!c?.id;
+  const canSeeActivity = can("candidates.viewActivity") && isSubmitted;
+  const canEdit = can("candidates.editDetails") && isSubmitted;
+
   const tabs = useMemo(
-    () => TABS.filter((t) => t.id !== "activity" || canSeeActivity),
-    [canSeeActivity],
+    () =>
+      ALL_TABS.filter((t) => {
+        if (t.id === "documents") return hasApplication;
+        if (t.id === "profile") return isSubmitted;
+        if (t.id === "activity") return canSeeActivity;
+        return true;
+      }),
+    [hasApplication, isSubmitted, canSeeActivity],
   );
   const tab = useMemo<TabId>(
     () =>
@@ -109,20 +127,32 @@ export function CandidateDetailPage() {
     [requested, tabs],
   );
 
+  // Where "back" goes — the tab this record actually belongs to, not just
+  // wherever the browser happened to come from.
+  const backTo = `/participants/${
+    c
+      ? {
+          candidate: "candidates",
+          applicant: "applicants",
+          contestant: "contestants",
+        }[participantKind(c.status)]
+      : "candidates"
+  }`;
+
   if (isLoading) return <LoadingState />;
   if (!c) {
     return (
       <>
-        <Back to="/candidates">
-          <ArrowLeft size={16} /> All candidates
+        <Back to="/participants/candidates">
+          <ArrowLeft size={16} /> All participants
         </Back>
         <EmptyState
           icon={<SearchX size={26} />}
-          title="Candidate not found"
-          message="We couldn't find that candidate."
+          title="Participant not found"
+          message="We couldn't find that participant."
           action={
             <Button asChild>
-              <Link to="/candidates">Back to contestants</Link>
+              <Link to="/participants/candidates">Back to participants</Link>
             </Button>
           }
         />
@@ -130,24 +160,24 @@ export function CandidateDetailPage() {
     );
   }
 
-  // Media see a name and the public-profile tools — no stage, status, tabs or
-  // application. (Their data is also stripped in the api.)
+  // Media see a name and the public-profile tools — no stage, status, tabs
+  // or application. (Their data is also stripped in the api.)
   if (!can("candidates.viewDetails")) {
     return (
       <>
-        <Back to="/candidates">
-          <ArrowLeft size={16} /> All candidates
+        <Back to={backTo}>
+          <ArrowLeft size={16} /> All participants
         </Back>
         <MediaTitle>{c.name}</MediaTitle>
-        <CandidateProfilePanel key={c.id} candidate={c} editable />
+        <CandidateProfilePanel key={c.applicantId} candidate={c} editable />
       </>
     );
   }
 
   return (
     <>
-      <Back to="/candidates">
-        <ArrowLeft size={16} /> All candidates
+      <Back to={backTo}>
+        <ArrowLeft size={16} /> All participants
       </Back>
 
       <Hero>
@@ -155,15 +185,28 @@ export function CandidateDetailPage() {
         <div>
           <h2>{c.name}</h2>
           <Badges>
-            <PhaseBadge phase={c.phase} />
-            <StatusBadge status={c.candidateStatus} />
-            <Badge>{c.lga}</Badge>
-            <Badge>{c.senatorialDistrict}</Badge>
+            {isSubmitted ? (
+              <>
+                <PhaseBadge phase={c.phase} />
+                <StatusBadge status={c.candidateStatus} />
+              </>
+            ) : (
+              <Badge $tone={c.status === "draft" ? "secondary" : "neutral"}>
+                {c.status === "draft"
+                  ? "Application in progress"
+                  : "Registered — not started"}
+              </Badge>
+            )}
+            {c.lga && <Badge>{c.lga}</Badge>}
+            {c.senatorialDistrict && <Badge>{c.senatorialDistrict}</Badge>}
           </Badges>
           {c.candidateStatus === "eliminated" && (
             <p style={{ margin: "12px 0 0", fontSize: "0.875rem" }}>
               Eliminated —{" "}
-              {c.eliminatedAtPhase ? phaseTitle(c.eliminatedAtPhase) : "not selected"}.
+              {c.eliminatedAtPhase
+                ? phaseTitle(c.eliminatedAtPhase)
+                : "not selected"}
+              .
             </p>
           )}
           {c.candidateStatus === "disqualified" && c.disqualificationReason && (
@@ -185,7 +228,7 @@ export function CandidateDetailPage() {
         <ApplicationTab
           candidate={c}
           editAction={
-            can("candidates.editDetails")
+            canEdit
               ? (section) => (
                   <Button
                     size="sm"
@@ -204,9 +247,13 @@ export function CandidateDetailPage() {
         <DocumentsTab
           candidate={c}
           actions={
-            can("candidates.editDetails")
+            canEdit
               ? (slot, url) => (
-                  <Button size="sm" variant={url ? "outline" : "default"} onClick={() => setUploading(slot)}>
+                  <Button
+                    size="sm"
+                    variant={url ? "outline" : "default"}
+                    onClick={() => setUploading(slot)}
+                  >
                     <UploadCloud size={14} /> {url ? "Replace" : "Upload"}
                   </Button>
                 )
@@ -214,7 +261,7 @@ export function CandidateDetailPage() {
           }
         />
       )}
-      {tab === "activity" && <ActivityTab candidateId={c.id} />}
+      {tab === "activity" && c.id && <ActivityTab candidateId={c.id} />}
       <EditSectionDialog
         candidate={c}
         section={editing}
@@ -228,7 +275,7 @@ export function CandidateDetailPage() {
       {tab === "profile" && (
         // Keyed so the editor's local form state resets per candidate.
         <CandidateProfilePanel
-          key={c.id}
+          key={c.applicantId}
           candidate={c}
           editable={can("candidates.editPublicProfile")}
         />

@@ -28,17 +28,21 @@ export interface Fact {
   locked?: boolean;
 }
 
-// A titled card of label/value rows. Empty values show as an em dash.
+// A titled card of label/value rows. Empty values show as an em dash by
+// default — pass emptyLabel (e.g. "Pending") to show something else, for a
+// record that's legitimately still incomplete rather than oddly missing data.
 export function FactCard({
   title,
   facts,
   action,
   note,
+  emptyLabel = "—",
 }: {
   title: string;
   facts: Fact[];
   action?: ReactNode;
   note?: string;
+  emptyLabel?: string;
 }) {
   return (
     <Card>
@@ -78,7 +82,7 @@ export function FactCard({
                   />
                 )}
               </dt>
-              <dd>{f.value || "—"}</dd>
+              <dd>{f.value || emptyLabel}</dd>
             </div>
           ))}
         </Dl>

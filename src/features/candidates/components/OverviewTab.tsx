@@ -1,10 +1,11 @@
 import styled from "styled-components";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui";
-import { Badge, PhoneLink } from "@/shared/components";
+import { Badge, EmailLink, PhoneLink } from "@/shared/components";
 import { CandidateScoreCard } from "@/features/judging";
 import { useCan } from "@/lib/rbac";
 import { formatDate } from "@/lib/formatting";
 import { media } from "@/theme";
+import type { Participant } from "@/features/participants/types";
 import { DOCUMENT_SLOTS } from "../data/documents";
 import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
 import {
@@ -50,19 +51,21 @@ const Photos = styled.div`
 
 // The at-a-glance view: key facts, the applicant's own words and pitch video,
 // and — judges only — the added-up scores.
-export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
+export function OverviewTab({ candidate: c }: { candidate: Participant }) {
   const can = useCan();
   const elig = eligibility(c.dateOfBirth);
   const marital = maritalFlag(c.maritalStatus);
   const onFile = DOCUMENT_SLOTS.filter((s) =>
     Boolean(c[DOCUMENT_URL_FIELDS[s.field]]),
   ).length;
+  const emptyLabel = c.status === "submitted" ? "—" : "Pending";
 
   return (
     <Layout>
       <Column>
         <FactCard
           title="At a glance"
+          emptyLabel={emptyLabel}
           facts={[
             { label: "Local government", value: c.lga },
             { label: "District", value: c.senatorialDistrict },
@@ -84,9 +87,7 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             },
             {
               label: "Marital status",
-              value: !marital ? (
-                "—"
-              ) : (
+              value: !marital ? undefined : (
                 <>
                   {marital.status}{" "}
                   {!marital.eligible && (
@@ -98,7 +99,14 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             { label: "Education", value: educationLabel(c) },
             { label: "Institution", value: institutionLabel(c) },
             { label: "Occupation", value: occupationLabel(c) },
-            { label: "Phone", value: <PhoneLink value={c.phone} /> },
+            {
+              label: "Email",
+              value: <EmailLink value={c.email} fallback={emptyLabel} />,
+            },
+            {
+              label: "Phone",
+              value: <PhoneLink value={c.phone} fallback={emptyLabel} />,
+            },
             { label: "Reference", value: c.referenceCode },
             {
               label: "Documents",
@@ -114,7 +122,7 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             },
             {
               label: "Submitted",
-              value: c.submittedAt ? formatDate(c.submittedAt) : "—",
+              value: c.submittedAt ? formatDate(c.submittedAt) : undefined,
             },
             {
               label: "Votes",
@@ -128,7 +136,7 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
             <CardTitle>Why she should be Mbopo</CardTitle>
           </CardHeader>
           <CardContent>
-            <p style={{ margin: 0, lineHeight: 1.65 }}>{c.why}</p>
+            <p style={{ margin: 0, lineHeight: 1.65 }}>{c.why || emptyLabel}</p>
             {(() => {
               const photos = [c.fullImageUrl, c.fullImageUrl2].filter(
                 (src): src is string => Boolean(src),
@@ -148,7 +156,13 @@ export function OverviewTab({ candidate: c }: { candidate: Candidate }) {
       </Column>
 
       <Column>
-        {can("judging.leaderboard") && <CandidateScoreCard candidate={c} />}
+        {can("judging.leaderboard") && c.status === "submitted" && (
+          // Safe: judges can only ever reach a submitted record through the
+          // unified Participants view (enforced server-side in
+          // admin/participants/services/get-one.service.ts), and the status
+          // check above already confirms it for this specific render.
+          <CandidateScoreCard candidate={c as Candidate} />
+        )}
         {c.videoPitchUrl && (
           <Card>
             <CardHeader>

@@ -31,6 +31,12 @@ export type Capability =
   // whether they ever finish. Customer Service can see but not manage.
   | "applicants.view"
   | "applicants.manage"
+  // The unified Participants view (features/participants) — one detail page
+  // reachable from the Candidates/Applicants/Contestants tabs alike. Gates
+  // the sidebar entry and the /participants route; a Judge/Head Judge/Media
+  // viewer is additionally refused (server-side) any record that isn't a
+  // submitted Contestant.
+  | "participants.view"
   // Candidates
   | "candidates.view"
   | "candidates.editPublicProfile"
@@ -99,10 +105,29 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "applicants.view": ["super_admin", "admin", "customer_service"],
   "applicants.manage": ["super_admin", "admin"],
 
+  "participants.view": [
+    "super_admin",
+    "admin",
+    "customer_service",
+    "media",
+    "judge",
+    "head_judge",
+  ],
+
   "candidates.view": ["super_admin", "admin", "media", "judge", "head_judge"],
   "candidates.editPublicProfile": ["super_admin", "admin", "media"],
   "candidates.viewIdentity": ["super_admin", "admin"],
-  "candidates.viewDetails": ["super_admin", "admin", "judge", "head_judge"],
+  // Customer Service gained this alongside the unified Participants view —
+  // they need the full application (not just name/photo) to follow up with
+  // someone before the deadline, same reason they already hold
+  // applicants.view. They still never get viewIdentity (raw NIN/VIN).
+  "candidates.viewDetails": [
+    "super_admin",
+    "admin",
+    "judge",
+    "head_judge",
+    "customer_service",
+  ],
   "stages.view": ["super_admin", "admin", "judge", "head_judge"],
   "candidates.editDetails": ["super_admin", "admin"],
   "candidates.viewActivity": ["super_admin", "admin"],

@@ -147,9 +147,9 @@ export function CandidateTable({
       rows={filtered}
       getRowId={(c) => c.id}
       isLoading={isLoading}
-      searchText={(c) => `${c.name} ${c.lga} ${c.phone}`}
-      searchPlaceholder="Search by name, LGA or phone"
-      onRowClick={(c) => navigate(`/candidates/${c.id}`)}
+      searchText={(c) => `${c.name} ${c.lga} ${c.phone} ${c.email}`}
+      searchPlaceholder="Search by name, email, LGA or phone"
+      onRowClick={(c) => navigate(`/participants/${c.applicantId}`)}
       emptyMessage="No candidates match these filters."
       filters={
         <>

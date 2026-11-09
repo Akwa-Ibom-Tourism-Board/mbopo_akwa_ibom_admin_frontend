@@ -1,11 +1,19 @@
 import { useState } from "react";
 import styled from "styled-components";
 import { ImageOff, Maximize2 } from "lucide-react";
-import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/shared/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui";
 import { Badge } from "@/shared/components";
 import { media } from "@/theme";
+import type { Participant } from "@/features/participants/types";
 import { DOCUMENT_SLOTS, type DocumentSlot } from "../data/documents";
-import { DOCUMENT_URL_FIELDS, type Candidate } from "../types";
+import { DOCUMENT_URL_FIELDS } from "../types";
 
 const Grid = styled.div`
   display: grid;
@@ -103,7 +111,10 @@ function DocumentCard({
 }: {
   slot: DocumentSlot;
   url: string | null | undefined;
-  actions?: (slot: DocumentSlot, url: string | null | undefined) => React.ReactNode;
+  actions?: (
+    slot: DocumentSlot,
+    url: string | null | undefined,
+  ) => React.ReactNode;
 }) {
   const [zoom, setZoom] = useState(false);
 
@@ -116,7 +127,12 @@ function DocumentCard({
             Nothing uploaded
           </Empty>
         ) : slot.kind === "video" ? (
-          <video src={url} controls preload="metadata" aria-label={slot.label} />
+          <video
+            src={url}
+            controls
+            preload="metadata"
+            aria-label={slot.label}
+          />
         ) : (
           <>
             <img src={url} alt={slot.label} />
@@ -152,7 +168,11 @@ function DocumentCard({
               <DialogTitle>{slot.label}</DialogTitle>
               <DialogDescription />
             </DialogHeader>
-            <img src={url} alt={slot.label} style={{ width: "100%", maxHeight: "70vh", objectFit: "contain" }} />
+            <img
+              src={url}
+              alt={slot.label}
+              style={{ width: "100%", maxHeight: "70vh", objectFit: "contain" }}
+            />
           </DialogContent>
         </Dialog>
       )}
@@ -167,8 +187,11 @@ export function DocumentsTab({
   candidate,
   actions,
 }: {
-  candidate: Candidate;
-  actions?: (slot: DocumentSlot, url: string | null | undefined) => React.ReactNode;
+  candidate: Participant;
+  actions?: (
+    slot: DocumentSlot,
+    url: string | null | undefined,
+  ) => React.ReactNode;
 }) {
   return (
     <Grid>
@@ -176,7 +199,10 @@ export function DocumentsTab({
         <DocumentCard
           key={slot.field}
           slot={slot}
-          url={candidate[DOCUMENT_URL_FIELDS[slot.field]] as string | null | undefined}
+          url={
+            candidate[DOCUMENT_URL_FIELDS[slot.field]] as
+              string | null | undefined
+          }
           actions={actions}
         />
       ))}
