@@ -10,10 +10,13 @@ export const PHONE_MESSAGE =
   "Enter a valid Nigerian phone number, e.g. 08012345678";
 
 // Backend: MINIMUM_ELIGIBLE_AGE / MAXIMUM_ELIGIBLE_AGE.
-export const MINIMUM_ELIGIBLE_AGE = 22;
-export const MAXIMUM_ELIGIBLE_AGE = 27;
+export const MINIMUM_ELIGIBLE_AGE = 18;
+export const MAXIMUM_ELIGIBLE_AGE = 50;
 
 export const EDUCATION_LEVELS = [
+  "WAEC",
+  "NECO",
+  "NCE",
   "HND",
   "Bachelor's Degree",
   "Master's Degree",
