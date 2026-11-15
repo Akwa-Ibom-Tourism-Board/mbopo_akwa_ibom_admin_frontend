@@ -8,7 +8,11 @@ interface LoginResponse {
   admin: AdminUser;
 }
 
-function persistSession(data: { token: string; refreshToken: string; admin: AdminUser }) {
+function persistSession(data: {
+  token: string;
+  refreshToken: string;
+  admin: AdminUser;
+}) {
   localStore.set(STORAGE_KEYS.authToken, data.token);
   localStore.set(STORAGE_KEYS.authRefreshToken, data.refreshToken);
   localStore.set(STORAGE_KEYS.authUser, data.admin);
@@ -20,7 +24,10 @@ export function clearSession(): void {
   localStore.remove(STORAGE_KEYS.authUser);
 }
 
-export async function login(email: string, password: string): Promise<AdminUser> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<AdminUser> {
   const data = await request<LoginResponse>("/admin/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
@@ -43,7 +50,10 @@ export async function logout(): Promise<void> {
   }
 }
 
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
   await request("/admin/auth/change-password", {
     method: "POST",
     body: JSON.stringify({ currentPassword, newPassword }),

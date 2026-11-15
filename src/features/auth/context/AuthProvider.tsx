@@ -1,20 +1,34 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { setUnauthorizedHandler, friendlyMessage } from "@/lib/http";
 import { localStore, STORAGE_KEYS } from "@/lib/storage";
 import { AuthContext } from "./AuthContext";
-import { clearSession, fetchMe, login as loginRequest, logout as logoutRequest } from "../api";
+import {
+  clearSession,
+  fetchMe,
+  login as loginRequest,
+  logout as logoutRequest,
+} from "../api";
 import type { AdminUser } from "../types";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AdminUser | null>(() =>
-    localStore.get<AdminUser>(STORAGE_KEYS.authUser) ?? null,
+  const [user, setUser] = useState<AdminUser | null>(
+    () => localStore.get<AdminUser>(STORAGE_KEYS.authUser) ?? null,
   );
   // Starts true whenever a token might still be valid, so RequireAuth
   // doesn't bounce an already-signed-in person to /login while /me is
   // still in flight on page load.
-  const [loading, setLoading] = useState(
-    () => Boolean(localStore.get(STORAGE_KEYS.authToken) || localStore.get(STORAGE_KEYS.authRefreshToken)),
+  const [loading, setLoading] = useState(() =>
+    Boolean(
+      localStore.get(STORAGE_KEYS.authToken) ||
+      localStore.get(STORAGE_KEYS.authRefreshToken),
+    ),
   );
   const queryClient = useQueryClient();
 
@@ -56,7 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(admin);
         return { ok: true as const };
       } catch (error) {
-        return { ok: false as const, error: friendlyMessage(error, "Incorrect email or password.") };
+        return {
+          ok: false as const,
+          error: friendlyMessage(error, "Incorrect email or password."),
+        };
       }
     },
     [queryClient],

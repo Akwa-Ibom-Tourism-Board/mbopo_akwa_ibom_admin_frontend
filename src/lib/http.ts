@@ -39,7 +39,16 @@ function getStoredTokens() {
 // middleware, and the backend's app.ts cors() exposedHeaders) — store them
 // immediately so the next request already uses the refreshed pair instead
 // of the one that just expired.
+// function captureRotatedTokens(response: Response): void {
+//   const nextAccessToken = response.headers.get("x-access-token");
+//   const nextRefreshToken = response.headers.get("x-refresh-token");
+//   if (nextAccessToken) localStore.set(STORAGE_KEYS.authToken, nextAccessToken);
+//   if (nextRefreshToken)
+//     localStore.set(STORAGE_KEYS.authRefreshToken, nextRefreshToken);
+// }
+
 function captureRotatedTokens(response: Response): void {
+  if (response.status === 304) return;
   const nextAccessToken = response.headers.get("x-access-token");
   const nextRefreshToken = response.headers.get("x-refresh-token");
   if (nextAccessToken) localStore.set(STORAGE_KEYS.authToken, nextAccessToken);
