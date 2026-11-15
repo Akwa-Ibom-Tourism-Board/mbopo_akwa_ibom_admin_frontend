@@ -28,8 +28,26 @@ function writeStorage<T>(key: string, value: T): void {
   }
 }
 
+// export const localStore = {
+//   get: <T>(key: string) => readStorage<T>(key),
+//   set: <T>(key: string, value: T) => writeStorage(key, value),
+//   remove: (key: string) => window.localStorage.removeItem(key),
+// };
+
 export const localStore = {
   get: <T>(key: string) => readStorage<T>(key),
-  set: <T>(key: string, value: T) => writeStorage(key, value),
-  remove: (key: string) => window.localStorage.removeItem(key),
+  set: <T>(key: string, value: T) => {
+    if (
+      key === STORAGE_KEYS.authToken ||
+      key === STORAGE_KEYS.authRefreshToken
+    ) {
+      console.trace("[STORAGE WRITE]", key, String(value).slice(-12));
+    }
+    writeStorage(key, value);
+  },
+  remove: (key: string) => {
+    if (key.startsWith("mbopo-admin-auth"))
+      console.trace("[STORAGE REMOVE]", key);
+    window.localStorage.removeItem(key);
+  },
 };
