@@ -63,7 +63,47 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
 }
 
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+// export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+//   const { accessToken, refreshToken } = getStoredTokens();
+
+//   const headers: Record<string, string> = {
+//     "Content-Type": "application/json",
+//     ...(init?.headers as Record<string, string> | undefined),
+//   };
+//   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+//   if (refreshToken) headers["x-refresh-token"] = refreshToken;
+
+//   const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+
+//   captureRotatedTokens(response);
+
+//   if (response.status === 204) return undefined as T;
+
+//   const body = (await response.json().catch(() => undefined)) as
+//     ApiEnvelope<T> | undefined;
+
+//   if (!response.ok) {
+//     const isAuthFailure =
+//       response.status === 401 ||
+//       (response.status === 403 && body?.message === DEACTIVATED_MESSAGE);
+//     if (isAuthFailure && accessToken) {
+//       onUnauthorized?.();
+//     }
+//     throw new ApiError(
+//       body?.message ?? response.statusText,
+//       response.status,
+//       body?.errors,
+//     );
+//   }
+
+//   return body?.data as T;
+// }
+
+export async function request<T>(
+  path: string,
+  init?: RequestInit,
+  isRetry = false,
+): Promise<T> {
   const { accessToken, refreshToken } = getStoredTokens();
 
   const headers: Record<string, string> = {
@@ -86,8 +126,18 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const isAuthFailure =
       response.status === 401 ||
       (response.status === 403 && body?.message === DEACTIVATED_MESSAGE);
+
     if (isAuthFailure && accessToken) {
-      onUnauthorized?.();
+      const currentToken = localStore.get<string>(STORAGE_KEYS.authToken);
+
+      // Tokens changed while this request was in flight (new login or
+      // another request already refreshed). Retry with the new ones.
+      if (currentToken && currentToken !== accessToken && !isRetry) {
+        return request<T>(path, init, true);
+      }
+
+      // Only sign out if the token we used is still the current one.
+      if (currentToken === accessToken) onUnauthorized?.();
     }
     throw new ApiError(
       body?.message ?? response.statusText,
