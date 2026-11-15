@@ -122,7 +122,11 @@ export async function request<T>(
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   if (refreshToken) headers["x-refresh-token"] = refreshToken;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...init, headers });
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    cache: "no-store",
+  });
 
   captureRotatedTokens(response);
 
