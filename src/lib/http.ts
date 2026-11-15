@@ -43,7 +43,8 @@ function captureRotatedTokens(response: Response): void {
   const nextAccessToken = response.headers.get("x-access-token");
   const nextRefreshToken = response.headers.get("x-refresh-token");
   if (nextAccessToken) localStore.set(STORAGE_KEYS.authToken, nextAccessToken);
-  if (nextRefreshToken) localStore.set(STORAGE_KEYS.authRefreshToken, nextRefreshToken);
+  if (nextRefreshToken)
+    localStore.set(STORAGE_KEYS.authRefreshToken, nextRefreshToken);
 }
 
 // A 403 the backend's authenticateAdmin middleware itself produces when the
@@ -78,15 +79,21 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (response.status === 204) return undefined as T;
 
-  const body = (await response.json().catch(() => undefined)) as ApiEnvelope<T> | undefined;
+  const body = (await response.json().catch(() => undefined)) as
+    ApiEnvelope<T> | undefined;
 
   if (!response.ok) {
     const isAuthFailure =
-      response.status === 401 || (response.status === 403 && body?.message === DEACTIVATED_MESSAGE);
+      response.status === 401 ||
+      (response.status === 403 && body?.message === DEACTIVATED_MESSAGE);
     if (isAuthFailure && accessToken) {
       onUnauthorized?.();
     }
-    throw new ApiError(body?.message ?? response.statusText, response.status, body?.errors);
+    throw new ApiError(
+      body?.message ?? response.statusText,
+      response.status,
+      body?.errors,
+    );
   }
 
   return body?.data as T;
@@ -103,5 +110,7 @@ export function friendlyMessage(
   error: unknown,
   fallback = "Something went wrong. Please try again.",
 ): string {
-  return error instanceof ApiError && error.status < 500 ? error.message : fallback;
+  return error instanceof ApiError && error.status < 500
+    ? error.message
+    : fallback;
 }
