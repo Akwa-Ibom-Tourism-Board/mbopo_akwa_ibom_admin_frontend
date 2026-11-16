@@ -26,7 +26,6 @@ import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function SuperAdminDashboard() {
   const candidates = useCandidates().data;
-  console.log("candidates", candidates);
   const users = useUsers().data;
   const complaints = useComplaints().data;
   const tiers = useVoteTiers().data;
