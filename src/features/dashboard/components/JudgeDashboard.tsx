@@ -2,6 +2,7 @@ import { Gavel, Trophy, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
 import { useJudgeSummary } from "../judgeSummary";
 import { count } from "../hooks";
+import { useCandidates } from "@/features/candidates/api/hooks";
 import {
   NoteBox,
   QuickLinks,
@@ -9,9 +10,11 @@ import {
   StatGrid,
   StatTile,
 } from "./DashboardParts";
+import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function JudgeDashboard() {
   const s = useJudgeSummary();
+  const candidates = useCandidates().data;
   const live = !s.loading ? s.live : undefined;
 
   return (
@@ -41,6 +44,10 @@ export function JudgeDashboard() {
           hint="Saved but not submitted"
         />
       </StatGrid>
+
+      <Section title="">
+        <CandidatesByLgaChart candidates={candidates} />
+      </Section>
 
       <Section title="Go to">
         <QuickLinks

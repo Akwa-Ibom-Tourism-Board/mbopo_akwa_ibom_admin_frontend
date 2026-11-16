@@ -22,9 +22,11 @@ import {
   StatGrid,
   StatTile,
 } from "./DashboardParts";
+import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function SuperAdminDashboard() {
   const candidates = useCandidates().data;
+  console.log("candidates", candidates);
   const users = useUsers().data;
   const complaints = useComplaints().data;
   const tiers = useVoteTiers().data;
@@ -75,6 +77,10 @@ export function SuperAdminDashboard() {
           hint={`${tiers?.length ?? 0} vote tiers`}
         />
       </StatGrid>
+
+      <Section title="">
+        <CandidatesByLgaChart candidates={candidates} />
+      </Section>
 
       <Section title="Manage">
         <QuickLinks

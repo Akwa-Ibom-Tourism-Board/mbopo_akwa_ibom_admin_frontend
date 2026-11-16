@@ -21,6 +21,7 @@ import {
   StatGrid,
   StatTile,
 } from "./DashboardParts";
+import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function AdminDashboard() {
   const candidates = useCandidates().data;
@@ -72,6 +73,10 @@ export function AdminDashboard() {
           value={count(complaints?.filter((c) => c.status === "open").length)}
         />
       </StatGrid>
+
+      <Section title="">
+        <CandidatesByLgaChart candidates={candidates} />
+      </Section>
 
       <Section title="Manage">
         <QuickLinks

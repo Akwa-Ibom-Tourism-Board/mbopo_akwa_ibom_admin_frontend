@@ -1,5 +1,6 @@
 import { LifeBuoy } from "lucide-react";
 import { PageHeader } from "@/shared/components";
+import { useCandidates } from "@/features/candidates/api/hooks";
 import { useComplaints } from "@/features/complaints";
 import { count } from "../hooks";
 import {
@@ -9,9 +10,11 @@ import {
   StatGrid,
   StatTile,
 } from "./DashboardParts";
+import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function CustomerServiceDashboard() {
   const complaints = useComplaints().data;
+  const candidates = useCandidates().data;
   const by = (s: string) => complaints?.filter((c) => c.status === s).length;
 
   return (
@@ -29,6 +32,10 @@ export function CustomerServiceDashboard() {
         <StatTile label="In progress" value={count(by("in_progress"))} />
         <StatTile label="Resolved" value={count(by("resolved"))} />
       </StatGrid>
+
+      <Section title="">
+        <CandidatesByLgaChart candidates={candidates} />
+      </Section>
 
       <Section title="Go to">
         <QuickLinks
