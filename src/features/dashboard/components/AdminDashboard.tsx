@@ -22,6 +22,8 @@ import {
   StatTile,
 } from "./DashboardParts";
 import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
+import { useParticipantsCount } from "@/features/participants/api/hooks";
+import { ParticipantsBreakdownChart } from "./ParticipantsBreakdownChart";
 
 export function AdminDashboard() {
   const candidates = useCandidates().data;
@@ -30,6 +32,7 @@ export function AdminDashboard() {
   const news = useNewsPosts().data;
   const activity = useRecentActivity();
   const stage = useCurrentStage();
+  const counts = useParticipantsCount().data;
 
   return (
     <>
@@ -76,6 +79,10 @@ export function AdminDashboard() {
 
       <Section title="">
         <CandidatesByLgaChart candidates={candidates} />
+      </Section>
+
+      <Section title="">
+        <ParticipantsBreakdownChart counts={counts} />
       </Section>
 
       <Section title="Manage">
