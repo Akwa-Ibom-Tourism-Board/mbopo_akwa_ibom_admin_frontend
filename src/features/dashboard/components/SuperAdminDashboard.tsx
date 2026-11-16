@@ -23,6 +23,8 @@ import {
   StatTile,
 } from "./DashboardParts";
 import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
+import { useParticipantsCount } from "@/features/participants/api/hooks";
+import { ParticipantsBreakdownChart } from "./ParticipantsBreakdownChart";
 
 export function SuperAdminDashboard() {
   const candidates = useCandidates().data;
@@ -31,6 +33,7 @@ export function SuperAdminDashboard() {
   const tiers = useVoteTiers().data;
   const activity = useRecentActivity();
   const stage = useCurrentStage();
+  const counts = useParticipantsCount().data;
 
   const votes = candidates?.reduce((sum, c) => sum + (c.voteCount ?? 0), 0);
   const open = complaints?.filter((c) => c.status === "open").length;
@@ -79,6 +82,10 @@ export function SuperAdminDashboard() {
 
       <Section title="">
         <CandidatesByLgaChart candidates={candidates} />
+      </Section>
+
+      <Section title="">
+        <ParticipantsBreakdownChart counts={counts} />
       </Section>
 
       <Section title="Manage">

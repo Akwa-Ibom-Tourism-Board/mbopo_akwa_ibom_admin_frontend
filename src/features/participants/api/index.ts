@@ -1,5 +1,5 @@
 import { request } from "@/lib/http";
-import type { Participant } from "../types";
+import type { Participant, ParticipantCounts } from "../types";
 
 // GET /admin/participants/:id is keyed by the User's own id (see
 // candidate.helpers.ts's serializeCandidateForViewer's `applicantId`) —
@@ -22,4 +22,8 @@ export async function messageParticipant(
     method: "POST",
     body: JSON.stringify({ subject, body }),
   });
+}
+
+export async function getParticipantsCount(): Promise<ParticipantCounts> {
+  return request<ParticipantCounts>(`/admin/participants/counts`);
 }

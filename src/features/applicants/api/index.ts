@@ -24,7 +24,10 @@ export async function getApplicant(id: string): Promise<Applicant> {
   return request<Applicant>(`/admin/applicants/${id}`);
 }
 
-export async function setApplicantActive(id: string, active: boolean): Promise<Applicant> {
+export async function setApplicantActive(
+  id: string,
+  active: boolean,
+): Promise<Applicant> {
   return request<Applicant>(`/admin/applicants/${id}/active`, {
     method: "PATCH",
     body: JSON.stringify({ active }),

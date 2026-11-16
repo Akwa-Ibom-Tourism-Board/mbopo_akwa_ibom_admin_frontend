@@ -14,7 +14,10 @@ export const applicantKeys = {
 };
 
 export const useApplicants = (query: ApplicantListQuery = {}) =>
-  useQuery({ queryKey: applicantKeys.list(query), queryFn: () => getApplicants(query) });
+  useQuery({
+    queryKey: applicantKeys.list(query),
+    queryFn: () => getApplicants(query),
+  });
 
 export const useApplicant = (id: string | undefined) =>
   useQuery({
@@ -26,7 +29,8 @@ export const useApplicant = (id: string | undefined) =>
 export function useSetApplicantActive() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, active }: { id: string; active: boolean }) => setApplicantActive(id, active),
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      setApplicantActive(id, active),
     onSuccess: () => qc.invalidateQueries({ queryKey: applicantKeys.all }),
   });
 }

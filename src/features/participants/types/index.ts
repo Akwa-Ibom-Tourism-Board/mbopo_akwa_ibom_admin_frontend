@@ -25,3 +25,10 @@ export function participantKind(
   if (status === "draft") return "applicant";
   return "candidate";
 }
+
+export interface ParticipantCounts {
+  participants: number;
+  candidates: number;
+  applicants: number;
+  notStarted: number;
+}
