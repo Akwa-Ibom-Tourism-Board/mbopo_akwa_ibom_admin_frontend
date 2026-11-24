@@ -115,7 +115,13 @@ export interface EmptyStateProps {
  * case; `children` (used alone, with no title) is an escape hatch for
  * anything bespoke.
  */
-export function EmptyState({ icon, title, message, action, children }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  title,
+  message,
+  action,
+  children,
+}: EmptyStateProps) {
   if (!title && !message && !action) {
     return <Empty>{children}</Empty>;
   }

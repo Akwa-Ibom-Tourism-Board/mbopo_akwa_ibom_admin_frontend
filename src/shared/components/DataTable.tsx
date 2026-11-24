@@ -46,6 +46,18 @@ export interface DataTableProps<T> {
   isRowSelectable?: (row: T) => boolean;
   emptyMessage?: string;
   pageSize?: number;
+  server?: ServerPagination;
+}
+
+export interface ServerPagination {
+  page: number;
+  totalPages: number;
+  total: number;
+  limit: number;
+  onPageChange: (page: number) => void;
+  isFetching?: boolean;
+  // Server-driven search: the input calls this (debounce it) instead of filtering locally.
+  onSearchChange?: (term: string) => void;
 }
 
 export function DataTable<T>({

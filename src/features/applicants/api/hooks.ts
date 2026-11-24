@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   deleteApplicant,
   getApplicant,
@@ -17,6 +22,7 @@ export const useApplicants = (query: ApplicantListQuery = {}) =>
   useQuery({
     queryKey: applicantKeys.list(query),
     queryFn: () => getApplicants(query),
+    placeholderData: keepPreviousData,
   });
 
 export const useApplicant = (id: string | undefined) =>

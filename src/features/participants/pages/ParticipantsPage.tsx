@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { PageHeader, Tabs, type TabItem } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
-import { useApplicants } from "@/features/applicants/api/hooks";
-import { ApplicantTable } from "@/features/applicants/components/ApplicantTable";
+// import { useApplicants } from "@/features/applicants/api/hooks";
+// import { ApplicantTable } from "@/features/applicants/components/ApplicantTable";
 import { useCandidates } from "@/features/candidates/api/hooks";
 import { CandidateTable } from "@/features/candidates/components/CandidateTable";
 import { MediaCandidateTable } from "@/features/candidates/components/MediaCandidateTable";
+import { ApplicantsList } from "../components/ApplicantsList";
 
 type TabId = "candidates" | "applicants" | "contestants";
 
@@ -24,20 +25,20 @@ const DESCRIPTIONS: Record<TabId, string> = {
   contestants: "Every fully-submitted application, in one place.",
 };
 
-function CandidatesTab() {
-  const { data, isLoading } = useApplicants({ limit: 200 });
-  return <ApplicantTable applicants={data?.applicants} isLoading={isLoading} />;
-}
+// function CandidatesTab() {
+//   const { data, isLoading } = useApplicants({ limit: 200 });
+//   return <ApplicantTable applicants={data?.applicants} isLoading={isLoading} />;
+// }
 
-function ApplicantsTab() {
-  // Hardcoded to in-progress — a candidate who hasn't started at all belongs
-  // on the Candidates tab, one who's submitted belongs on Contestants.
-  const { data, isLoading } = useApplicants({
-    limit: 200,
-    status: "in_progress",
-  });
-  return <ApplicantTable applicants={data?.applicants} isLoading={isLoading} />;
-}
+// function ApplicantsTab() {
+//   // Hardcoded to in-progress — a candidate who hasn't started at all belongs
+//   // on the Candidates tab, one who's submitted belongs on Contestants.
+//   const { data, isLoading } = useApplicants({
+//     limit: 200,
+//     status: "in_progress",
+//   });
+//   return <ApplicantTable applicants={data?.applicants} isLoading={isLoading} />;
+// }
 
 function ContestantsTab() {
   const { data, isLoading } = useCandidates();
@@ -87,8 +88,8 @@ export function ParticipantsPage() {
         value={activeTab}
         onChange={(t) => navigate(`/participants/${t}`)}
       />
-      {activeTab === "candidates" && <CandidatesTab />}
-      {activeTab === "applicants" && <ApplicantsTab />}
+      {activeTab === "candidates" && <ApplicantsList />}
+      {activeTab === "applicants" && <ApplicantsList status="in_progress" />}
       {activeTab === "contestants" && <ContestantsTab />}
     </>
   );

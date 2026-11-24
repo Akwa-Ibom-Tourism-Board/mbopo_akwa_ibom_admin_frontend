@@ -10,6 +10,7 @@ import {
 } from "@/shared/components";
 import { formatDate } from "@/lib/formatting";
 import type { Applicant } from "../types";
+import { ServerPagination } from "@/shared/components/DataTable";
 
 const NameCell = styled.div`
   display: flex;
@@ -95,9 +96,11 @@ const columns: DataTableColumn<Applicant>[] = [
 export function ApplicantTable({
   applicants,
   isLoading,
+  server,
 }: {
   applicants: Applicant[] | undefined;
   isLoading: boolean;
+  server?: ServerPagination;
 }) {
   const navigate = useNavigate();
   return (
@@ -106,6 +109,7 @@ export function ApplicantTable({
       rows={applicants}
       getRowId={(a) => a.id}
       isLoading={isLoading}
+      server={server}
       searchText={(a) =>
         `${a.firstName} ${a.lastName} ${a.email} ${a.phoneNumber}`
       }
