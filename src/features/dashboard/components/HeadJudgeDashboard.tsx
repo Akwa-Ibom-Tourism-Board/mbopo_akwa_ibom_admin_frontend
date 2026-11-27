@@ -1,6 +1,6 @@
 import { Gavel, Trophy, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useCandidates } from "@/features/candidates/api/hooks";
+import { useCandidateStats } from "@/features/candidates/api/hooks";
 import { useJudgeSummary } from "../judgeSummary";
 import { useFinalizeStatus } from "@/features/judging/api/hooks";
 import { count } from "../hooks";
@@ -15,7 +15,7 @@ import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 
 export function HeadJudgeDashboard() {
   const s = useJudgeSummary();
-  const candidates = useCandidates().data;
+  const stats = useCandidateStats().data;
   const live = !s.loading ? s.live : undefined;
   const fin = useFinalizeStatus(live ?? "lga", !!live).data;
   const finished = fin?.judges.filter((j) => j.outstanding === 0).length;
@@ -49,7 +49,7 @@ export function HeadJudgeDashboard() {
       </StatGrid>
 
       <Section title="">
-        <CandidatesByLgaChart candidates={candidates} />
+        <CandidatesByLgaChart byLga={stats?.byLga} />
       </Section>
 
       <Section title="Go to">

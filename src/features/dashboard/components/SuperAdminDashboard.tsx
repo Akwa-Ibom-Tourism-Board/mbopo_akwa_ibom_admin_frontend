@@ -8,7 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useCandidates } from "@/features/candidates/api/hooks";
+import { useCandidateStats } from "@/features/candidates/api/hooks";
 import { useComplaints } from "@/features/complaints";
 import { useUsers } from "@/features/users";
 import { useVoteTiers } from "@/features/voting-content/api/hooks";
@@ -27,16 +27,15 @@ import { useParticipantsCount } from "@/features/participants/api/hooks";
 import { ParticipantsBreakdownChart } from "./ParticipantsBreakdownChart";
 
 export function SuperAdminDashboard() {
-  const candidates = useCandidates().data;
+  const stats = useCandidateStats().data;
   const users = useUsers().data;
-  const complaints = useComplaints().data;
+  const open = useComplaints({ status: "open", limit: 1 }).data?.meta.total;
   const tiers = useVoteTiers().data;
   const activity = useRecentActivity();
   const stage = useCurrentStage();
   const counts = useParticipantsCount().data;
 
-  const votes = candidates?.reduce((sum, c) => sum + (c.voteCount ?? 0), 0);
-  const open = complaints?.filter((c) => c.status === "open").length;
+  const votes = stats?.totalVotes;
   const cheapest = tiers?.length
     ? Math.min(...tiers.map((t) => t.priceNaira / t.votes))
     : undefined;
@@ -68,7 +67,7 @@ export function SuperAdminDashboard() {
           )}
           hint="All roles except Super Admin"
         />
-        <StatTile label="Candidates" value={count(candidates?.length)} />
+        <StatTile label="Candidates" value={count(stats?.total)} />
         <StatTile
           label="Votes cast"
           value={votes == null ? "—" : formatNumber(votes)}
@@ -81,7 +80,7 @@ export function SuperAdminDashboard() {
       </StatGrid>
 
       <Section title="">
-        <CandidatesByLgaChart candidates={candidates} />
+        <CandidatesByLgaChart byLga={stats?.byLga} />
       </Section>
 
       <Section title="">

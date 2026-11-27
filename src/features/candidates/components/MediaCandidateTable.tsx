@@ -1,5 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
+import {
+  Badge,
+  DataTable,
+  type DataTableColumn,
+  type ServerPagination,
+} from "@/shared/components";
 import type { Candidate } from "../types";
 
 const columns: DataTableColumn<Candidate>[] = [
@@ -30,9 +35,11 @@ const columns: DataTableColumn<Candidate>[] = [
 export function MediaCandidateTable({
   candidates,
   isLoading,
+  server,
 }: {
   candidates: Candidate[] | undefined;
   isLoading: boolean;
+  server?: ServerPagination;
 }) {
   const navigate = useNavigate();
   return (
@@ -41,9 +48,10 @@ export function MediaCandidateTable({
       rows={candidates}
       getRowId={(c) => c.id}
       isLoading={isLoading}
-      searchText={(c) => c.name}
+      server={server}
+      searchText={server ? undefined : (c) => c.name}
       searchPlaceholder="Search by name"
-      onRowClick={(c) => navigate(`/candidates/${c.id}`)}
+      onRowClick={(c) => navigate(`/participants/${c.applicantId}`)}
       emptyMessage="No candidates match."
     />
   );

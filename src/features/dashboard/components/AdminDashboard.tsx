@@ -8,7 +8,7 @@ import {
   Users,
 } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useCandidates } from "@/features/candidates/api/hooks";
+import { useCandidateStats } from "@/features/candidates/api/hooks";
 import { useComplaints } from "@/features/complaints";
 import { useUsers } from "@/features/users";
 import { useNewsPosts } from "@/features/voting-content/api/hooks";
@@ -26,9 +26,10 @@ import { useParticipantsCount } from "@/features/participants/api/hooks";
 import { ParticipantsBreakdownChart } from "./ParticipantsBreakdownChart";
 
 export function AdminDashboard() {
-  const candidates = useCandidates().data;
+  const stats = useCandidateStats().data;
   const users = useUsers().data;
-  const complaints = useComplaints().data;
+  const openMessages = useComplaints({ status: "open", limit: 1 }).data?.meta
+    .total;
   const news = useNewsPosts().data;
   const activity = useRecentActivity();
   const stage = useCurrentStage();
@@ -65,20 +66,15 @@ export function AdminDashboard() {
         />
         <StatTile
           label="Candidates still competing"
-          value={count(
-            candidates?.filter((c) => c.candidateStatus === "active").length,
-          )}
+          value={count(stats?.active)}
           hint="Status only — no scores"
         />
         <StatTile label="News posts" value={count(news?.length)} />
-        <StatTile
-          label="Open messages"
-          value={count(complaints?.filter((c) => c.status === "open").length)}
-        />
+        <StatTile label="Open messages" value={count(openMessages)} />
       </StatGrid>
 
       <Section title="">
-        <CandidatesByLgaChart candidates={candidates} />
+        <CandidatesByLgaChart byLga={stats?.byLga} />
       </Section>
 
       <Section title="">

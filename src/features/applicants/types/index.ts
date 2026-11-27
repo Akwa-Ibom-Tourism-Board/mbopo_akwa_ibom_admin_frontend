@@ -34,9 +34,6 @@ export interface Applicant {
   progress: RegistrationProgress;
 }
 
-export interface PageMeta {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
+// Re-exported for existing callers — the real definition is shared across
+// every paginated list now (see shared/types/pagination.ts).
+export type { PageMeta } from "@/shared/types/pagination";

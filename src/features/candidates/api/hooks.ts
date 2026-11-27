@@ -3,10 +3,12 @@ import {
   getCandidate,
   getCandidateEvents,
   getCandidates,
+  getCandidateStats,
   retryVinVerification,
   updateCandidateDetails,
   updateCandidateProfile,
   uploadCandidateDocument,
+  type CandidateListQuery,
 } from ".";
 import type { Candidate, DocumentField } from "../types";
 import type { SectionId } from "../schemas";
@@ -14,11 +16,21 @@ import type { PublicProfileUpdate } from "../types";
 
 export const candidateKeys = {
   all: ["candidates"] as const,
+  list: (query: CandidateListQuery) => ["candidates", "list", query] as const,
   detail: (id: string) => ["candidates", id] as const,
 };
 
-export const useCandidates = () =>
-  useQuery({ queryKey: candidateKeys.all, queryFn: getCandidates });
+export const useCandidates = (query: CandidateListQuery = {}) =>
+  useQuery({
+    queryKey: candidateKeys.list(query),
+    queryFn: () => getCandidates(query),
+  });
+
+export const useCandidateStats = () =>
+  useQuery({
+    queryKey: [...candidateKeys.all, "stats"],
+    queryFn: () => getCandidateStats(),
+  });
 
 export const useCandidate = (id: string | undefined) =>
   useQuery({

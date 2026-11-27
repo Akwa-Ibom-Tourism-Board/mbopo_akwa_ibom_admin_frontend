@@ -1,6 +1,10 @@
-import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
+import {
+  Badge,
+  DataTable,
+  type DataTableColumn,
+  type ServerPagination,
+} from "@/shared/components";
 import { useUsers } from "@/features/users";
 import { formatRelative } from "@/lib/formatting";
 import { CHANNEL_LABELS, SOURCE_LABELS, type Complaint } from "../types";
@@ -9,41 +13,37 @@ import { ComplaintStatusBadge, StatusFilter } from "./StatusFilter";
 export function ComplaintList({
   complaints,
   isLoading,
+  server,
+  status,
+  onStatusChange,
+  source,
+  onSourceChange,
 }: {
   complaints: Complaint[] | undefined;
   isLoading: boolean;
+  server: ServerPagination;
+  status: string;
+  onStatusChange: (v: string) => void;
+  source: string;
+  onSourceChange: (v: string) => void;
 }) {
   const navigate = useNavigate();
   const users = useUsers();
-  const [status, setStatus] = useState("all");
-  const [source, setSource] = useState("all");
 
   const nameOf = (id?: string) => {
     const u = users.data?.find((x) => x.id === id);
     return u ? `${u.firstName} ${u.lastName}` : "Unassigned";
   };
 
-  const rows = useMemo(
-    () =>
-      complaints?.filter(
-        (c) =>
-          (status === "all" || c.status === status) &&
-          (source === "all" || c.source === source),
-      ),
-    [complaints, status, source],
-  );
-
   const columns: DataTableColumn<Complaint>[] = [
     {
       id: "subject",
       header: "Subject",
-      sortValue: (c) => c.subject,
       cell: (c) => <strong>{c.subject}</strong>,
     },
     {
       id: "from",
       header: "From",
-      sortValue: (c) => c.complainantName,
       cell: (c) => c.complainantName,
     },
     {
@@ -64,13 +64,11 @@ export function ComplaintList({
     {
       id: "assigned",
       header: "Assigned to",
-      sortValue: (c) => nameOf(c.assignedToId),
       cell: (c) => nameOf(c.assignedToId),
     },
     {
       id: "updated",
       header: "Updated",
-      sortValue: (c) => c.updatedAt,
       cell: (c) => formatRelative(c.updatedAt),
     },
   ];
@@ -78,12 +76,10 @@ export function ComplaintList({
   return (
     <DataTable
       columns={columns}
-      rows={rows}
+      rows={complaints}
       getRowId={(c) => c.id}
       isLoading={isLoading}
-      searchText={(c) =>
-        `${c.subject} ${c.complainantName} ${c.complainantEmail}`
-      }
+      server={server}
       searchPlaceholder="Search messages"
       onRowClick={(c) => navigate(`/messages/${c.id}`)}
       emptyMessage="No messages match."
@@ -91,8 +87,8 @@ export function ComplaintList({
         <StatusFilter
           status={status}
           source={source}
-          onStatus={setStatus}
-          onSource={setSource}
+          onStatus={onStatusChange}
+          onSource={onSourceChange}
         />
       }
     />

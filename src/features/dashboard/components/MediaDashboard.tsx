@@ -1,6 +1,6 @@
 import { Handshake, Newspaper, Users } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useCandidates } from "@/features/candidates/api/hooks";
+import { useCandidateStats } from "@/features/candidates/api/hooks";
 import { useNewsPosts, useSponsors } from "@/features/voting-content/api/hooks";
 import { count } from "../hooks";
 import {
@@ -12,7 +12,7 @@ import {
 } from "./DashboardParts";
 
 export function MediaDashboard() {
-  const candidates = useCandidates().data;
+  const stats = useCandidateStats().data;
   const news = useNewsPosts().data;
   const sponsors = useSponsors().data;
 
@@ -25,7 +25,7 @@ export function MediaDashboard() {
       <StatGrid>
         <StatTile
           label="Profiles missing a bio"
-          value={count(candidates?.filter((c) => !c.bio).length)}
+          value={count(stats?.withoutBio)}
           hint="Candidates with no public bio yet"
         />
         <StatTile label="Picture news posts" value={count(news?.length)} />

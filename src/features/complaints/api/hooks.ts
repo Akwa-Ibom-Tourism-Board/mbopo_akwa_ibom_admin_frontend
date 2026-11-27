@@ -6,13 +6,17 @@ import {
   replyToComplaint,
   resendReplyEmail,
   updateStatus,
+  type ComplaintListQuery,
 } from ".";
 import type { Complaint, ComplaintStatus } from "../types";
 
 const KEY = ["complaints"] as const;
 
-export const useComplaints = () =>
-  useQuery({ queryKey: KEY, queryFn: getComplaints });
+export const useComplaints = (query: ComplaintListQuery = {}) =>
+  useQuery({
+    queryKey: [...KEY, "list", query],
+    queryFn: () => getComplaints(query),
+  });
 
 export const useComplaint = (id: string | undefined) =>
   useQuery({

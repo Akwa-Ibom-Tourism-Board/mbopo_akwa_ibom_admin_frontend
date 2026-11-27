@@ -1,6 +1,5 @@
 import { LifeBuoy } from "lucide-react";
 import { PageHeader } from "@/shared/components";
-import { useCandidates } from "@/features/candidates/api/hooks";
 import { useComplaints } from "@/features/complaints";
 import { count } from "../hooks";
 import {
@@ -10,14 +9,17 @@ import {
   StatGrid,
   StatTile,
 } from "./DashboardParts";
-import { CandidatesByLgaChart } from "./CandidatesByLgaChart";
 import { ParticipantsBreakdownChart } from "./ParticipantsBreakdownChart";
 import { useParticipantsCount } from "@/features/participants/api/hooks";
 
+// Each of these asks the backend for just the count (limit: 1, read
+// meta.total) rather than fetching every complaint to tally client-side.
 export function CustomerServiceDashboard() {
-  const complaints = useComplaints().data;
-  const candidates = useCandidates().data;
-  const by = (s: string) => complaints?.filter((c) => c.status === s).length;
+  const open = useComplaints({ status: "open", limit: 1 }).data?.meta.total;
+  const inProgress = useComplaints({ status: "in_progress", limit: 1 }).data
+    ?.meta.total;
+  const resolved = useComplaints({ status: "resolved", limit: 1 }).data?.meta
+    .total;
   const counts = useParticipantsCount().data;
 
   return (
@@ -29,16 +31,12 @@ export function CustomerServiceDashboard() {
       <StatGrid>
         <StatTile
           label="Open"
-          value={count(by("open"))}
+          value={count(open)}
           hint="Waiting for a first reply"
         />
-        <StatTile label="In progress" value={count(by("in_progress"))} />
-        <StatTile label="Resolved" value={count(by("resolved"))} />
+        <StatTile label="In progress" value={count(inProgress)} />
+        <StatTile label="Resolved" value={count(resolved)} />
       </StatGrid>
-
-      <Section title="">
-        <CandidatesByLgaChart candidates={candidates} />
-      </Section>
 
       <Section title="">
         <ParticipantsBreakdownChart counts={counts} />

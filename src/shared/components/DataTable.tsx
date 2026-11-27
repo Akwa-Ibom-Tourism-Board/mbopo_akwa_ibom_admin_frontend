@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from "lucide-react";
 import { Button, Checkbox, Input, LoadingState } from "@/shared/ui";
 import { EmptyState } from "./PageParts";
+import { Pager as ServerPager } from "./Pager";
 import {
   BulkActions,
   BulkBar,
@@ -22,7 +23,10 @@ export interface DataTableColumn<T> {
   id: string;
   header: string;
   cell: (row: T) => ReactNode;
-  // Providing a sort value makes the column sortable.
+  // Providing a sort value makes the column sortable — client-driven tables
+  // only (see `server` below): a server-paginated table only ever has one
+  // page of rows in memory, so sorting them in the browser would silently
+  // sort just that page instead of the whole list.
   sortValue?: (row: T) => string | number;
 }
 
@@ -32,12 +36,17 @@ export interface DataTableProps<T> {
   getRowId: (row: T) => string;
   isLoading?: boolean;
   // Text a row is matched against by the search box. Omit to hide search.
+  // Ignored when `server` is set — search there goes through
+  // `server.onSearchChange` instead, since only one page of rows is ever in
+  // memory to search over locally.
   searchText?: (row: T) => string;
   searchPlaceholder?: string;
   // Filter controls (Selects etc.) rendered next to the search box. Filtering
   // itself is the parent's job — pass the already-filtered rows.
   filters?: ReactNode;
-  // Setting this turns on the checkbox column and bulk-action bar.
+  // Setting this turns on the checkbox column and bulk-action bar. Selection
+  // is always scoped to the rows currently rendered — "this page" when
+  // `server` is set.
   bulkActions?: (selectedRows: T[], clear: () => void) => ReactNode;
   // Per-row action cell (e.g. a dropdown menu), rendered last.
   rowActions?: (row: T) => ReactNode;
@@ -45,7 +54,15 @@ export interface DataTableProps<T> {
   // Rows that can't be bulk-selected (e.g. already disqualified).
   isRowSelectable?: (row: T) => boolean;
   emptyMessage?: string;
+  // Only used in client-driven mode (no `server`).
   pageSize?: number;
+  // Pass this to put the table entirely under backend control: `rows` is
+  // taken as exactly the current page, as-is — no local filtering, sorting,
+  // or slicing happens. This is the only mode for any list that can grow
+  // past a page or two (applicants, contestants, messages, users); the few
+  // tables still client-driven (judging/leaderboard/stage rosters, Picture
+  // News) are bounded by a phase roster or hand-authored content, not by
+  // public sign-ups, so a full in-memory list stays reasonable there.
   server?: ServerPagination;
 }
 
@@ -56,9 +73,14 @@ export interface ServerPagination {
   limit: number;
   onPageChange: (page: number) => void;
   isFetching?: boolean;
-  // Server-driven search: the input calls this (debounce it) instead of filtering locally.
+  // Server-driven search: DataTable debounces internally and calls this
+  // instead of filtering `rows` locally.
   onSearchChange?: (term: string) => void;
 }
+
+// Shared debounce for server-driven search across every DataTable consumer,
+// so no page has to implement its own.
+const SEARCH_DEBOUNCE_MS = 350;
 
 export function DataTable<T>({
   columns,
@@ -74,15 +96,30 @@ export function DataTable<T>({
   isRowSelectable,
   emptyMessage = "Nothing to show.",
   pageSize = 15,
+  server,
 }: DataTableProps<T>) {
+  const isServer = !!server;
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<{ id: string; dir: "asc" | "desc" } | null>(
     null,
   );
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
+  );
+
+  // Server-driven: `rows` already IS the page to show — no local filtering,
+  // sorting or slicing. Client-driven: unchanged local behavior.
   const visible = useMemo(() => {
+    if (isServer) return rows ?? [];
     let out = rows ?? [];
     const q = query.trim().toLowerCase();
     if (q && searchText) {
@@ -104,20 +141,22 @@ export function DataTable<T>({
       });
     }
     return out;
-  }, [rows, query, searchText, sort, columns]);
+  }, [isServer, rows, query, searchText, sort, columns]);
 
-  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
-  const safePage = Math.min(page, pageCount - 1);
-  const pageRows = visible.slice(
-    safePage * pageSize,
-    (safePage + 1) * pageSize,
-  );
+  const pageCount = isServer
+    ? Math.max(1, server.totalPages)
+    : Math.max(1, Math.ceil(visible.length / pageSize));
+  const safePage = isServer ? 0 : Math.min(page, pageCount - 1);
+  const pageRows = isServer
+    ? visible
+    : visible.slice(safePage * pageSize, (safePage + 1) * pageSize);
 
   // Search/filter/sort changes can shrink the list; drop selections that are
   // no longer in the data so a bulk action never hits a hidden row.
   useEffect(() => {
+    if (isServer) return;
     setPage(0);
-  }, [query, rows]);
+  }, [isServer, query, rows]);
   useEffect(() => {
     if (!rows) return;
     const ids = new Set(rows.map(getRowId));
@@ -126,6 +165,17 @@ export function DataTable<T>({
       return next.size === prev.size ? prev : next;
     });
   }, [rows, getRowId]);
+
+  const handleSearchInput = (value: string) => {
+    setQuery(value);
+    if (!server?.onSearchChange) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const onSearchChange = server.onSearchChange;
+    debounceRef.current = setTimeout(
+      () => onSearchChange(value),
+      SEARCH_DEBOUNCE_MS,
+    );
+  };
 
   const selectable = (r: T) => (isRowSelectable ? isRowSelectable(r) : true);
   const selectableOnPage = pageRows.filter(selectable);
@@ -158,9 +208,9 @@ export function DataTable<T>({
 
   return (
     <Wrap>
-      {(searchText || filters) && (
+      {(searchText || server?.onSearchChange || filters) && (
         <Toolbar>
-          {searchText ? (
+          {searchText || server?.onSearchChange ? (
             <div style={{ position: "relative" }}>
               <Search
                 size={16}
@@ -171,7 +221,7 @@ export function DataTable<T>({
                 aria-label="Search"
                 placeholder={searchPlaceholder}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => handleSearchInput(e.target.value)}
                 style={{ paddingLeft: 36 }}
               />
             </div>
@@ -205,10 +255,11 @@ export function DataTable<T>({
                 </Th>
               )}
               {columns.map((c) => {
-                const active = sort?.id === c.id;
+                const sortable = !!c.sortValue && !isServer;
+                const active = sortable && sort?.id === c.id;
                 const Icon = !active
                   ? ArrowUpDown
-                  : sort.dir === "asc"
+                  : sort!.dir === "asc"
                     ? ArrowUp
                     : ArrowDown;
                 return (
@@ -216,20 +267,20 @@ export function DataTable<T>({
                     key={c.id}
                     aria-sort={
                       active
-                        ? sort.dir === "asc"
+                        ? sort!.dir === "asc"
                           ? "ascending"
                           : "descending"
                         : undefined
                     }
                   >
-                    {c.sortValue ? (
+                    {sortable ? (
                       <SortButton
                         type="button"
                         onClick={() =>
                           setSort(
                             !active
                               ? { id: c.id, dir: "asc" }
-                              : sort.dir === "asc"
+                              : sort!.dir === "asc"
                                 ? { id: c.id, dir: "desc" }
                                 : null,
                           )
@@ -299,34 +350,45 @@ export function DataTable<T>({
         </Table>
       </Scroll>
 
-      <Footer>
-        <span>
-          {visible.length} {visible.length === 1 ? "result" : "results"}
-        </span>
-        {pageCount > 1 && (
-          <Pager>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={safePage === 0}
-              onClick={() => setPage(safePage - 1)}
-            >
-              Previous
-            </Button>
-            <span>
-              Page {safePage + 1} of {pageCount}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={safePage >= pageCount - 1}
-              onClick={() => setPage(safePage + 1)}
-            >
-              Next
-            </Button>
-          </Pager>
-        )}
-      </Footer>
+      {isServer ? (
+        <ServerPager
+          page={server.page}
+          totalPages={server.totalPages}
+          total={server.total}
+          limit={server.limit}
+          onChange={server.onPageChange}
+          isFetching={server.isFetching}
+        />
+      ) : (
+        <Footer>
+          <span>
+            {visible.length} {visible.length === 1 ? "result" : "results"}
+          </span>
+          {pageCount > 1 && (
+            <Pager>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage === 0}
+                onClick={() => setPage(safePage - 1)}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {safePage + 1} of {pageCount}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={safePage >= pageCount - 1}
+                onClick={() => setPage(safePage + 1)}
+              >
+                Next
+              </Button>
+            </Pager>
+          )}
+        </Footer>
+      )}
     </Wrap>
   );
 }

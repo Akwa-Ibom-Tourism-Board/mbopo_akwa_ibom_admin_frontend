@@ -114,8 +114,8 @@ const ToggleButton = styled.button`
 `;
 
 export interface CandidatesByLgaChartProps {
-  /** Any array of objects with an `lga` field — pass your candidates straight in. */
-  candidates: readonly { lga?: string | null }[] | undefined;
+  /** Pre-aggregated counts from the backend (GET /admin/contestants/stats) — never raw rows. */
+  byLga: Record<string, number> | undefined;
   title?: string;
   /** "name" keeps the LGA list order, "count" puts the busiest LGAs first. */
   sort?: "name" | "count";
@@ -129,7 +129,7 @@ export interface CandidatesByLgaChartProps {
 }
 
 export function CandidatesByLgaChart({
-  candidates,
+  byLga,
   title = "Candidates by local government",
   sort = "name",
   lgas = AKWA_IBOM_LGAS,
@@ -138,10 +138,8 @@ export function CandidatesByLgaChart({
   const [expanded, setExpanded] = useState(false);
   const { rows, max, total, covered } = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const c of candidates ?? []) {
-      if (!c.lga) continue;
-      const key = normalize(c.lga);
-      counts.set(key, (counts.get(key) ?? 0) + 1);
+    for (const [lga, value] of Object.entries(byLga ?? {})) {
+      counts.set(normalize(lga), value);
     }
 
     let list = lgas.map((name) => ({
@@ -160,7 +158,7 @@ export function CandidatesByLgaChart({
       total: list.reduce((s, r) => s + r.value, 0),
       covered: list.filter((r) => r.value > 0).length,
     };
-  }, [candidates, lgas, sort]);
+  }, [byLga, lgas, sort]);
 
   const canCollapse = rows.length > collapsedCount;
   const visible =

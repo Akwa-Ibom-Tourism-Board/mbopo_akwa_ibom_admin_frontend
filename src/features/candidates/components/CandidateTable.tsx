@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -11,8 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui";
-import { Badge, DataTable, type DataTableColumn } from "@/shared/components";
-import { PHASES, phaseTitle } from "@/lib/phases";
+import {
+  Badge,
+  DataTable,
+  type DataTableColumn,
+  type ServerPagination,
+} from "@/shared/components";
+import { PHASES, phaseTitle, type PhaseId } from "@/lib/phases";
 import { AKWA_IBOM_LGAS, SENATORIAL_DISTRICTS } from "@/lib/constants";
 import { STATUS_LABELS, type Candidate, type CandidateStatus } from "../types";
 import { maritalFlag } from "../utils/derive";
@@ -29,7 +33,7 @@ const FilterSelect = styled.div`
   min-width: 150px;
 `;
 
-const ALL = "all";
+export const ALL = "all";
 
 function Filter({
   label,
@@ -65,7 +69,6 @@ const columns: DataTableColumn<Candidate>[] = [
   {
     id: "name",
     header: "Candidate",
-    sortValue: (c) => c.name,
     cell: (c) => (
       <NameCell>
         <Avatar>
@@ -76,23 +79,12 @@ const columns: DataTableColumn<Candidate>[] = [
       </NameCell>
     ),
   },
-  {
-    id: "lga",
-    header: "LGA",
-    sortValue: (c) => c.lga ?? "",
-    cell: (c) => c.lga,
-  },
-  {
-    id: "district",
-    header: "District",
-    sortValue: (c) => c.senatorialDistrict ?? "",
-    cell: (c) => c.senatorialDistrict,
-  },
+  { id: "lga", header: "LGA", cell: (c) => c.lga },
+  { id: "district", header: "District", cell: (c) => c.senatorialDistrict },
   { id: "phase", header: "Stage", cell: (c) => <PhaseBadge phase={c.phase} /> },
   {
     id: "marital",
     header: "Marital",
-    sortValue: (c) => c.maritalStatus ?? "",
     cell: (c) => {
       const marital = maritalFlag(c.maritalStatus);
       if (!marital) return "—";
@@ -111,43 +103,50 @@ const columns: DataTableColumn<Candidate>[] = [
   {
     id: "votes",
     header: "Votes",
-    sortValue: (c) => c.voteCount,
     cell: (c) => c.voteCount.toLocaleString("en-NG"),
   },
 ];
 
+// Filter/search/sort state all lives one level up now (see
+// ContestantsList.tsx) and is sent to the backend — this component just
+// renders whatever page it's handed. (Sorting is dropped entirely: with
+// only one server page ever in memory, a "sort" button could only reorder
+// that one page, which would look like sorting the whole list but silently
+// wasn't — see DataTable.tsx's own note on this.)
 export function CandidateTable({
   candidates,
   isLoading,
+  server,
+  phase,
+  onPhaseChange,
+  status,
+  onStatusChange,
+  district,
+  onDistrictChange,
+  lga,
+  onLgaChange,
 }: {
   candidates: Candidate[] | undefined;
   isLoading: boolean;
+  server: ServerPagination;
+  phase: PhaseId | typeof ALL;
+  onPhaseChange: (v: PhaseId | typeof ALL) => void;
+  status: CandidateStatus | typeof ALL;
+  onStatusChange: (v: CandidateStatus | typeof ALL) => void;
+  district: string;
+  onDistrictChange: (v: string) => void;
+  lga: string;
+  onLgaChange: (v: string) => void;
 }) {
   const navigate = useNavigate();
-  const [stage, setStage] = useState(ALL);
-  const [lga, setLga] = useState(ALL);
-  const [district, setDistrict] = useState(ALL);
-  const [status, setStatus] = useState(ALL);
-
-  const filtered = useMemo(
-    () =>
-      candidates?.filter(
-        (c) =>
-          (stage === ALL || c.phase === stage) &&
-          (lga === ALL || c.lga === lga) &&
-          (district === ALL || c.senatorialDistrict === district) &&
-          (status === ALL || c.candidateStatus === status),
-      ),
-    [candidates, stage, lga, district, status],
-  );
 
   return (
     <DataTable
       columns={columns}
-      rows={filtered}
+      rows={candidates}
       getRowId={(c) => c.id}
       isLoading={isLoading}
-      searchText={(c) => `${c.name} ${c.lga} ${c.phone} ${c.email}`}
+      server={server}
       searchPlaceholder="Search by name, email, LGA or phone"
       onRowClick={(c) => navigate(`/participants/${c.applicantId}`)}
       emptyMessage="No candidates match these filters."
@@ -155,8 +154,8 @@ export function CandidateTable({
         <>
           <Filter
             label="stages"
-            value={stage}
-            onChange={setStage}
+            value={phase}
+            onChange={(v) => onPhaseChange(v as PhaseId | typeof ALL)}
             options={PHASES.map((p) => ({
               value: p.id,
               label: phaseTitle(p.id),
@@ -165,7 +164,7 @@ export function CandidateTable({
           <Filter
             label="statuses"
             value={status}
-            onChange={setStatus}
+            onChange={(v) => onStatusChange(v as CandidateStatus | typeof ALL)}
             options={(Object.keys(STATUS_LABELS) as CandidateStatus[]).map(
               (s) => ({
                 value: s,
@@ -176,13 +175,16 @@ export function CandidateTable({
           <Filter
             label="districts"
             value={district}
-            onChange={setDistrict}
-            options={SENATORIAL_DISTRICTS.map((d) => ({ value: d, label: d }))}
+            onChange={onDistrictChange}
+            options={Object.keys(SENATORIAL_DISTRICTS).map((d) => ({
+              value: d,
+              label: d,
+            }))}
           />
           <Filter
             label="LGAs"
             value={lga}
-            onChange={setLga}
+            onChange={onLgaChange}
             options={AKWA_IBOM_LGAS.map((l) => ({ value: l, label: l }))}
           />
         </>

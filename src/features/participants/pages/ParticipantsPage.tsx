@@ -4,9 +4,7 @@ import { PageHeader, Tabs, type TabItem } from "@/shared/components";
 import { useCan } from "@/lib/rbac";
 // import { useApplicants } from "@/features/applicants/api/hooks";
 // import { ApplicantTable } from "@/features/applicants/components/ApplicantTable";
-import { useCandidates } from "@/features/candidates/api/hooks";
-import { CandidateTable } from "@/features/candidates/components/CandidateTable";
-import { MediaCandidateTable } from "@/features/candidates/components/MediaCandidateTable";
+import { ContestantsList } from "@/features/candidates/components/ContestantsList";
 import { ApplicantsList } from "../components/ApplicantsList";
 
 type TabId = "candidates" | "applicants" | "contestants";
@@ -39,15 +37,6 @@ const DESCRIPTIONS: Record<TabId, string> = {
 //   });
 //   return <ApplicantTable applicants={data?.applicants} isLoading={isLoading} />;
 // }
-
-function ContestantsTab() {
-  const { data, isLoading } = useCandidates();
-  const can = useCan();
-  if (!can("candidates.viewDetails")) {
-    return <MediaCandidateTable candidates={data} isLoading={isLoading} />;
-  }
-  return <CandidateTable candidates={data} isLoading={isLoading} />;
-}
 
 export function ParticipantsPage() {
   // Not a route param — the three tabs are literal paths (see routes.tsx),
@@ -90,7 +79,7 @@ export function ParticipantsPage() {
       />
       {activeTab === "candidates" && <ApplicantsList />}
       {activeTab === "applicants" && <ApplicantsList status="in_progress" />}
-      {activeTab === "contestants" && <ContestantsTab />}
+      {activeTab === "contestants" && <ContestantsList />}
     </>
   );
 }

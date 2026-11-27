@@ -11,8 +11,13 @@ import { phaseTitle } from "@/lib/phases";
 export function useJudgeSummary() {
   const { user } = useAuth();
   const states = usePhaseStates().data;
-  const candidates = useCandidates().data;
   const live = states?.find((s) => s.status === "open")?.phaseId;
+  // Bounded by a single phase's roster (never "all contestants ever"), so a
+  // generous limit here is fine — this isn't the kind of unbounded list the
+  // backend pagination work is about.
+  const candidates = useCandidates(
+    live ? { phase: live, limit: 500 } : { limit: 1 },
+  ).data?.contestants;
   // useMyPhaseScores needs a phase; when none is open its result is ignored.
   const mine = useMyPhaseScores(user!.id, live ?? "lga").data;
 

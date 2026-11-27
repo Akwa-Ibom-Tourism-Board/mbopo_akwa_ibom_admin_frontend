@@ -1,8 +1,28 @@
 import { request } from "@/lib/http";
+import type { PageMeta } from "@/shared/types/pagination";
 import type { Complaint, ComplaintStatus } from "../types";
 
-export async function getComplaints(): Promise<Complaint[]> {
-  return request<Complaint[]>("/admin/complaints");
+export interface ComplaintListQuery {
+  search?: string;
+  status?: string;
+  channel?: string;
+  source?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getComplaints(
+  query: ComplaintListQuery = {},
+): Promise<{ complaints: Complaint[]; meta: PageMeta }> {
+  const params = new URLSearchParams();
+  if (query.search) params.set("search", query.search);
+  if (query.status) params.set("status", query.status);
+  if (query.channel) params.set("channel", query.channel);
+  if (query.source) params.set("source", query.source);
+  if (query.page) params.set("page", String(query.page));
+  if (query.limit) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return request(`/admin/complaints${qs ? `?${qs}` : ""}`);
 }
 
 export async function getComplaint(id: string): Promise<Complaint | null> {

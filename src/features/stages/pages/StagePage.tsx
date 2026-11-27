@@ -45,17 +45,28 @@ export function StagePage() {
   const { phaseId } = useParams();
   const can = useCan();
   const states = usePhaseStates();
-  const candidates = useCandidates();
+  // participantsOf needs the full contestant roster (it looks at the phase
+  // before and after this one too, to show "advanced"/"incoming") — bounded
+  // by total contestants, not the unbounded applicant pool, so one large
+  // fetch here is fine; this isn't the kind of list the backend pagination
+  // work is about.
+  const candidates = useCandidates({ limit: 500 });
+  const contestants = candidates.data?.contestants;
 
   const valid = isPhaseId(phaseId);
   const rows = useMemo(
-    () =>
-      valid && candidates.data ? participantsOf(phaseId, candidates.data) : [],
-    [valid, phaseId, candidates.data],
+    () => (valid && contestants ? participantsOf(phaseId, contestants) : []),
+    [valid, phaseId, contestants],
   );
 
   if (!valid) {
-    return <EmptyState icon={<SearchX size={26} />} title="Stage not found" message="We couldn't find that stage." />;
+    return (
+      <EmptyState
+        icon={<SearchX size={26} />}
+        title="Stage not found"
+        message="We couldn't find that stage."
+      />
+    );
   }
   const state = states.data?.find((s) => s.phaseId === phaseId);
   if (!state || candidates.isLoading) return <LoadingState />;

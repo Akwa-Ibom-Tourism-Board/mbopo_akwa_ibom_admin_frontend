@@ -1,6 +1,7 @@
 import { request } from "@/lib/http";
 import { uploadCandidateDocument as uploadDocumentToCloudinary } from "@/lib/cloudinary";
 import { LGA_TO_DISTRICT } from "@/lib/constants";
+import type { PageMeta } from "@/shared/types/pagination";
 import { sectionSchemas, type SectionId } from "../schemas";
 import type {
   Candidate,
@@ -9,11 +10,46 @@ import type {
   PublicProfileUpdate,
 } from "../types";
 
-export async function getCandidates(): Promise<Candidate[]> {
-  const result = await request<{ contestants: Candidate[] }>(
-    "/admin/contestants",
-  );
-  return result.contestants;
+export interface CandidateListQuery {
+  search?: string;
+  lga?: string;
+  district?: string;
+  phase?: string;
+  candidateStatus?: string;
+  page?: number;
+  limit?: number;
+}
+
+export async function getCandidates(
+  query: CandidateListQuery = {},
+): Promise<{ contestants: Candidate[]; meta: PageMeta }> {
+  const params = new URLSearchParams();
+  if (query.search) params.set("search", query.search);
+  if (query.lga) params.set("lga", query.lga);
+  if (query.district) params.set("district", query.district);
+  if (query.phase) params.set("phase", query.phase);
+  if (query.candidateStatus) {
+    params.set("candidateStatus", query.candidateStatus);
+  }
+  if (query.page) params.set("page", String(query.page));
+  if (query.limit) params.set("limit", String(query.limit));
+  const qs = params.toString();
+  return request(`/admin/contestants${qs ? `?${qs}` : ""}`);
+}
+
+export interface CandidateStats {
+  total: number;
+  active: number;
+  withoutBio: number;
+  totalVotes: number;
+  byLga: Record<string, number>;
+}
+
+// Dashboard aggregates, computed server-side — never pull every contestant
+// into the client just to add them up (the same reasoning behind paginating
+// the Contestants list itself).
+export async function getCandidateStats(): Promise<CandidateStats> {
+  return request("/admin/contestants/stats");
 }
 
 export async function getCandidate(id: string): Promise<Candidate | null> {
