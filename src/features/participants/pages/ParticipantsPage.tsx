@@ -1,11 +1,13 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { PageHeader, Tabs, type TabItem } from "@/shared/components";
+import { Button } from "@/shared/ui";
 import { useCan } from "@/lib/rbac";
 // import { useApplicants } from "@/features/applicants/api/hooks";
 // import { ApplicantTable } from "@/features/applicants/components/ApplicantTable";
 import { ContestantsList } from "@/features/candidates/components/ContestantsList";
 import { ApplicantsList } from "../components/ApplicantsList";
+import { CopyContactsDialog } from "../components/CopyContactsDialog";
 
 type TabId = "candidates" | "applicants" | "contestants";
 
@@ -45,9 +47,11 @@ export function ParticipantsPage() {
   const tab = useLocation().pathname.split("/")[2];
   const navigate = useNavigate();
   const can = useCan();
+  const [copyOpen, setCopyOpen] = useState(false);
 
   const canSeeApplicantTabs = can("applicants.view");
   const canSeeContestants = can("candidates.view");
+  const canCopyContacts = can("applicants.manage");
   const tabs = useMemo(
     () =>
       TABS.filter((t) =>
@@ -71,7 +75,17 @@ export function ParticipantsPage() {
 
   return (
     <>
-      <PageHeader title="Participants" description={DESCRIPTIONS[activeTab]} />
+      <PageHeader
+        title="Participants"
+        description={DESCRIPTIONS[activeTab]}
+        actions={
+          canCopyContacts && (
+            <Button variant="outline" onClick={() => setCopyOpen(true)}>
+              Copy contacts
+            </Button>
+          )
+        }
+      />
       <Tabs
         tabs={tabs}
         value={activeTab}
@@ -80,6 +94,12 @@ export function ParticipantsPage() {
       {activeTab === "candidates" && <ApplicantsList />}
       {activeTab === "applicants" && <ApplicantsList status="in_progress" />}
       {activeTab === "contestants" && <ContestantsList />}
+      {canCopyContacts && (
+        <CopyContactsDialog
+          open={copyOpen}
+          onClose={() => setCopyOpen(false)}
+        />
+      )}
     </>
   );
 }

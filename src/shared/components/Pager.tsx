@@ -6,7 +6,8 @@ const Bar = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 16px 0;
+  padding: 12px 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.border};
   font-family: ${({ theme }) => theme.fonts.sans};
   font-size: 14px;
   color: ${({ theme }) => theme.colors.foreground};
