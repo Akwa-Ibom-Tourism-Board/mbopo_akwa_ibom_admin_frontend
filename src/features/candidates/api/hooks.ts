@@ -5,6 +5,7 @@ import {
   getCandidates,
   getCandidateStats,
   retryVinVerification,
+  setVinReason,
   updateCandidateDetails,
   updateCandidateProfile,
   uploadCandidateDocument,
@@ -78,6 +79,15 @@ export function useRetryVinVerification(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => retryVinVerification(id),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: candidateKeys.detail(id) }),
+  });
+}
+
+export function useSetVinReason(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string | null) => setVinReason(id, reason),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: candidateKeys.detail(id) }),
   });

@@ -1,4 +1,4 @@
-import { request } from "@/lib/http";
+import { request, downloadFile } from "@/lib/http";
 import type { Participant, ParticipantCounts } from "../types";
 
 // GET /admin/participants/:id is keyed by the User's own id (see
@@ -56,4 +56,18 @@ export async function getContacts(
   if (query.step) params.set("step", String(query.step));
   const qs = params.toString();
   return request(`/admin/participants/contacts${qs ? `?${qs}` : ""}`);
+}
+
+// Downloads straight to the browser rather than returning JSON — see
+// lib/http.ts's downloadFile.
+export async function exportParticipants(
+  status: ContactsStatus = "all",
+): Promise<void> {
+  const params = new URLSearchParams();
+  if (status !== "all") params.set("status", status);
+  const qs = params.toString();
+  return downloadFile(
+    `/admin/participants/export${qs ? `?${qs}` : ""}`,
+    "mbopo-participants.xlsx",
+  );
 }

@@ -1,5 +1,6 @@
 import styled, { keyframes } from "styled-components";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { media } from "@/theme";
 
 const overlayIn = keyframes`
   from { opacity: 0; }
@@ -63,7 +64,9 @@ export const StyledClose = styled(DialogPrimitive.Close)`
   align-items: center;
   justify-content: center;
   padding: 0.25rem;
-  transition: opacity ${({ theme }) => theme.transitions.fast};
+  transition:
+    opacity ${({ theme }) => theme.transitions.fast},
+    background ${({ theme }) => theme.transitions.fast};
 
   &:hover {
     opacity: 1;
@@ -72,6 +75,28 @@ export const StyledClose = styled(DialogPrimitive.Close)`
   &:focus-visible {
     outline: 2px solid ${({ theme }) => theme.colors.ring};
     outline-offset: 2px;
+  }
+
+  /* On large screens a dialog's only way to close is often this button
+     (e.g. once a redundant footer "Close" button is removed) — make it
+     read as a real, visible control rather than a faint corner icon. */
+  ${media.lg} {
+    opacity: 1;
+    padding: 0.4rem;
+    border: 1px solid ${({ theme }) => theme.colors.border};
+    background: ${({ theme }) => theme.colors.muted.DEFAULT};
+
+    svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2.5;
+    }
+
+    &:hover {
+      background: ${({ theme }) => theme.alpha(theme.colors.primary.DEFAULT, 0.12)};
+      border-color: ${({ theme }) => theme.colors.primary.DEFAULT};
+      color: ${({ theme }) => theme.colors.primary.DEFAULT};
+    }
   }
 `;
 

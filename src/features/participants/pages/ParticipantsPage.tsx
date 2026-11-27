@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { PageHeader, Tabs, type TabItem } from "@/shared/components";
 import { Button } from "@/shared/ui";
 import { useCan } from "@/lib/rbac";
+import { friendlyMessage } from "@/lib/http";
 // import { useApplicants } from "@/features/applicants/api/hooks";
 // import { ApplicantTable } from "@/features/applicants/components/ApplicantTable";
 import { ContestantsList } from "@/features/candidates/components/ContestantsList";
+import { exportUnverifiedVins } from "@/features/candidates/api";
 import { ApplicantsList } from "../components/ApplicantsList";
 import { CopyContactsDialog } from "../components/CopyContactsDialog";
 
@@ -48,10 +51,12 @@ export function ParticipantsPage() {
   const navigate = useNavigate();
   const can = useCan();
   const [copyOpen, setCopyOpen] = useState(false);
+  const [vinExportPending, setVinExportPending] = useState(false);
 
   const canSeeApplicantTabs = can("applicants.view");
   const canSeeContestants = can("candidates.view");
   const canCopyContacts = can("applicants.manage");
+  const canExportVins = can("candidates.editDetails");
   const tabs = useMemo(
     () =>
       TABS.filter((t) =>
@@ -79,11 +84,36 @@ export function ParticipantsPage() {
         title="Participants"
         description={DESCRIPTIONS[activeTab]}
         actions={
-          canCopyContacts && (
-            <Button variant="outline" onClick={() => setCopyOpen(true)}>
-              Copy contacts
-            </Button>
-          )
+          <>
+            {canCopyContacts && (
+              <Button variant="outline" onClick={() => setCopyOpen(true)}>
+                Contacts &amp; export
+              </Button>
+            )}
+            {canExportVins && activeTab === "contestants" && (
+              <Button
+                variant="outline"
+                disabled={vinExportPending}
+                onClick={async () => {
+                  setVinExportPending(true);
+                  try {
+                    await exportUnverifiedVins();
+                  } catch (error) {
+                    toast.error(
+                      friendlyMessage(
+                        error,
+                        "Couldn't download the file — try again.",
+                      ),
+                    );
+                  } finally {
+                    setVinExportPending(false);
+                  }
+                }}
+              >
+                {vinExportPending ? "Downloading…" : "Download unverified VINs"}
+              </Button>
+            )}
+          </>
         }
       />
       <Tabs

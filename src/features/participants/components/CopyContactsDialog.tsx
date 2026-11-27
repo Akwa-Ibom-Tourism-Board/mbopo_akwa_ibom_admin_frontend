@@ -15,7 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/ui";
-import { getContacts, type ContactsStatus } from "../api";
+import { exportParticipants, getContacts, type ContactsStatus } from "../api";
+import { friendlyMessage } from "@/lib/http";
 
 // Mirrors the 5-step list in the backend's applicant-progress.helpers.ts —
 // purely a label list for this picker, not business logic.
@@ -71,7 +72,9 @@ export function CopyContactsDialog({
 }) {
   const [status, setStatus] = useState<ContactsStatus>("all");
   const [step, setStep] = useState<number | undefined>(undefined);
-  const [pending, setPending] = useState<"emails" | "phones" | null>(null);
+  const [pending, setPending] = useState<"emails" | "phones" | "excel" | null>(
+    null,
+  );
 
   const run = async (kind: "emails" | "phones") => {
     setPending(kind);
@@ -91,14 +94,27 @@ export function CopyContactsDialog({
     }
   };
 
+  const runExport = async () => {
+    setPending("excel");
+    try {
+      await exportParticipants(status);
+    } catch (error) {
+      toast.error(
+        friendlyMessage(error, "Couldn't download the file — try again."),
+      );
+    } finally {
+      setPending(null);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Copy contacts</DialogTitle>
+          <DialogTitle>Contacts &amp; export</DialogTitle>
           <DialogDescription>
             Copy every matching email address or phone number to your clipboard,
-            ready to paste into a mailing or SMS tool.
+            or download the full details as an Excel file.
           </DialogDescription>
         </DialogHeader>
 
@@ -127,7 +143,8 @@ export function CopyContactsDialog({
         {status === "in_progress" && (
           <Field>
             <label htmlFor="copy-contacts-step">
-              Stuck at (optional — leave as "Any step" for all of them)
+              Stuck at (optional — leave as "Any step" for all of them; the
+              Excel download always covers the whole cohort, not just this step)
             </label>
             <Select
               value={step ? String(step) : "any"}
@@ -153,6 +170,13 @@ export function CopyContactsDialog({
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={!!pending}>
             Close
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => void runExport()}
+            disabled={!!pending}
+          >
+            {pending === "excel" ? "Downloading…" : "Download Excel"}
           </Button>
           <Button
             variant="outline"

@@ -16,6 +16,7 @@ import {
   occupationLabel,
 } from "../utils/derive";
 import { FactCard, type Fact } from "./Facts";
+import { EditVinReasonDialog } from "./EditVinReasonDialog";
 
 const Grid = styled.div`
   display: grid;
@@ -57,6 +58,7 @@ export function ApplicationTab({
   const can = useCan();
   const seeIdentity = can("candidates.viewIdentity");
   const canRetryVin = can("candidates.retryVinVerification");
+  const canEditVinNote = can("candidates.editDetails");
   const elig = eligibility(c.dateOfBirth);
   const marital = maritalFlag(c.maritalStatus);
   const retryVin = useRetryVinVerification(c.id ?? "");
@@ -65,28 +67,33 @@ export function ApplicationTab({
   // data on an otherwise-complete record.
   const emptyLabel = c.status === "submitted" ? "—" : "Pending";
 
-  const vinOutcome =
-    c.isVinVerified === true ? (
-      <Badge $tone="primary">VIN verified</Badge>
-    ) : c.isVinVerified === false ? (
-      <>
-        <Badge $tone="danger">VIN check failed</Badge>
-        {c.vinVerificationFailedReason && (
-          <span style={{ display: "block", marginTop: 4, fontWeight: 400 }}>
-            {c.vinVerificationFailedReason}
-          </span>
-        )}
-        {canRetryVin && (
+  // VIN is optional. The as-entered value (draftVin) shows to anyone who
+  // can see this tab at all, whatever its verification state — Admin and
+  // Judges alike need to see "no VIN" versus "has one but it's unverified"
+  // at a glance, not just the latter.
+  const vinOutcome = !c.draftVin ? (
+    <Badge>No VIN provided</Badge>
+  ) : (
+    <>
+      {c.isVinVerified === true ? (
+        <Badge $tone="primary">Verified</Badge>
+      ) : c.isVinVerified === false ? (
+        <Badge $tone="danger">Verification failed</Badge>
+      ) : (
+        <Badge>Not checked yet</Badge>
+      )}
+      {c.vinVerificationFailedReason && (
+        <span style={{ display: "block", marginTop: 4, fontWeight: 400 }}>
+          {c.vinVerificationFailedReason}
+        </span>
+      )}
+      <div style={{ display: "flex", gap: 12, marginTop: 4 }}>
+        {canRetryVin && c.isVinVerified !== true && (
           <Button
             type="button"
             variant="link"
             size="sm"
-            style={{
-              display: "block",
-              height: "auto",
-              padding: 0,
-              marginTop: 4,
-            }}
+            style={{ height: "auto", padding: 0 }}
             disabled={retryVin.isPending}
             onClick={() =>
               retryVin.mutate(undefined, {
@@ -98,10 +105,15 @@ export function ApplicationTab({
             {retryVin.isPending ? "Retrying…" : "Retry verification"}
           </Button>
         )}
-      </>
-    ) : (
-      <Badge>Not checked yet</Badge>
-    );
+        {canEditVinNote && (
+          <EditVinReasonDialog
+            candidateId={c.id ?? ""}
+            currentReason={c.vinVerificationFailedReason}
+          />
+        )}
+      </div>
+    </>
+  );
 
   const personal: Fact[] = [
     {
@@ -154,8 +166,11 @@ export function ApplicationTab({
 
   const identity: Fact[] = [
     { label: "NIN", locked: true, value: seeIdentity ? c.nin : maskId(c.nin) },
-    { label: "VIN", locked: true, value: seeIdentity ? c.vin : maskId(c.vin) },
-    { label: "VIN check", locked: true, value: vinOutcome },
+    // As entered, regardless of verification state — unlike NIN above,
+    // this isn't masked for any role that reaches this tab at all (Judge
+    // included): see candidate.helpers.ts's serializeCandidateForViewer.
+    { label: "VIN", locked: true, value: c.draftVin },
+    { label: "VIN status", locked: true, value: vinOutcome },
     { label: "Local government", value: c.lga },
     { label: "Senatorial district", value: c.senatorialDistrict },
     { label: "Village", value: c.village },

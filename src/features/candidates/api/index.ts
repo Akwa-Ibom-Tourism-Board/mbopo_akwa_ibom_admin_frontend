@@ -1,4 +1,4 @@
-import { request } from "@/lib/http";
+import { request, downloadFile } from "@/lib/http";
 import { uploadCandidateDocument as uploadDocumentToCloudinary } from "@/lib/cloudinary";
 import { LGA_TO_DISTRICT } from "@/lib/constants";
 import type { PageMeta } from "@/shared/types/pagination";
@@ -74,6 +74,27 @@ export async function retryVinVerification(id: string): Promise<Candidate> {
   return request<Candidate>(`/admin/contestants/${id}/retry-vin-verification`, {
     method: "POST",
   });
+}
+
+// Doesn't touch isVinVerified itself — just the explanatory note next to
+// it (see the backend's set-vin-reason.service.ts). Pass null to clear it.
+export async function setVinReason(
+  id: string,
+  reason: string | null,
+): Promise<Candidate> {
+  return request<Candidate>(`/admin/contestants/${id}/vin-reason`, {
+    method: "PATCH",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+// Every submitted contestant whose VIN isn't a confirmed match — no VIN at
+// all, one that failed, or one that hasn't been checked yet.
+export async function exportUnverifiedVins(): Promise<void> {
+  return downloadFile(
+    "/admin/contestants/export-unverified-vin",
+    "mbopo-unverified-vins.xlsx",
+  );
 }
 
 export async function getCandidateEvents(

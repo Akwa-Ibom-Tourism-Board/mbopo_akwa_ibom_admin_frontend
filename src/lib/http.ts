@@ -162,6 +162,53 @@ export async function request<T>(
   return body?.data as T;
 }
 
+// For the handful of endpoints that hand back a file (Excel exports, see
+// admin/helpers/export.helpers.ts on the backend) instead of the usual JSON
+// envelope — `request<T>` always calls response.json(), which would throw
+// on binary content, so this is a separate path with its own auth headers
+// and its own error handling.
+export async function downloadFile(
+  path: string,
+  fallbackFilename: string,
+): Promise<void> {
+  const { accessToken, refreshToken } = getStoredTokens();
+  const headers: Record<string, string> = {};
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+  if (refreshToken) headers["x-refresh-token"] = refreshToken;
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers,
+    cache: "no-store",
+  });
+
+  captureRotatedTokens(response);
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => undefined)) as
+      ApiEnvelope<unknown> | undefined;
+    if (response.status === 401 && accessToken) onUnauthorized?.();
+    throw new ApiError(
+      body?.message ?? response.statusText,
+      response.status,
+      body?.errors,
+    );
+  }
+
+  const disposition = response.headers.get("content-disposition");
+  const filename =
+    disposition?.match(/filename="?([^"]+)"?/)?.[1] ?? fallbackFilename;
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
 // The backend marks every deliberate rejection it throws (wrong password,
 // a business rule like "every judge must finish scoring first") as
 // `isOperational: true` with a status below 500 and a message that's
