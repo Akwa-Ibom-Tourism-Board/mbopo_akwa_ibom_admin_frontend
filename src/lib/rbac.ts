@@ -92,7 +92,9 @@ export type Capability =
   | "complaints.respond"
   | "complaints.reassign"
   // Audit trail
-  | "activity.view";
+  | "activity.view"
+  // Platform-wide registration open/closed toggle (Super Admin/Admin only).
+  | "registration.manage";
 
 const ALL_ROLES: Role[] = [
   "super_admin",
@@ -165,6 +167,7 @@ export const PERMISSIONS: Record<Capability, readonly Role[]> = {
   "complaints.reassign": ["super_admin", "admin"],
 
   "activity.view": ["super_admin", "admin"],
+  "registration.manage": ["super_admin", "admin"],
 };
 
 // Which roles a given role may create/edit/deactivate. "super_admin" is never

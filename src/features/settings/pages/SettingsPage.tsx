@@ -14,8 +14,9 @@ import {
 import { PageHeader } from "@/shared/components";
 import { FormRow, FormStack } from "@/shared/components/FormParts";
 import { useAuth, useChangePassword } from "@/features/auth";
-import { ROLE_LABELS } from "@/lib/rbac";
+import { ROLE_LABELS, useCan } from "@/lib/rbac";
 import { formatDateTime } from "@/lib/formatting";
+import { RegistrationSettingsCard } from "../components/RegistrationSettingsCard";
 
 const schema = z
   .object({
@@ -38,6 +39,7 @@ type Values = z.infer<typeof schema>;
 // password instead).
 export function SettingsPage() {
   const { user } = useAuth();
+  const can = useCan();
   const changePassword = useChangePassword();
   const {
     register,
@@ -125,6 +127,12 @@ export function SettingsPage() {
           </FormStack>
         </CardContent>
       </Card>
+
+      {can("registration.manage") && (
+        <div style={{ marginTop: 28 }}>
+          <RegistrationSettingsCard />
+        </div>
+      )}
     </>
   );
 }
