@@ -37,3 +37,12 @@ export async function setApplicantActive(
 export async function deleteApplicant(id: string): Promise<void> {
   await request(`/admin/applicants/${id}`, { method: "DELETE" });
 }
+
+// Submits this applicant's draft on their behalf — same completeness
+// check, reference code and confirmation email as a normal self-service
+// submission (see the backend's submit-for-applicant.service.ts). Throws
+// with the same "Application is incomplete: ..." message if it isn't
+// ready yet.
+export async function submitForApplicant(id: string): Promise<void> {
+  await request(`/admin/applicants/${id}/submit`, { method: "POST" });
+}

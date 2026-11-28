@@ -1,15 +1,31 @@
 import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
-import { ArrowLeft, Mail, Pencil, SearchX, UploadCloud } from "lucide-react";
+import {
+  ArrowLeft,
+  Mail,
+  Pencil,
+  SearchX,
+  Send,
+  UploadCloud,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button, LoadingState } from "@/shared/ui";
-import { Badge, EmptyState, Tabs, type TabItem } from "@/shared/components";
+import {
+  Badge,
+  ConfirmDialog,
+  EmptyState,
+  Tabs,
+  type TabItem,
+} from "@/shared/components";
 import { phaseTitle } from "@/lib/phases";
 import { useCan } from "@/lib/rbac";
+import { friendlyMessage } from "@/lib/http";
 import { media } from "@/theme";
 import { useParticipant } from "../api/hooks";
 import { participantKind } from "../types";
 import { MessageParticipantDialog } from "../components/MessageParticipantDialog";
+import { useSubmitForApplicant } from "@/features/applicants/api/hooks";
 import { ActivityTab } from "@/features/candidates/components/ActivityTab";
 import { ApplicationTab } from "@/features/candidates/components/ApplicationTab";
 import { EditSectionDialog } from "@/features/candidates/components/EditSectionDialog";
@@ -103,6 +119,8 @@ export function ParticipantDetailPage() {
   const [editing, setEditing] = useState<SectionId | null>(null);
   const [uploading, setUploading] = useState<DocumentSlot | null>(null);
   const [messaging, setMessaging] = useState(false);
+  const [confirmingSubmit, setConfirmingSubmit] = useState(false);
+  const submitForApplicant = useSubmitForApplicant(id ?? "");
 
   const isSubmitted = c?.status === "submitted";
   // Documents exist as soon as registration uploads them (well before
@@ -113,6 +131,10 @@ export function ParticipantDetailPage() {
   const canSeeActivity = can("candidates.viewActivity") && isSubmitted;
   const canEdit = can("candidates.editDetails") && isSubmitted;
   const canMessage = can("participants.message");
+  // Staff submitting on behalf of someone who can't finish the process
+  // themselves — only makes sense for a draft that's actually started.
+  const canSubmitForApplicant =
+    can("applicants.manage") && hasApplication && !isSubmitted;
 
   const tabs = useMemo(
     () =>
@@ -190,16 +212,28 @@ export function ParticipantDetailPage() {
         <Back to={backTo}>
           <ArrowLeft size={16} /> All participants
         </Back>
-        {canMessage && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setMessaging(true)}
-          >
-            <Mail size={14} /> Message
-          </Button>
-        )}
+        <div style={{ display: "flex", gap: 8 }}>
+          {canSubmitForApplicant && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmingSubmit(true)}
+            >
+              <Send size={14} /> Submit for applicant
+            </Button>
+          )}
+          {canMessage && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMessaging(true)}
+            >
+              <Mail size={14} /> Message
+            </Button>
+          )}
+        </div>
       </div>
 
       <Hero>
@@ -242,6 +276,31 @@ export function ParticipantDetailPage() {
           participantName={c.name}
           open={messaging}
           onOpenChange={setMessaging}
+        />
+      )}
+      {canSubmitForApplicant && (
+        <ConfirmDialog
+          open={confirmingSubmit}
+          onOpenChange={setConfirmingSubmit}
+          title="Submit this application?"
+          description={`This submits ${c.name}'s application exactly as if they'd clicked submit themselves — using whatever they've filled in so far. They'll get the same confirmation email. This can't be undone.`}
+          confirmLabel="Submit application"
+          loading={submitForApplicant.isPending}
+          onConfirm={() =>
+            submitForApplicant.mutate(undefined, {
+              onSuccess: () => {
+                toast.success(`${c.name}'s application was submitted.`);
+                setConfirmingSubmit(false);
+              },
+              onError: (error) =>
+                toast.error(
+                  friendlyMessage(
+                    error,
+                    "Couldn't submit this application — try again.",
+                  ),
+                ),
+            })
+          }
         />
       )}
 
