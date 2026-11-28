@@ -109,7 +109,7 @@ export function CopyContactsDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent>
+      <DialogContent style={{ maxWidth: 640 }}>
         <DialogHeader>
           <DialogTitle>Contacts &amp; export</DialogTitle>
           <DialogDescription>
@@ -168,9 +168,6 @@ export function CopyContactsDialog({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={!!pending}>
-            Close
-          </Button>
           <Button
             variant="outline"
             onClick={() => void runExport()}

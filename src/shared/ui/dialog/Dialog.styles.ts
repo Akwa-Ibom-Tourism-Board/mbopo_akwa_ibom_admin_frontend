@@ -35,6 +35,7 @@ export const StyledContent = styled(DialogPrimitive.Content)`
   width: 90%;
   max-width: 32rem;
   max-height: 85vh;
+  overflow-x: hidden;
   overflow-y: auto;
   transform: translate(-50%, -50%);
   gap: 1rem;
@@ -120,6 +121,7 @@ export const StyledFooter = styled.div`
 
   @media (min-width: 640px) {
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: flex-end;
   }
 `;
